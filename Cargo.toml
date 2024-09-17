@@ -8,7 +8,8 @@ authors = ["Adphi"]
 edition = "2021"
 description = ""
 documentation = ""
-
+license = "Apache-2.0"
+repository = "https://github.com/linka-cloud/prost-validate"
 
 [workspace.dependencies]
 prost = "0.13.2"

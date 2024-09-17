@@ -1,10 +1,11 @@
 [package]
 name = "prost-reflect-validate"
+description = "protoc-gen-validate's validation using prost-reflect"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
-description.workspace = true
-documentation.workspace = true
+license.workspace = true
+repository.workspace = true
 
 exclude = [
     "tests"
