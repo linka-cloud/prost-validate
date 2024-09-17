@@ -1,10 +1,10 @@
-use crate::bool::{make_validate_bool, validate_bool};
-use crate::bytes::{make_validate_bytes, validate_bytes};
-use crate::message::{make_validate_message, validate_message};
-use crate::number::{make_validate_double, make_validate_float, make_validate_i32, make_validate_i64, make_validate_u32, make_validate_u64, validate_double, validate_float, validate_i32, validate_i64, validate_u32, validate_u64};
-use crate::r#enum::{make_validate_enum, validate_enum};
+use crate::bool::{make_validate_bool};
+use crate::bytes::{make_validate_bytes};
+use crate::message::{make_validate_message};
+use crate::number::{make_validate_double, make_validate_float, make_validate_i32, make_validate_i64, make_validate_u32, make_validate_u64};
+use crate::r#enum::{make_validate_enum};
 use crate::registry::ValidationFn;
-use crate::string::{make_validate_string, validate_string};
+use crate::string::{make_validate_string};
 use crate::validate_proto::FieldRules;
 use anyhow::Result;
 use prost_reflect::{FieldDescriptor, Kind, Value};
@@ -13,28 +13,6 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 type ValueValidationFn = Arc<dyn Fn(Cow<Value>, &FieldRules) -> Result<bool> + Send + Sync>;
-
-pub(crate) fn validate_field(val: Cow<Value>, field: &FieldDescriptor, rules: &FieldRules) -> anyhow::Result<()> {
-    match field.kind() {
-        Kind::Double => validate_double(val.as_f64(), &field, rules),
-        Kind::Float => validate_float(val.as_f32(), &field, rules),
-        Kind::Int32 => validate_i32(val.as_i32(), &field, rules),
-        Kind::Int64 => validate_i64(val.as_i64(), &field, rules),
-        Kind::Uint32 => validate_u32(val.as_u32(), &field, rules),
-        Kind::Uint64 => validate_u64(val.as_u64(), &field, rules),
-        Kind::Sint32 => validate_i32(val.as_i32(), &field, rules),
-        Kind::Sint64 => validate_i64(val.as_i64(), &field, rules),
-        Kind::Fixed32 => validate_u32(val.as_u32(), &field, rules),
-        Kind::Fixed64 => validate_u64(val.as_u64(), &field, rules),
-        Kind::Sfixed32 => validate_i32(val.as_i32(), &field, rules),
-        Kind::Sfixed64 => validate_i64(val.as_i64(), &field, rules),
-        Kind::Bool => validate_bool(val.as_bool(), &field, rules),
-        Kind::String => validate_string(val.as_str(), &field, rules),
-        Kind::Bytes => validate_bytes(val.as_bytes(), &field, rules),
-        Kind::Message(_) => validate_message(val.as_message(), &field, rules),
-        Kind::Enum(_) => validate_enum(val.as_enum_number(), &field, rules),
-    }
-}
 
 macro_rules! as_validation_func {
     ($fns:expr,$typ:ident,$conv:ident) => {

@@ -1,4 +1,4 @@
-use crate::field::{make_validate_field, validate_field};
+use crate::field::{make_validate_field};
 use crate::registry::{FieldValidationFn, ValidationFn, REGISTRY};
 use crate::validate_proto::field_rules::Type;
 use crate::validate_proto::RepeatedRules;
@@ -10,36 +10,6 @@ use prost_reflect::{FieldDescriptor, Kind, Value};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::sync::Arc;
-
-pub(crate) fn validate_list(vals: Option<&[Value]>, field: &FieldDescriptor, rules: Box<RepeatedRules>) -> anyhow::Result<()> {
-    let vals = vals.unwrap_or(&[]);
-    if rules.ignore_empty() && vals.is_empty() {
-        return Ok(());
-    }
-    if let Some(v) = rules.min_items {
-        if vals.len() < v as usize {
-            return Err(format_err!("{}: must have at least {} items", field.full_name(), v));
-        }
-    }
-    if let Some(v) = rules.max_items {
-        if vals.len() > v as usize {
-            return Err(format_err!("{}: must have at most {} items", field.full_name(), v));
-        }
-    }
-    if rules.unique.unwrap_or(false) {
-        if let Some(v) = unique_count(vals, field) {
-            if vals.len() != v {
-                return Err(format_err!("{}: must have unique values", field.full_name()));
-            }
-        }
-    }
-    if let Some(rules) = rules.items {
-        for val in vals {
-            validate_field(Cow::Borrowed(val), field, &rules)?;
-        }
-    }
-    Ok(())
-}
 
 macro_rules! list_rules {
     ($rules:ident) => {

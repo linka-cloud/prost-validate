@@ -5,36 +5,6 @@ use anyhow::{format_err, Result};
 use prost_reflect::{FieldDescriptor, Kind};
 use std::sync::Arc;
 
-pub(crate) fn validate_enum(val: Option<i32>, field: &FieldDescriptor, rules: &FieldRules) -> Result<()> {
-    if !matches!(rules.r#type, Some(Type::Enum(_))) {
-        return Ok(());
-    }
-    let desc = match field.kind() {
-        Kind::Enum(d) => d,
-        _ => return Ok(()),
-    };
-    let val = val.unwrap_or(0);
-    let rules = match &rules.r#type {
-        Some(Type::Enum(rules)) => rules,
-        _ => return Ok(()),
-    };
-    if let Some(v) = rules.r#const {
-        if val != v {
-            return Err(format_err!("{}: must be {}", field.full_name(), v));
-        }
-    }
-    if !rules.r#in.is_empty() && !rules.r#in.contains(&val) {
-        return Err(format_err!("{}: must be in {:?}", field.full_name(), rules.r#in));
-    }
-    if !rules.not_in.is_empty() && rules.not_in.contains(&val) {
-        return Err(format_err!("{}: must not be in {:?}", field.full_name(), rules.not_in));
-    }
-    if rules.defined_only() && desc.get_value(val).is_none() {
-        return Err(format_err!("{}: must be a defined enumeration value", field.full_name()));
-    }
-    Ok(())
-}
-
 macro_rules! enum_rules {
     ($rules:ident) => {
         match &$rules.r#type {

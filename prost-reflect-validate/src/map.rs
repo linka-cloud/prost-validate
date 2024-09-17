@@ -1,4 +1,4 @@
-use crate::field::{make_validate_field, validate_field};
+use crate::field::{make_validate_field};
 use crate::registry::{FieldValidationFn, ValidationFn, REGISTRY};
 use crate::validate_proto::field_rules::Type;
 use crate::validate_proto::MapRules;
@@ -8,43 +8,6 @@ use prost_reflect::{FieldDescriptor, Kind, MapKey, Value};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::sync::Arc;
-
-pub(crate) fn validate_map(vals: Option<&HashMap<MapKey, Value>>, field: &FieldDescriptor, rules: Box<MapRules>) -> anyhow::Result<()> {
-    let default: HashMap<MapKey, Value> = HashMap::new();
-    let vals = vals.unwrap_or(&default);
-    if rules.ignore_empty() && (&vals).is_empty() {
-        return Ok(());
-    }
-    if let Some(v) = rules.min_pairs {
-        if vals.len() < v as usize {
-            return Err(format_err!("{}: must have at least {} pairs", field.full_name(), v));
-        }
-    }
-    if let Some(v) = rules.max_pairs {
-        if vals.len() > v as usize {
-            return Err(format_err!("{}: must have at most {} pairs", field.full_name(), v));
-        }
-    }
-    if let Some(v) = rules.keys {
-        for (k, _) in vals {
-            let val = Value::from(k.clone());
-            validate_field(Cow::Borrowed(&val), field, &v)?;
-        }
-    }
-    if let Some(v) = rules.values {
-        for (_, val) in vals {
-            validate_field(Cow::Borrowed(val), field, &v)?;
-        }
-    }
-    if rules.no_sparse.unwrap_or(false) {
-        for (_, val) in vals {
-            if val.is_default(&field.kind()) {
-                return Err(format_err!("{}: must not have sparse values", field.full_name()));
-            }
-        }
-    }
-    Ok(())
-}
 
 macro_rules! list_rules {
     ($rules:ident) => {

@@ -1,54 +1,13 @@
-use crate::any::{make_validate_any, validate_any};
-use crate::duration::{make_validate_duration, validate_duration};
+use crate::any::{make_validate_any};
+use crate::duration::{make_validate_duration};
 use crate::registry::{FieldValidationFn, ValidationFn, REGISTRY};
-use crate::timestamp::{make_validate_timestamp, validate_timestamp};
+use crate::timestamp::{make_validate_timestamp};
 use crate::validate_proto::{FieldRules, MessageRules};
 use crate::ValidatorExt;
-use anyhow::{format_err, Result};
+use anyhow::{format_err};
 use prost_reflect::{DynamicMessage, FieldDescriptor, Kind};
 use std::collections::HashMap;
 use std::sync::Arc;
-
-pub(crate) fn validate_message(val: Option<&DynamicMessage>, field: &FieldDescriptor, rules: &FieldRules) -> Result<()> {
-    let desc = match field.kind() {
-        Kind::Message(desc) => desc,
-        _ => return Ok(()),
-    };
-    match desc.full_name() {
-        "google.protobuf.Timestamp" => return validate_timestamp(val, field, rules),
-        "google.protobuf.Duration" => return validate_duration(val, field, rules),
-        "google.protobuf.Any" => return validate_any(val, field, rules),
-        // TODO(adphi): well-known types
-        "google.protobuf.StringValue" => {}
-        "google.protobuf.BoolValue" => {}
-        "google.protobuf.BytesValue" => {}
-        "google.protobuf.FloatValue" => {}
-        "google.protobuf.DoubleValue" => {}
-        "google.protobuf.Int32Value" => {}
-        "google.protobuf.Int64Value" => {}
-        "google.protobuf.UInt32Value" => {}
-        "google.protobuf.UInt64Value" => {}
-        _ => {}
-    }
-    if !matches!(rules.message, Some(_)) {
-        return Ok(());
-    }
-    let rules = match rules.message {
-        Some(rules) => rules,
-        _ => return Ok(()),
-    };
-    let has = val.is_some();
-    if rules.required() && !has {
-        return Err(format_err!("{}: is required", field.full_name()));
-    }
-    if rules.skip() {
-        return Ok(());
-    }
-    if has {
-        return val.unwrap().validate();
-    }
-    Ok(())
-}
 
 // macro_rules! make_validate_wrapper {
 //     ($fns:expr,$typ:ident,$conv:ident) => {

@@ -1,5 +1,4 @@
 use crate::registry::REGISTRY;
-use crate::validate::validate;
 use prost_reflect::ReflectMessage;
 
 mod number;
@@ -29,16 +28,11 @@ mod validate_proto {
 
 pub trait ValidatorExt {
     fn validate(&self) -> anyhow::Result<()>;
-    fn validate_slow(&self) -> anyhow::Result<()>;
 }
 
 impl<T: ReflectMessage> ValidatorExt for T {
     fn validate(&self) -> anyhow::Result<()> {
         let msg = self.transcode_to_dynamic();
         REGISTRY.validate(&msg)
-    }
-
-    fn validate_slow(&self) -> anyhow::Result<()> {
-        validate(self)
     }
 }
