@@ -23,7 +23,6 @@ pub(crate) struct Registry {
 impl Registry {
     pub(crate) fn register(&self, m: &mut HashMap<String, ValidationFn>, desc: &MessageDescriptor) -> Result<()> {
         if m.get(desc.full_name()).is_some() {
-            println!("validation already exists for {}", desc.full_name());
             return Ok(());
         }
         // insert a dummy validation to prevent recursion
