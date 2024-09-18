@@ -19,9 +19,6 @@ pub(crate) trait IsTrue {
 
 impl<'a> IsTrue for Cow<'a, Value> {
     fn is_true(&self) -> bool {
-        match self.as_bool() {
-            Some(true) => true,
-            _ => false,
-        }
+        self.as_bool().unwrap_or(false)
     }
 }

@@ -57,8 +57,14 @@ pub(crate) fn make_validate_map(m: &mut HashMap<String, ValidationFn>, field: Fi
             Ok(true)
         }));
     }
+
+    let (key_desc, val_desc) = {
+        let k = field.kind();
+        let k = k.as_message().unwrap();
+        (k.get_field(1).unwrap(), k.get_field(2).unwrap())
+    };
     if let Some(rules) = rules.keys {
-        let validate = make_validate_field(m, &field, &rules);
+        let validate = make_validate_field(m, &key_desc, &rules);
         push(&mut fns, name.clone(), Arc::new(move |vals: &HashMap<MapKey, Value>, rules: &MapRules, _: &String| {
             let rules = rules.keys.as_ref().unwrap();
             for (k, _) in vals {
@@ -71,9 +77,9 @@ pub(crate) fn make_validate_map(m: &mut HashMap<String, ValidationFn>, field: Fi
         }));
     }
     if let Some(rules) = rules.values {
-        let validate = make_validate_field(m, &field, &rules);
+        let validate = make_validate_field(m, &val_desc, &rules);
         push(&mut fns, name.clone(), Arc::new(move |vals: &HashMap<MapKey, Value>, rules: &MapRules, _: &String| {
-            let rules = rules.keys.as_ref().unwrap();
+            let rules = rules.values.as_ref().unwrap();
             for (_, val) in vals {
                 let val = Value::from(val.clone());
                 if !validate(Cow::Borrowed(&val), rules)? {

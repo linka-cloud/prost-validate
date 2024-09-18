@@ -41,50 +41,121 @@ macro_rules! make_validate_number {
                     Ok(true)
                 }));
             }
-            if rules.lt.is_some() {
+            // reference implementation: https://github.com/bufbuild/protoc-gen-validate/blob/v1.1.0/templates/goshared/ltgt.go
+            if let Some(lt) = rules.lt {
                 let name = name.clone();
-                fns.push(Arc::new(move |val, rules| {
+                if let Some(gt) = rules.gt {
+                    if lt > gt {
+                        fns.push(Arc::new(move |val, _| {
+                            let val = val.unwrap_or($default);
+                            if val <= gt || val >= lt {
+                                return Err(format_err!("{}: must be inside range ({}, {})", name, gt, lt));
+                            }
+                            Ok(true)
+                        }));
+                    } else {
+                        fns.push(Arc::new(move |val, _| {
+                            let val = val.unwrap_or($default);
+                            if val >= lt && val <= gt {
+                                return Err(format_err!("{}: must be outside range [{}, {}]", name, lt, gt));
+                            }
+                            Ok(true)
+                        }));
+                    }
+                } else if let Some(gte) = rules.gte {
+                    if lt > gte {
+                        fns.push(Arc::new(move |val, _| {
+                            let val = val.unwrap_or($default);
+                            if val < gte || val >= lt {
+                                return Err(format_err!("{}: must be inside range [{}, {})", name, gte, lt));
+                            }
+                            Ok(true)
+                        }));
+                    } else {
+                        fns.push(Arc::new(move |val, _| {
+                            let val = val.unwrap_or($default);
+                            if val >= lt && val < gte {
+                                return Err(format_err!("{}: must be outside range [{}, {})", name, gte, lt));
+                            }
+                            Ok(true)
+                        }));
+                    }
+                } else {
+                    fns.push(Arc::new(move |val, _| {
+                        let val = val.unwrap_or($default);
+                        if val >= lt {
+                            return Err(format_err!("{}: must be less than {}", name, lt));
+                        }
+                        Ok(true)
+                    }));
+                }
+            } else if let Some(lte) = rules.lte {
+                let name = name.clone();
+                if let Some(gt) = rules.gt {
+                    if lte > gt {
+                        fns.push(Arc::new(move |val, _| {
+                            let val = val.unwrap_or($default);
+                            if val <= gt || val > lte {
+                                return Err(format_err!("{}: must be inside range ({}, {}]", name, gt, lte));
+                            }
+                            Ok(true)
+                        }));
+                    } else {
+                        fns.push(Arc::new(move |val, _| {
+                            let val = val.unwrap_or($default);
+                            if val > lte && val <= gt {
+                                return Err(format_err!("{}: must be outside range ({}, {}]", name, lte, gt));
+                            }
+                            Ok(true)
+                        }));
+                    }
+                } else if let Some(gte) = rules.gte {
+                    if lte > gte {
+                        fns.push(Arc::new(move |val, _| {
+                            let val = val.unwrap_or($default);
+                            if val < gte || val > lte {
+                                return Err(format_err!("{}: must be inside range [{}, {}]", name, gte, lte));
+                            }
+                            Ok(true)
+                        }));
+                    } else {
+                        fns.push(Arc::new(move |val, _| {
+                            let val = val.unwrap_or($default);
+                            if val > lte && val < gte {
+                                return Err(format_err!("{}: must be outside range ({}, {})", name, lte, gte));
+                            }
+                            Ok(true)
+                        }));
+                    }
+                } else {
+                    fns.push(Arc::new(move |val, _| {
+                        let val = val.unwrap_or($default);
+                        if val > lte {
+                            return Err(format_err!("{}: must be less or equal to {}", name, lte));
+                        }
+                        Ok(true)
+                    }));
+                }
+            } else if let Some(gt) = rules.gt {
+                let name = name.clone();
+                fns.push(Arc::new(move |val, _| {
                     let val = val.unwrap_or($default);
-                    let v = number_rules!(rules, $enum_value).lt.unwrap();
-                    if val >= v {
-                        return Err(format_err!("{}: must be lt {}", name, v));
+                    if val <= gt {
+                        return Err(format_err!("{}: must be greater than {}", name, gt));
+                    }
+                    Ok(true)
+                }));
+            } else if let Some(gte) = rules.gte {
+                let name = name.clone();
+                fns.push(Arc::new(move |val, _| {
+                    let val = val.unwrap_or($default);
+                    if val < gte {
+                        return Err(format_err!("{}: must be greater or equal to {}", name, gte));
                     }
                     Ok(true)
                 }));
             }
-            if rules.lte.is_some() {
-                let name = name.clone();
-                fns.push(Arc::new(move |val, rules| {
-                    let val = val.unwrap_or($default);
-                    let v = number_rules!(rules, $enum_value).lte.unwrap();
-                    if val > v {
-                        return Err(format_err!("{}: must be lte {}", name, v));
-                    }
-                    Ok(true)
-                }));
-            }
-            if rules.gt.is_some() {
-                let name = name.clone();
-                fns.push(Arc::new(move |val, rules| {
-                    let val = val.unwrap_or($default);
-                    let v = number_rules!(rules, $enum_value).gt.unwrap();
-                    if val <= v {
-                        return Err(format_err!("{}: must be gt {}", name, v));
-                    }
-                    Ok(true)
-                }));
-            }
-            if rules.gte.is_some() {
-                let name = name.clone();
-                fns.push(Arc::new(move |val, rules| {
-                    let val = val.unwrap_or($default);
-                    let v = number_rules!(rules, $enum_value).gte.unwrap();
-                    if val < v {
-                        return Err(format_err!("{}: must be gte {}", name, v));
-                    }
-                    Ok(true)
-                }));
-            }
+
             if !rules.r#in.is_empty() {
                 let name = name.clone();
                 fns.push(Arc::new(move |val, rules| {
@@ -118,3 +189,9 @@ make_validate_number!(make_validate_i64, Int64, i64, 0);
 make_validate_number!(make_validate_i32, Int32, i32, 0);
 make_validate_number!(make_validate_double, Double, f64, 0.0);
 make_validate_number!(make_validate_float, Float, f32, 0.0);
+make_validate_number!(make_validate_sint32, Sint32, i32, 0);
+make_validate_number!(make_validate_sint64, Sint64, i64, 0);
+make_validate_number!(make_validate_fixed32, Fixed32, u32, 0);
+make_validate_number!(make_validate_fixed64, Fixed64, u64, 0);
+make_validate_number!(make_validate_sfixed32, Sfixed32, i32, 0);
+make_validate_number!(make_validate_sfixed64, Sfixed64, i64, 0);

@@ -116,7 +116,7 @@ pub(crate) fn make_validate_bytes(field: &FieldDescriptor, rules: &FieldRules) -
     }
     if !rules.not_in.is_empty() {
         push(&mut fns, name.clone(), Arc::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
-            if !rules.not_in.contains(&val.deref().into()) {
+            if rules.not_in.contains(&val.deref().into()) {
                 return Err(format_err!("{}: must not be in {:?}", name, rules.not_in));
             }
             Ok(true)
@@ -129,7 +129,7 @@ pub(crate) fn make_validate_bytes(field: &FieldDescriptor, rules: &FieldRules) -
         WellKnown::Ip(v) => {
             if v {
                 push(&mut fns, name.clone(), Arc::new(move |val: &Bytes, _: &BytesRules, name: &String| {
-                    if val.len() == 16 || val.len() == 8 {
+                    if val.len() != 16 && val.len() != 4 {
                         return Err(format_err!("{}: must be a valid ip", name));
                     }
                     Ok(true)
@@ -139,7 +139,7 @@ pub(crate) fn make_validate_bytes(field: &FieldDescriptor, rules: &FieldRules) -
         WellKnown::Ipv4(v) => {
             if v {
                 push(&mut fns, name.clone(), Arc::new(move |val: &Bytes, _: &BytesRules, name: &String| {
-                    if val.len() == 8 {
+                    if val.len() != 4 {
                         return Err(format_err!("{}: must be a valid ipv4", name));
                     }
                     Ok(true)
@@ -149,7 +149,7 @@ pub(crate) fn make_validate_bytes(field: &FieldDescriptor, rules: &FieldRules) -
         WellKnown::Ipv6(v) => {
             if v {
                 push(&mut fns, name.clone(), Arc::new(move |val: &Bytes, _: &BytesRules, name: &String| {
-                    if val.len() == 16 {
+                    if val.len() != 16 {
                         return Err(format_err!("{}: must be a valid ipv6", name));
                     }
                     Ok(true)

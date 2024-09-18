@@ -2,9 +2,8 @@ use crate::registry::FieldValidationFn;
 use crate::validate_proto::field_rules::Type;
 use crate::validate_proto::string_rules::WellKnown;
 use crate::validate_proto::{FieldRules, KnownRegex, StringRules};
-use anyhow::format_err;
+use anyhow::{format_err,Result};
 use http::uri::Uri;
-use idna::domain_to_ascii;
 use once_cell::sync::Lazy;
 use prost_reflect::FieldDescriptor;
 use regex::Regex;
@@ -12,42 +11,45 @@ use std::net::IpAddr;
 use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::Arc;
+use email_address::EmailAddress;
+
+fn validate_hostname(host: &str) -> Result<()> {
+    let host = host.trim_end_matches('.').to_lowercase();
+    if host.len() > 253 {
+        return Err(format_err!("hostname cannot exceed 253 characters"));
+    }
+    for part in host.split('.') {
+        let l = part.len();
+        if l == 0 || l > 63 {
+            return Err(format_err!("hostname part must be non-empty and cannot exceed 63 characters"));
+        }
+        if part.starts_with('-') {
+            return Err(format_err!("hostname parts cannot begin with hyphens"));
+        }
+        if part.ends_with('-') {
+            return Err(format_err!("hostname parts cannot end with hyphens"));
+        }
+        for r in part.chars() {
+            if !(r.is_ascii_alphanumeric() || r == '-') {
+                return Err(format_err!("hostname parts can only contain alphanumeric characters or hyphens, got {}", r));
+            }
+        }
+    }
+    Ok(())
+}
+
+fn validate_email(addr: &str) -> Result<()> {
+    EmailAddress::from_str(addr)?;
+    Ok(())
+}
 
 pub(crate) static UUID_RE: Lazy<Regex> = Lazy::new(|| Regex::new(
     r"^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$"
 ).unwrap());
 
-// Regex from the specs
-// https://html.spec.whatwg.org/multipage/forms.html#valid-e-mail-address
-// It will mark esoteric email addresses like quoted string as invalid
-static EMAIL_USER_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+\z").unwrap());
-static EMAIL_DOMAIN_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(
-        r"^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
-    ).unwrap()
-});
-// literal form, ipv4 or ipv6 address (SMTP 4.1.3)
-static EMAIL_LITERAL_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"\[([a-fA-F0-9:\.]+)\]\z").unwrap());
-
 static HEADER_NAME_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^:?[0-9a-zA-Z!#$%&'*+-.^_|~`]+$").unwrap());
-static HEADER_VALUE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[^\x00-\b\n-\x1f\x7f]*$").unwrap());
-
-pub(crate) fn validate_domain_part(domain_part: &str) -> bool {
-    if EMAIL_DOMAIN_RE.is_match(domain_part) {
-        return true;
-    }
-
-    // maybe we have an ip as a domain?
-    match EMAIL_LITERAL_RE.captures(domain_part) {
-        Some(caps) => match caps.get(1) {
-            Some(c) => c.as_str().validate_ip(),
-            None => false,
-        },
-        None => false,
-    }
-}
+static HEADER_VALUE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[^\x00-\x08\x0A-\x1F\x7F]*$").unwrap());
+static HEADER_STRING_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[^\x00\n\r]*$").unwrap());
 
 pub(crate) trait ValidateIp {
     /// Validates whether the given string is an IP V4
@@ -73,41 +75,6 @@ where
     fn validate_ip(&self) -> bool {
         IpAddr::from_str(&self.to_string()).is_ok()
     }
-}
-
-/// Validates whether the given string is an email based on the [HTML5 spec](https://html.spec.whatwg.org/multipage/forms.html#valid-e-mail-address).
-/// [RFC 5322](https://tools.ietf.org/html/rfc5322) is not practical in most circumstances and allows email addresses
-/// that are unfamiliar to most users.
-pub(crate) fn validate_email(val: &str) -> bool {
-    if val.is_empty() || !val.contains('@') {
-        return false;
-    }
-
-    let parts: Vec<&str> = val.rsplitn(2, '@').collect();
-    let user_part = parts[1];
-    let domain_part = parts[0];
-
-    // prost-reflect-validate the length of each part of the email, BEFORE doing the regex
-    // according to RFC5321 the max length of the local part is 64 characters
-    // and the max length of the domain part is 255 characters
-    // https://datatracker.ietf.org/doc/html/rfc5321#section-4.5.3.1.1
-    if user_part.chars().count() > 64 || domain_part.chars().count() > 255 {
-        return false;
-    }
-
-    if !EMAIL_USER_RE.is_match(user_part) {
-        return false;
-    }
-
-    if !validate_domain_part(domain_part) {
-        // Still the possibility of an [IDN](https://en.wikipedia.org/wiki/Internationalized_domain_name)
-        return match domain_to_ascii(domain_part) {
-            Ok(d) => validate_domain_part(&d),
-            Err(_) => false,
-        };
-    }
-
-    true
 }
 
 fn validate_uri(val: &str) -> bool {
@@ -174,7 +141,7 @@ pub(crate) fn make_validate_string(field: &FieldDescriptor, rules: &FieldRules) 
     if rules.len.is_some() {
         push(&mut fns, name.clone(), Arc::new(move |val: String, rules: &StringRules, name: &String| {
             let v = rules.len();
-            if val.len() != v as usize {
+            if val.chars().count() != v as usize {
                 return Err(format_err!("{}: must be {} characters long", name, v));
             }
             Ok(true)
@@ -183,7 +150,7 @@ pub(crate) fn make_validate_string(field: &FieldDescriptor, rules: &FieldRules) 
     if rules.min_len.is_some() {
         push(&mut fns, name.clone(), Arc::new(move |val: String, rules: &StringRules, name: &String| {
             let v = rules.min_len();
-            if val.len() < v as usize {
+            if val.chars().count() < v as usize {
                 return Err(format_err!("{}: must be minimum {} characters long", name, v));
             }
             Ok(true)
@@ -192,17 +159,25 @@ pub(crate) fn make_validate_string(field: &FieldDescriptor, rules: &FieldRules) 
     if rules.max_len.is_some() {
         push(&mut fns, name.clone(), Arc::new(move |val: String, rules: &StringRules, name: &String| {
             let v = rules.max_len();
-            if val.len() > v as usize {
+            if val.chars().count() > v as usize {
                 return Err(format_err!("{}: must be maximum {} characters long", name, v));
             }
             Ok(true)
         }));
     }
+    if rules.len_bytes.is_some() {
+        push(&mut fns, name.clone(), Arc::new(move |val: String, rules: &StringRules, name: &String| {
+            let v = rules.len_bytes();
+            if val.len() != v as usize {
+                return Err(format_err!("{}: must be {} characters long", name, v));
+            }
+            Ok(true)
+        }))
+    }
     if rules.min_bytes.is_some() {
         push(&mut fns, name.clone(), Arc::new(move |val: String, rules: &StringRules, name: &String| {
-            let bytes = val.as_bytes();
             let v = rules.min_bytes();
-            if bytes.len() < v as usize {
+            if val.len() < v as usize {
                 return Err(format_err!("{}: must be minimum {} bytes long", name, v));
             }
             Ok(true)
@@ -210,18 +185,21 @@ pub(crate) fn make_validate_string(field: &FieldDescriptor, rules: &FieldRules) 
     }
     if rules.max_bytes.is_some() {
         push(&mut fns, name.clone(), Arc::new(move |val: String, rules: &StringRules, name: &String| {
-            let bytes = val.as_bytes();
             let v = rules.max_bytes();
-            if bytes.len() > v as usize {
+            if val.len() > v as usize {
                 return Err(format_err!("{}: must be maximum {} bytes long", name, v));
             }
             Ok(true)
         }));
     }
     if let Some(v) = &rules.pattern {
-        let regex = Regex::new(v.as_str()).unwrap();
+        let regex = Regex::new(v.as_str());
         push(&mut fns, name.clone(), Arc::new(move |val: String, rules: &StringRules, name: &String| {
             let v = rules.pattern();
+            let regex = match &regex {
+                Ok(r) => r,
+                Err(err) => return Err(format_err!("{}: invalid regex pattern: {}", name, err)),
+            };
             if !regex.is_match(val.as_str()) {
                 return Err(format_err!("{}: must matches {}", name, v));
             }
@@ -285,13 +263,14 @@ pub(crate) fn make_validate_string(field: &FieldDescriptor, rules: &FieldRules) 
     if rules.well_known.is_none() {
         return fns;
     }
+    let strict = rules.strict();
     match rules.well_known.unwrap() {
         WellKnown::Email(v) => {
             if v {
                 fns.push(Arc::new(move |val, _| {
                     let val = val.unwrap_or("".to_string());
-                    if !validate_email(val.as_str()) {
-                        return Err(format_err!("{}: must be a valid email", name));
+                    if let Err(err) = validate_email(val.as_str()) {
+                        return Err(format_err!("{}: {}", name, err));
                     }
                     Ok(true)
                 }));
@@ -301,8 +280,8 @@ pub(crate) fn make_validate_string(field: &FieldDescriptor, rules: &FieldRules) 
             if v {
                 fns.push(Arc::new(move |val, _| {
                     let val = val.unwrap_or("".to_string());
-                    if !validate_domain_part(val.as_str()) {
-                        return Err(format_err!("{}: must be a valid hostname", name));
+                    if let Err(err) = validate_hostname(val.as_str()) {
+                        return Err(format_err!("{}: {}", name, err));
                     }
                     Ok(true)
                 }));
@@ -367,7 +346,10 @@ pub(crate) fn make_validate_string(field: &FieldDescriptor, rules: &FieldRules) 
             if v {
                 fns.push(Arc::new(move |val, _| {
                     let val = val.unwrap_or("".to_string());
-                    if !validate_domain_part(val.as_str()) && !val.validate_ip() {
+                    if val.validate_ip() {
+                        return Ok(true);
+                    }
+                    if let Err(_) = validate_hostname(val.as_str()) {
                         return Err(format_err!("{}: must be a valid hostname or ip address", name));
                     }
                     Ok(true)
@@ -390,7 +372,11 @@ pub(crate) fn make_validate_string(field: &FieldDescriptor, rules: &FieldRules) 
                 Ok(KnownRegex::HttpHeaderName) => {
                     fns.push(Arc::new(move |val, _| {
                         let val = val.unwrap_or("".to_string());
-                        if !HEADER_NAME_RE.is_match(val.as_str()) {
+                        let mut regex = &HEADER_NAME_RE;
+                        if !strict {
+                            regex = &HEADER_STRING_RE;
+                        }
+                        if !regex.is_match(val.as_str()) {
                             return Err(format_err!("{}: must match regex pattern \"^:?[0-9a-zA-Z!#$%&'*+-.^_|~`]+$\"", name));
                         }
                         Ok(true)
@@ -399,7 +385,11 @@ pub(crate) fn make_validate_string(field: &FieldDescriptor, rules: &FieldRules) 
                 Ok(KnownRegex::HttpHeaderValue) => {
                     fns.push(Arc::new(move |val, _| {
                         let val = val.unwrap_or("".to_string());
-                        if !HEADER_VALUE_RE.is_match(val.as_str()) {
+                        let mut regex = &HEADER_VALUE_RE;
+                        if !strict {
+                            regex = &HEADER_STRING_RE;
+                        }
+                        if !regex.is_match(val.as_str()) {
                             return Err(format_err!("{}: must match regex pattern \"^[^\\x00-\\b\\n-\\x1f\\x7f]*$\"", name));
                         }
                         Ok(true)

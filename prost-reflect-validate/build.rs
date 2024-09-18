@@ -1,4 +1,4 @@
-static DIR: &str = "proto";
+static DIR: &str = "proto/validate";
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let files = &["validate.proto"];
