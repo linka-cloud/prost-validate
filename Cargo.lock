@@ -441,6 +441,7 @@ dependencies = [
  "prost-reflect-build",
  "prost-reflect-validate",
  "prost-types",
+ "time",
  "walkdir",
 ]
 

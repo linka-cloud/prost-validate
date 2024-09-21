@@ -4,13 +4,13 @@ use crate::proto::cases;
 use crate::proto::cases::message_required_oneof::One;
 #[allow(unused_imports)]
 use crate::proto::cases::*;
-#[allow(unused_imports)]
-use std::collections::HashMap;
-#[allow(unused_imports)]
-use prost_types::{Duration, Timestamp};
 use prost_reflect::ReflectMessage;
 #[allow(unused_imports)]
 use prost_reflect_validate::ValidatorExt;
+#[allow(unused_imports)]
+use prost_types::{Any, Duration, Timestamp};
+#[allow(unused_imports)]
+use std::collections::HashMap;
 
 #[allow(unused)]
 struct TestCase<T: ReflectMessage> {
@@ -1072,133 +1072,137 @@ mod message {
 }
 #[cfg(test)]
 mod repeated {
-    // use super::*;
+    use super::*;
 
-    // 	test_case!(repeated_none_valid, RepeatedNone{val: vec![1, 2, 3}], 0);
-    //
-    // 	test_case!(repeated_embed none_valid, RepeatedEmbedNone{val: []*cases.Embed{{val: 1}}}, 0);
-    // 	test_case!(repeated_embed none_valid_nil, RepeatedEmbedNone::default(), 0);
-    // 	test_case!(repeated_embed none_valid_empty, RepeatedEmbedNone{val: []*cases.Embed::default()}, 0);
-    // 	test_case!(repeated_embed none_invalid, RepeatedEmbedNone{val: []*cases.Embed{{val: -1}}}, 1);
-    //
-    // 	test_case!(repeated_cross_package_embed_none_valid, RepeatedEmbedCrossPackageNone{val: []*other_package.Embed{{val: 1}}}, 0);
-    // 	test_case!(repeated_cross_package_embed_none_valid_nil, RepeatedEmbedCrossPackageNone::default(), 0);
-    // 	test_case!(repeated_cross_package_embed_none_valid_empty, RepeatedEmbedCrossPackageNone{val: []*other_package.Embed::default()}, 0);
-    // 	test_case!(repeated_cross_package_embed_none_invalid, RepeatedEmbedCrossPackageNone{val: []*other_package.Embed{{val: -1}}}, 1);
-    //
-    // 	test_case!(repeated_min_valid, RepeatedMin{val: []*cases.Embed{{val: 1}, {val: 2}, {val: 3}}}, 0);
-    // 	test_case!(repeated_min_valid_equal, RepeatedMin{val: []*cases.Embed{{val: 1}, {val: 2}}}, 0);
-    // 	test_case!(repeated_min_invalid, RepeatedMin{val: []*cases.Embed{{val: 1}}}, 1);
-    // 	test_case!(repeated_min_invalid_element, RepeatedMin{val: []*cases.Embed{{val: 1}, {val: -1}}}, 1);
-    //
-    // 	test_case!(repeated_max_valid, RepeatedMax{val: []float64{1, 2}}, 0);
-    // 	test_case!(repeated_max_valid_equal, RepeatedMax{val: []float64{1, 2, 3}}, 0);
-    // 	test_case!(repeated_max_invalid, RepeatedMax{val: []float64{1, 2, 3, 4}}, 1);
-    //
-    // 	test_case!(repeated_min/max_valid, RepeatedMinMax{val: []int32{1, 2, 3}}, 0);
-    // 	test_case!(repeated_min/max_valid_min, RepeatedMinMax{val: []int32{1, 2}}, 0);
-    // 	test_case!(repeated_min/max_valid_max, RepeatedMinMax{val: []int32{1, 2, 3, 4}}, 0);
-    // 	test_case!(repeated_min/max_invalid_below, RepeatedMinMax{val: []int32::default()}, 1);
-    // 	test_case!(repeated_min/max_invalid_above, RepeatedMinMax{val: []int32{1, 2, 3, 4, 5}}, 1);
-    //
-    // 	test_case!(repeated_exact_valid, RepeatedExact{val: []uint32{1, 2, 3}}, 0);
-    // 	test_case!(repeated_exact_invalid_below, RepeatedExact{val: []uint32{1, 2}}, 1);
-    // 	test_case!(repeated_exact_invalid_above, RepeatedExact{val: []uint32{1, 2, 3, 4}}, 1);
-    //
-    // 	test_case!(repeated_unique_valid", RepeatedUnique{val: []string{"foo", "bar, "baz"}}, 0);
-    // 	test_case!(repeated_unique_valid_empty, RepeatedUnique::default(), 0);
-    // 	test_case!(repeated_unique_valid_case sensitivity", RepeatedUnique{val: []string{"foo, "Foo"}}, 0);
-    // 	test_case!(repeated_unique_invalid", RepeatedUnique{val: []string{"foo", "bar", "foo, "baz"}}, 1);
-    //
-    // 	test_case!(repeated_items_valid, RepeatedItemRule{val: []float32{1, 2, 3}}, 0);
-    // 	test_case!(repeated_items_valid_empty, RepeatedItemRule{val: []float32::default()}, 0);
-    // 	test_case!(repeated_items_valid_pattern", RepeatedItemPattern{val: []string{"Alpha, "Beta123"}}, 0);
-    // 	test_case!(repeated_items_invalid, RepeatedItemRule{val: []float32{1, -2, 3}}, 1);
-    // 	test_case!(repeated_items_invalid_pattern", RepeatedItemPattern{val: []string{"Alpha, "!@#$%^&*()"}}, 1);
-    // 	test_case!(repeated_items_invalid_in, RepeatedItemIn{val: []string{"baz"}}, 1);
-    // 	test_case!(repeated_items_valid_in, RepeatedItemIn{val: []string{"foo"}}, 0);
-    // 	test_case!(repeated_items_invalid_not_in, RepeatedItemNotIn{val: []string{"foo"}}, 1);
-    // 	test_case!(repeated_items_valid_not_in, RepeatedItemNotIn{val: []string{"baz"}}, 0);
-    //
-    // 	test_case!(repeated_items_invalid_enum in, RepeatedEnumIn{val: []cases.AnEnum{1}}, 1);
-    // 	test_case!(repeated_items_valid_enum in, RepeatedEnumIn{val: []cases.AnEnum{0}}, 0);
-    // 	test_case!(repeated_items_invalid_enum not_in, RepeatedEnumNotIn{val: []cases.AnEnum{0}}, 1);
-    // 	test_case!(repeated_items_valid_enum not_in, RepeatedEnumNotIn{val: []cases.AnEnum{1}}, 0);
-    // 	test_case!(repeated_items_invalid_embedded enum in, RepeatedEmbeddedEnumIn{val: []cases.RepeatedEmbeddedEnumIn_AnotherInEnum{1}}, 1);
-    // 	test_case!(repeated_items_valid_embedded enum in, RepeatedEmbeddedEnumIn{val: []cases.RepeatedEmbeddedEnumIn_AnotherInEnum{0}}, 0);
-    // 	test_case!(repeated_items_invalid_embedded enum not_in, RepeatedEmbeddedEnumNotIn{val: []cases.RepeatedEmbeddedEnumNotIn_AnotherNotInEnum{0}}, 1);
-    // 	test_case!(repeated_items_valid_embedded enum not_in, RepeatedEmbeddedEnumNotIn{val: []cases.RepeatedEmbeddedEnumNotIn_AnotherNotInEnum{1}}, 0);
-    //
-    // 	test_case!(repeated_items_invalid_any in, RepeatedAnyIn{val: []*anypb.Any{{TypeUrl: "type.googleapis.com/google.protobuf.Timestamp"}}}, 1);
-    // 	test_case!(repeated_items_valid_any in, RepeatedAnyIn{val: []*anypb.Any{{TypeUrl: "type.googleapis.com/google.protobuf.Duration"}}}, 0);
-    // 	test_case!(repeated_items_invalid_any not_in, RepeatedAnyNotIn{val: []*anypb.Any{{TypeUrl: "type.googleapis.com/google.protobuf.Timestamp"}}}, 1);
-    // 	test_case!(repeated_items_valid_any not_in, RepeatedAnyNotIn{val: []*anypb.Any{{TypeUrl: "type.googleapis.com/google.protobuf.Duration"}}}, 0);
-    //
-    // 	test_case!(repeated_embed skip_valid, RepeatedEmbedSkip{val: []*cases.Embed{{val: 1}}}, 0);
-    // 	test_case!(repeated_embed skip_valid_invalid element, RepeatedEmbedSkip{val: []*cases.Embed{{val: -1}}}, 0);
-    // 	test_case!(repeated_min and items len_valid", RepeatedMinAndItemLen{val: []string{"aaa, "bbb"}}, 0);
-    // 	test_case!(repeated_min and items len_invalid_min, RepeatedMinAndItemLen{val: []string::default()}, 1);
-    // 	test_case!(repeated_min and items len_invalid_len, RepeatedMinAndItemLen{val: []string{"x"}}, 1);
-    // 	test_case!(repeated_min and max items len_valid", RepeatedMinAndMaxItemLen{val: []string{"aaa, "bbb"}}, 0);
-    // 	test_case!(repeated_min and max items len_invalid_min_len, RepeatedMinAndMaxItemLen::default(), 1);
-    // 	test_case!(repeated_min and max items len_invalid_max_len", RepeatedMinAndMaxItemLen{val: []string{"aaa", "bbb", "ccc, "ddd"}}, 1);
-    //
-    // 	test_case!(repeated_duration_gte_valid, RepeatedDuration{val: []*durationpb.Duration{{seconds: 3}}}, 0);
-    // 	test_case!(repeated_duration_gte_valid_empty, RepeatedDuration::default(), 0);
-    // 	test_case!(repeated_duration_gte_valid_equal, RepeatedDuration{val: []*durationpb.Duration{{nanos: 1000000}}}, 0);
-    // 	test_case!(repeated_duration_gte_invalid, RepeatedDuration{val: []*durationpb.Duration{{seconds: -1}}}, 1);
-    //
-    // 	test_case!(repeated_exact_valid_ignore_empty, RepeatedExactIgnore{val: nil}, 0);
+    #[test]
+    fn debug() {
+        repeated_cross_package_embed_none_invalid()
+    }
+
+    test_case!(repeated_none_valid, RepeatedNone{val: vec![1, 2, 3]}, 0);
+
+    test_case!(repeated_embed_none_valid, RepeatedEmbedNone{val: vec![cases::Embed{val: 1}]}, 0);
+    test_case!(repeated_embed_none_valid_nil, RepeatedEmbedNone::default(), 0);
+    test_case!(repeated_embed_none_valid_empty, RepeatedEmbedNone{val: vec![cases::Embed::default()]}, 0);
+    test_case!(repeated_embed_none_invalid, RepeatedEmbedNone{val: vec![cases::Embed{val: -1}]}, 1);
+    test_case!(repeated_cross_package_embed_none_valid, RepeatedEmbedCrossPackageNone{val: vec![other_package::Embed{val: 1}]}, 0);
+    test_case!(repeated_cross_package_embed_none_valid_nil, RepeatedEmbedCrossPackageNone::default(), 0);
+    test_case!(repeated_cross_package_embed_none_valid_empty, RepeatedEmbedCrossPackageNone{val: vec![other_package::Embed::default()]}, 0);
+    test_case!(repeated_cross_package_embed_none_invalid, RepeatedEmbedCrossPackageNone{val: vec![other_package::Embed{val: -1}]}, 1);
+
+    test_case!(repeated_min_valid, RepeatedMin{val: vec![cases::Embed{val: 1}, cases::Embed{val: 2}, cases::Embed{val: 3}]}, 0);
+    test_case!(repeated_min_valid_equal, RepeatedMin{val: vec![cases::Embed{val: 1}, cases::Embed{val: 2}]}, 0);
+    test_case!(repeated_min_invalid, RepeatedMin{val: vec![cases::Embed{val: 1}]}, 1);
+    test_case!(repeated_min_invalid_element, RepeatedMin{val: vec![cases::Embed{val: 1}, cases::Embed{val: -1}]}, 1);
+
+    test_case!(repeated_max_valid, RepeatedMax{val: vec![1., 2.]}, 0);
+    test_case!(repeated_max_valid_equal, RepeatedMax{val: vec![1., 2., 3.]}, 0);
+    test_case!(repeated_max_invalid, RepeatedMax{val: vec![1., 2., 3., 4.]}, 1);
+
+    test_case!(repeated_min_max_valid, RepeatedMinMax{val: vec![1, 2, 3]}, 0);
+    test_case!(repeated_min_max_valid_min, RepeatedMinMax{val: vec![1, 2]}, 0);
+    test_case!(repeated_min_max_valid_max, RepeatedMinMax{val: vec![1, 2, 3, 4]}, 0);
+    test_case!(repeated_min_max_invalid_below, RepeatedMinMax{val: vec![]}, 1);
+    test_case!(repeated_min_max_invalid_above, RepeatedMinMax{val: vec![1, 2, 3, 4, 5]}, 1);
+
+    test_case!(repeated_exact_valid, RepeatedExact{val: vec![1, 2, 3]}, 0);
+    test_case!(repeated_exact_invalid_below, RepeatedExact{val: vec![1, 2]}, 1);
+    test_case!(repeated_exact_invalid_above, RepeatedExact{val: vec![1, 2, 3, 4]}, 1);
+
+    test_case!(repeated_unique_valid, RepeatedUnique{val: vec!["foo".to_string(), "bar".to_string(), "baz".to_string()]}, 0);
+    test_case!(repeated_unique_valid_empty, RepeatedUnique::default(), 0);
+    test_case!(repeated_unique_valid_case_sensitivity, RepeatedUnique{val: vec!["foo".to_string(), "Foo".to_string()]}, 0);
+    test_case!(repeated_unique_invalid, RepeatedUnique{val: vec!["foo".to_string(), "bar".to_string(), "foo".to_string(), "baz".to_string()]}, 1);
+
+    test_case!(repeated_items_valid, RepeatedItemRule{val: vec![1., 2., 3.]}, 0);
+    test_case!(repeated_items_valid_empty, RepeatedItemRule{val: vec![]}, 0);
+    test_case!(repeated_items_valid_pattern, RepeatedItemPattern{val: vec!["Alpha".to_string(), "Beta123".to_string()]}, 0);
+    test_case!(repeated_items_invalid, RepeatedItemRule{val: vec![1., -2., 3.]}, 1);
+    test_case!(repeated_items_invalid_pattern, RepeatedItemPattern{val: vec!["Alpha".to_string(), "!@#$%^&*()".to_string()]}, 1);
+    test_case!(repeated_items_invalid_in, RepeatedItemIn{val: vec!["baz".to_string()]}, 1);
+    test_case!(repeated_items_valid_in, RepeatedItemIn{val: vec!["foo".to_string()]}, 0);
+    test_case!(repeated_items_invalid_not_in, RepeatedItemNotIn{val: vec!["foo".to_string()]}, 1);
+    test_case!(repeated_items_valid_not_in, RepeatedItemNotIn{val: vec!["baz".to_string()]}, 0);
+
+    test_case!(repeated_items_invalid_enum_in, RepeatedEnumIn{val: vec![1]}, 1);
+    test_case!(repeated_items_valid_enum_in, RepeatedEnumIn{val: vec![0]}, 0);
+    test_case!(repeated_items_invalid_enum_not_in, RepeatedEnumNotIn{val: vec![0]}, 1);
+    test_case!(repeated_items_valid_enum_not_in, RepeatedEnumNotIn{val: vec![1]}, 0);
+    test_case!(repeated_items_invalid_embedded_enum_in, RepeatedEmbeddedEnumIn{val: vec![1]}, 1);
+    test_case!(repeated_items_valid_embedded_enum_in, RepeatedEmbeddedEnumIn{val: vec![0]}, 0);
+    test_case!(repeated_items_invalid_embedded_enum_not_in, RepeatedEmbeddedEnumNotIn{val: vec![0]}, 1);
+    test_case!(repeated_items_valid_embedded_enum_not_in, RepeatedEmbeddedEnumNotIn{val: vec![1]}, 0);
+
+    test_case!(repeated_items_invalid_any_in, RepeatedAnyIn{val: vec![Any{type_url: "type.googleapis.com/google.protobuf.Timestamp".to_string(), value: vec![]}]}, 1);
+    test_case!(repeated_items_valid_any_in, RepeatedAnyIn{val: vec![Any{type_url: "type.googleapis.com/google.protobuf.Duration".to_string(), value: vec![]}]}, 0);
+    test_case!(repeated_items_invalid_any_not_in, RepeatedAnyNotIn{val: vec![Any{type_url: "type.googleapis.com/google.protobuf.Timestamp".to_string(), value: vec![]}]}, 1);
+    test_case!(repeated_items_valid_any_not_in, RepeatedAnyNotIn{val: vec![Any{type_url: "type.googleapis.com/google.protobuf.Duration".to_string(), value: vec![]}]}, 0);
+
+    test_case!(repeated_embed_skip_valid, RepeatedEmbedSkip{val: vec![cases::Embed{val: 1}]}, 0);
+    test_case!(repeated_embed_skip_valid_invalid_element, RepeatedEmbedSkip{val: vec![cases::Embed{val: -1}]}, 0);
+    test_case!(repeated_min_and_items_len_valid, RepeatedMinAndItemLen{val: vec!["aaa".to_string(), "bbb".to_string()]}, 0);
+    test_case!(repeated_min_and_items_len_invalid_min, RepeatedMinAndItemLen{val: vec![String::default()]}, 1);
+    test_case!(repeated_min_and_items_len_invalid_len, RepeatedMinAndItemLen{val: vec!["x".to_string()]}, 1);
+    test_case!(repeated_min_and_max_items_len_valid, RepeatedMinAndMaxItemLen{val: vec!["aaa".to_string(), "bbb".to_string()]}, 0);
+    test_case!(repeated_min_and_max_items_len_invalid_min_len, RepeatedMinAndMaxItemLen::default(), 1);
+    test_case!(repeated_min_and_max_items_len_invalid_max_len, RepeatedMinAndMaxItemLen{val: vec!["aaa".to_string(), "bbb".to_string(), "ccc".to_string(), "ddd".to_string()]}, 1);
+
+    test_case!(repeated_duration_gte_valid, RepeatedDuration{val: vec![Duration{seconds: 3, nanos: 0}]}, 0);
+    test_case!(repeated_duration_gte_valid_empty, RepeatedDuration::default(), 0);
+    test_case!(repeated_duration_gte_valid_equal, RepeatedDuration{val: vec![Duration{nanos: 1000000, seconds: 0}]}, 0);
+    test_case!(repeated_duration_gte_invalid, RepeatedDuration{val: vec![Duration{seconds: -1, nanos: 0}]}, 1);
+
+    test_case!(repeated_exact_valid_ignore_empty, RepeatedExactIgnore{val: vec![]}, 0);
 }
 #[cfg(test)]
 mod map {
-    // use super::*;
+    use super::*;
 
-    // 	test_case!(map_none_valid, MapNone{val: map[uint32]bool{123: true, 456: false}}, 0);
-    //
-    // 	test_case!(map_min pairs_valid, MapMin{val: map[int32]float32{1: 2, 3: 4, 5: 6}}, 0);
-    // 	test_case!(map_min pairs_valid_equal, MapMin{val: map[int32]float32{1: 2, 3: 4}}, 0);
-    // 	test_case!(map_min pairs_invalid, MapMin{val: map[int32]float32{1: 2}}, 1);
-    //
-    // 	test_case!(map_max pairs_valid, MapMax{val: map[int64]float64{1: 2, 3: 4}}, 0);
-    // 	test_case!(map_max pairs_valid_equal, MapMax{val: map[int64]float64{1: 2, 3: 4, 5: 6}}, 0);
-    // 	test_case!(map_max pairs_invalid, MapMax{val: map[int64]float64{1: 2, 3: 4, 5: 6, 7: 8}}, 1);
-    //
-    // 	test_case!(map_min/max_valid, MapMinMax{val: map[string]bool{"a": true, "b": false, "c": true}}, 0);
-    // 	test_case!(map_min/max_valid_min, MapMinMax{val: map[string]bool{"a": true, "b": false}}, 0);
-    // 	test_case!(map_min/max_valid_max, MapMinMax{val: map[string]bool{"a": true, "b": false, "c": true, "d": false}}, 0);
-    // 	test_case!(map_min/max_invalid_below, MapMinMax{val: map[string]bool::default()}, 1);
-    // 	test_case!(map_min/max_invalid_above, MapMinMax{val: map[string]bool{"a": true, "b": false, "c": true, "d": false, "e": true}}, 1);
-    //
-    // 	test_case!(map_exact_valid", MapExact{val: map[uint64]string{1: "a", 2: "b, 3: "c"}}, 0);
-    // 	test_case!(map_exact_invalid_below", MapExact{val: map[uint64]string{1: "a, 2: "b"}}, 1);
-    // 	test_case!(map_exact_invalid_above", MapExact{val: map[uint64]string{1: "a", 2: "b", 3: "c, 4: "d"}}, 1);
-    //
-    // 	test_case!(map_no sparse_valid, MapNoSparse{val: map[uint32]*cases.MapNoSparse_Msg{1: ::default(), 2: ::default()}}, 0);
-    // 	test_case!(map_no sparse_valid_empty, MapNoSparse{val: map[uint32]*cases.MapNoSparse_Msg::default()}, 0);
-    // 	// sparse maps are no longer supported, so this case is no longer possible
-    // 	// {"map_no sparse_invalid", MapNoSparse{val: map[uint32]*cases.MapNoSparse_Msg{1: ::default(), 2: nil}}, 1),
-    //
-    // 	test_case!(map_keys_valid", MapKeys{val: map[int64]string{-1: "a, -2: "b"}}, 0);
-    // 	test_case!(map_keys_valid_empty, MapKeys{val: map[int64]string::default()}, 0);
-    // 	test_case!(map_keys_valid_pattern, MapKeysPattern{val: map[string]string{"A": "a"}}, 0);
-    // 	test_case!(map_keys_valid_in, MapKeysIn{val: map[string]string{"foo": "value"}}, 0);
-    // 	test_case!(map_keys_valid_not_in, MapKeysNotIn{val: map[string]string{"baz": "value"}}, 0);
-    // 	test_case!(map_keys_invalid, MapKeys{val: map[int64]string{1: "a"}}, 1);
-    // 	test_case!(map_keys_invalid_pattern", MapKeysPattern{val: map[string]string{"A": "a, "!@#$%^&*()": "b"}}, 1);
-    // 	test_case!(map_keys_invalid_in, MapKeysIn{val: map[string]string{"baz": "value"}}, 1);
-    // 	test_case!(map_keys_invalid_not_in, MapKeysNotIn{val: map[string]string{"foo": "value"}}, 1);
-    //
-    // 	test_case!(map_values_valid", MapValues{val: map[string]string{"a": "Alpha, "b": "Beta"}}, 0);
-    // 	test_case!(map_values_valid_empty, MapValues{val: map[string]string::default()}, 0);
-    // 	test_case!(map_values_valid_pattern, MapValuesPattern{val: map[string]string{"a": "A"}}, 0);
-    // 	test_case!(map_values_invalid", MapValues{val: map[string]string{"a": "A, "b": "B"}}, 2);
-    // 	test_case!(map_values_invalid_pattern", MapValuesPattern{val: map[string]string{"a": "A, "b": "!@#$%^&*()"}}, 1);
-    //
-    // 	test_case!(map_recursive_valid, MapRecursive{val: map[uint32]*cases.MapRecursive_Msg{1: {val: "abc"}}}, 0);
-    // 	test_case!(map_recursive_invalid, MapRecursive{val: map[uint32]*cases.MapRecursive_Msg{1: ::default()}}, 1);
-    // 	test_case!(map_exact_valid_ignore_empty, MapExactIgnore{val: nil}, 0);
-    // 	test_case!(map_multiple_valid", MultipleMaps{First: map[uint32]string{1: "a, 2: "b"}, Second: map[int32]bool{-1: true, -2: false}}, 0);
+    test_case!(map_none_valid, MapNone{val: HashMap::from([(123, true), (456, false)])}, 0);
+
+    test_case!(map_min_pairs_valid, MapMin{val: HashMap::from([(1, 2.), (3, 4.), (5, 6.)])}, 0);
+    test_case!(map_min_pairs_valid_equal, MapMin{val: HashMap::from([(1, 2.), (3, 4.)])}, 0);
+    test_case!(map_min_pairs_invalid, MapMin{val: HashMap::from([(1, 2.)])}, 1);
+
+    test_case!(map_max_pairs_valid, MapMax{val: HashMap::from([(1, 2.), (3, 4.)])}, 0);
+    test_case!(map_max_pairs_valid_equal, MapMax{val: HashMap::from([(1, 2.), (3, 4.), (5, 6.)])}, 0);
+    test_case!(map_max_pairs_invalid, MapMax{val: HashMap::from([(1, 2.), (3, 4.), (5, 6.), (7, 8.)])}, 1);
+
+    test_case!(map_min_max_valid, MapMinMax{val: HashMap::from([("a".to_string(), true), ("b".to_string(), false), ("c".to_string(), true)])}, 0);
+    test_case!(map_min_max_valid_min, MapMinMax{val: HashMap::from([("a".to_string(), true), ("b".to_string(), false)])}, 0);
+    test_case!(map_min_max_valid_max, MapMinMax{val: HashMap::from([("a".to_string(), true), ("b".to_string(), false), ("c".to_string(), true), ("d".to_string(), false)])}, 0);
+    test_case!(map_min_max_invalid_below, MapMinMax{val: HashMap::from([])}, 1);
+    test_case!(map_min_max_invalid_above, MapMinMax{val: HashMap::from([("a".to_string(), true), ("b".to_string(), false), ("c".to_string(), true), ("d".to_string(), false), ("e".to_string(), true)])}, 1);
+
+    test_case!(map_exact_valid, MapExact{val: HashMap::from([(1, "a".to_string()), (2, "b".to_string()), (3, "c".to_string())])}, 0);
+    test_case!(map_exact_invalid_below, MapExact{val: HashMap::from([(1, "a".to_string()), (2, "b".to_string())])}, 1);
+    test_case!(map_exact_invalid_above, MapExact{val: HashMap::from([(1, "a".to_string()), (2, "b".to_string()), (3, "c".to_string()), (4, "d".to_string())])}, 1);
+
+    test_case!(map_no_sparse_valid, MapNoSparse{val: HashMap::from([(1, cases::map_no_sparse::Msg::default()), (2, cases::map_no_sparse::Msg::default())])}, 0);
+    test_case!(map_no_sparse_valid_empty, MapNoSparse{val: HashMap::from([])}, 0);
+    // sparse maps are no longer supported, so this case is no longer possible
+    // "map_no_sparse_invalid", MapNoSparse{val: HashMap::from([(1, cases::map_no_sparse::Msg::default()), (2, None)])}, 1),
+
+    test_case!(map_keys_valid, MapKeys{val: HashMap::from([(-1, "a".to_string()), (-2, "b".to_string())])}, 0);
+    test_case!(map_keys_valid_empty, MapKeys{val: HashMap::default()}, 0);
+    test_case!(map_keys_valid_pattern, MapKeysPattern{val: HashMap::from([("A".to_string(), "a".to_string())])}, 0);
+    test_case!(map_keys_valid_in, MapKeysIn{val: HashMap::from([("foo".to_string(), "value".to_string())])}, 0);
+    test_case!(map_keys_valid_not_in, MapKeysNotIn{val: HashMap::from([("baz".to_string(), "value".to_string())])}, 0);
+    test_case!(map_keys_invalid, MapKeys{val: HashMap::from([(1, "a".to_string())])}, 1);
+    test_case!(map_keys_invalid_pattern, MapKeysPattern{val: HashMap::from([("A".to_string(), "a".to_string()), ("!@#$%^&*()".to_string(), "b".to_string())])}, 1);
+    test_case!(map_keys_invalid_in, MapKeysIn{val: HashMap::from([("baz".to_string(), "value".to_string())])}, 1);
+    test_case!(map_keys_invalid_not_in, MapKeysNotIn{val: HashMap::from([("foo".to_string(), "value".to_string())])}, 1);
+
+    test_case!(map_values_valid, MapValues{val: HashMap::from([("a".to_string(), "Alpha".to_string()), ("b".to_string(), "Beta".to_string())])}, 0);
+    test_case!(map_values_valid_empty, MapValues{val: HashMap::default()}, 0);
+    test_case!(map_values_valid_pattern, MapValuesPattern{val: HashMap::from([("a".to_string(), "A".to_string())])}, 0);
+    test_case!(map_values_invalid, MapValues{val: HashMap::from([("a".to_string(), "A".to_string()), ("b".to_string(), "B".to_string())])}, 2);
+    test_case!(map_values_invalid_pattern, MapValuesPattern{val: HashMap::from([("a".to_string(), "A".to_string()), ("b".to_string(), "!@#$%^&*()".to_string())])}, 1);
+
+    test_case!(map_recursive_valid, MapRecursive{val: HashMap::from([(1, cases::map_recursive::Msg{val: "abc".to_string()})])}, 0);
+    test_case!(map_recursive_invalid, MapRecursive{val: HashMap::from([(1, cases::map_recursive::Msg::default())])}, 1);
+    test_case!(map_exact_valid_ignore_empty, MapExactIgnore::default(), 0);
+    test_case!(map_multiple_valid, MultipleMaps{first: HashMap::from([(1, "a".to_string()), (2, "b".to_string())]), second: HashMap::from([(-1, true), (-2, false)]), third: HashMap::default()}, 0);
 }
 #[cfg(test)]
 mod oneof {
@@ -1221,70 +1225,65 @@ mod oneof {
     test_case!(oneof_ignore_empty_valid_x, OneOfIgnoreEmpty{o: Some(one_of_ignore_empty::O::X("".to_string()))}, 0);
     test_case!(oneof_ignore_empty_valid_y, OneOfIgnoreEmpty{o: Some(one_of_ignore_empty::O::Y(b"".to_vec()))}, 0);
     test_case!(oneof_ignore_empty_valid_z, OneOfIgnoreEmpty{o: Some(one_of_ignore_empty::O::Z(0))}, 0);
-
-    #[test]
-    fn debug() {
-        oneof_required_valid()
-    }
 }
 #[cfg(test)]
 mod wrapper {
-    // use super::*;
+    use super::*;
 
-    // 	test_case!(wrapper_none_valid, WrapperNone{val: &wrapperspb.Int32Value{Value: 123}}, 0);
-    // 	test_case!(wrapper_none_valid_empty, WrapperNone{val: nil}, 0);
+    test_case!(wrapper_none_valid, WrapperNone{val: Some(123)}, 0);
+    test_case!(wrapper_none_valid_empty, WrapperNone{val: None}, 0);
+
+    test_case!(wrapper_float_valid, WrapperFloat{val: Some(1.)}, 0);
+    test_case!(wrapper_float_valid_empty, WrapperFloat{val: None}, 0);
+    test_case!(wrapper_float_invalid, WrapperFloat{val: Some(0.)}, 1);
+
+    test_case!(wrapper_double_valid, WrapperDouble{val: Some(1.)}, 0);
+    test_case!(wrapper_double_valid_empty, WrapperDouble{val: None}, 0);
+    test_case!(wrapper_double_invalid, WrapperDouble{val: Some(0.)}, 1);
+
+    test_case!(wrapper_int64_valid, WrapperInt64{val: Some(1)}, 0);
+    test_case!(wrapper_int64_valid_empty, WrapperInt64{val: None}, 0);
+    test_case!(wrapper_int64_invalid, WrapperInt64{val: Some(0)}, 1);
+
+    test_case!(wrapper_int32_valid, WrapperInt32{val: Some(1)}, 0);
+    test_case!(wrapper_int32_valid_empty, WrapperInt32{val: None}, 0);
+    test_case!(wrapper_int32_invalid, WrapperInt32{val: Some(0)}, 1);
+
+    test_case!(wrapper_uint64_valid, WrapperUInt64{val: Some(1)}, 0);
+    test_case!(wrapper_uint64_valid_empty, WrapperUInt64{val: None}, 0);
+    test_case!(wrapper_uint64_invalid, WrapperUInt64{val: Some(0)}, 1);
+
+    test_case!(wrapper_uint32_valid, WrapperUInt32{val: Some(1)}, 0);
+    test_case!(wrapper_uint32_valid_empty, WrapperUInt32{val: None}, 0);
+    test_case!(wrapper_uint32_invalid, WrapperUInt32{val: Some(0)}, 1);
+
+    test_case!(wrapper_bool_valid, WrapperBool{val: Some(true)}, 0);
+    test_case!(wrapper_bool_valid_empty, WrapperBool{val: None}, 0);
+    test_case!(wrapper_bool_invalid, WrapperBool{val: Some(false)}, 1);
+
+    test_case!(wrapper_string_valid, WrapperString{val: Some("foobar".to_string())}, 0);
+    test_case!(wrapper_string_valid_empty, WrapperString{val: None}, 0);
+    test_case!(wrapper_string_invalid, WrapperString{val: Some("fizzbuzz".to_string())}, 1);
+
+    test_case!(wrapper_bytes_valid, WrapperBytes{val: Some(b"foo".to_vec())}, 0);
+    test_case!(wrapper_bytes_valid_empty, WrapperBytes{val: None}, 0);
+    test_case!(wrapper_bytes_invalid, WrapperBytes{val: Some(b"x".to_vec())}, 1);
+
+    test_case!(wrapper_required_string_valid, WrapperRequiredString{val: Some("bar".to_string())}, 0);
+    test_case!(wrapper_required_string_invalid, WrapperRequiredString{val: Some("foo".to_string())}, 1);
+    test_case!(wrapper_required_string_invalid_empty, WrapperRequiredString::default(), 1);
+
+    test_case!(wrapper_required_string_empty_valid, WrapperRequiredEmptyString{val: Some("".to_string())}, 0);
+    test_case!(wrapper_required_string_empty_invalid, WrapperRequiredEmptyString{val: Some("foo".to_string())}, 1);
+    test_case!(wrapper_required_string_empty_invalid_empty, WrapperRequiredEmptyString::default(), 1);
     //
-    // 	test_case!(wrapper_float_valid, WrapperFloat{val: &wrapperspb.FloatValue{Value: 1}}, 0);
-    // 	test_case!(wrapper_float_valid_empty, WrapperFloat{val: nil}, 0);
-    // 	test_case!(wrapper_float_invalid, WrapperFloat{val: &wrapperspb.FloatValue{Value: 0}}, 1);
-    //
-    // 	test_case!(wrapper_double_valid, WrapperDouble{val: &wrapperspb.DoubleValue{Value: 1}}, 0);
-    // 	test_case!(wrapper_double_valid_empty, WrapperDouble{val: nil}, 0);
-    // 	test_case!(wrapper_double_invalid, WrapperDouble{val: &wrapperspb.DoubleValue{Value: 0}}, 1);
-    //
-    // 	test_case!(wrapper_int64_valid, WrapperInt64{val: &wrapperspb.Int64Value{Value: 1}}, 0);
-    // 	test_case!(wrapper_int64_valid_empty, WrapperInt64{val: nil}, 0);
-    // 	test_case!(wrapper_int64_invalid, WrapperInt64{val: &wrapperspb.Int64Value{Value: 0}}, 1);
-    //
-    // 	test_case!(wrapper_int32_valid, WrapperInt32{val: &wrapperspb.Int32Value{Value: 1}}, 0);
-    // 	test_case!(wrapper_int32_valid_empty, WrapperInt32{val: nil}, 0);
-    // 	test_case!(wrapper_int32_invalid, WrapperInt32{val: &wrapperspb.Int32Value{Value: 0}}, 1);
-    //
-    // 	test_case!(wrapper_uint64_valid, WrapperUInt64{val: &wrapperspb.UInt64Value{Value: 1}}, 0);
-    // 	test_case!(wrapper_uint64_valid_empty, WrapperUInt64{val: nil}, 0);
-    // 	test_case!(wrapper_uint64_invalid, WrapperUInt64{val: &wrapperspb.UInt64Value{Value: 0}}, 1);
-    //
-    // 	test_case!(wrapper_uint32_valid, WrapperUInt32{val: &wrapperspb.UInt32Value{Value: 1}}, 0);
-    // 	test_case!(wrapper_uint32_valid_empty, WrapperUInt32{val: nil}, 0);
-    // 	test_case!(wrapper_uint32_invalid, WrapperUInt32{val: &wrapperspb.UInt32Value{Value: 0}}, 1);
-    //
-    // 	test_case!(wrapper_bool_valid, WrapperBool{val: &wrapperspb.BoolValue{Value: true}}, 0);
-    // 	test_case!(wrapper_bool_valid_empty, WrapperBool{val: nil}, 0);
-    // 	test_case!(wrapper_bool_invalid, WrapperBool{val: &wrapperspb.BoolValue{Value: false}}, 1);
-    //
-    // 	test_case!(wrapper_string_valid, WrapperString{val: &wrapperspb.StringValue{Value: "foobar"}}, 0);
-    // 	test_case!(wrapper_string_valid_empty, WrapperString{val: nil}, 0);
-    // 	test_case!(wrapper_string_invalid, WrapperString{val: &wrapperspb.StringValue{Value: "fizzbuzz"}}, 1);
-    //
-    // 	test_case!(wrapper_bytes_valid, WrapperBytes{val: &wrapperspb.BytesValue{Value: []byte("foo")}}, 0);
-    // 	test_case!(wrapper_bytes_valid_empty, WrapperBytes{val: nil}, 0);
-    // 	test_case!(wrapper_bytes_invalid, WrapperBytes{val: &wrapperspb.BytesValue{Value: []byte("x")}}, 1);
-    //
-    // 	test_case!(wrapper_required_string_valid, WrapperRequiredString{val: &wrapperspb.StringValue{Value: "bar"}}, 0);
-    // 	test_case!(wrapper_required_string_invalid, WrapperRequiredString{val: &wrapperspb.StringValue{Value: "foo"}}, 1);
-    // 	test_case!(wrapper_required_string_invalid_empty, WrapperRequiredString::default(), 1);
-    //
-    // 	test_case!(wrapper_required_string_empty_valid, WrapperRequiredEmptyString{val: &wrapperspb.StringValue{Value: ""}}, 0);
-    // 	test_case!(wrapper_required_string_empty_invalid, WrapperRequiredEmptyString{val: &wrapperspb.StringValue{Value: "foo"}}, 1);
-    // 	test_case!(wrapper_required_string_empty_invalid_empty, WrapperRequiredEmptyString::default(), 1);
-    //
-    // 	test_case!(wrapper_optional_string_uuid_valid, WrapperOptionalUuidString{val: &wrapperspb.StringValue{Value: "8b72987b-024a-43b3-b4cf-647a1f925c5d"}}, 0);
-    // 	test_case!(wrapper_optional_string_uuid_valid_empty, WrapperOptionalUuidString::default(), 0);
-    // 	test_case!(wrapper_optional_string_uuid_invalid, WrapperOptionalUuidString{val: &wrapperspb.StringValue{Value: "foo"}}, 1);
-    //
-    // 	test_case!(wrapper_required_float_valid, WrapperRequiredFloat{val: &wrapperspb.FloatValue{Value: 1}}, 0);
-    // 	test_case!(wrapper_required_float_invalid, WrapperRequiredFloat{val: &wrapperspb.FloatValue{Value: -5}}, 1);
-    // 	test_case!(wrapper_required_float_invalid_empty, WrapperRequiredFloat::default(), 1);
+    test_case!(wrapper_optional_string_uuid_valid, WrapperOptionalUuidString{val: Some("8b72987b-024a-43b3-b4cf-647a1f925c5d".to_string())}, 0);
+    test_case!(wrapper_optional_string_uuid_valid_empty, WrapperOptionalUuidString::default(), 0);
+    test_case!(wrapper_optional_string_uuid_invalid, WrapperOptionalUuidString{val: Some("foo".to_string())}, 1);
+
+    test_case!(wrapper_required_float_valid, WrapperRequiredFloat{val: Some(1.)}, 0);
+    test_case!(wrapper_required_float_invalid, WrapperRequiredFloat{val: Some(-5.)}, 1);
+    test_case!(wrapper_required_float_invalid_empty, WrapperRequiredFloat::default(), 1);
 }
 #[cfg(test)]
 mod duration {
@@ -1417,59 +1416,89 @@ mod timestamp {
 
     test_case!(timestamp_lt_now_valid, TimestampLtNow{val: Some(Timestamp::default())}, 0);
     test_case!(timestamp_lt_now_valid_empty, TimestampLtNow::default(), 0);
-    // test_case!(timestamp_lt_now_invalid, TimestampLtNow{val: Some(Timestamp{seconds: time.Now().Unix() + 7200})}, 1);
-    //
-    // test_case!(timestamp_gt_now_valid, TimestampGtNow{val: Some(Timestamp{seconds: time.Now().Unix() + 7200})}, 0);
-    // test_case!(timestamp_gt_now_valid_empty, TimestampGtNow::default(), 0);
-    // test_case!(timestamp_gt_now_invalid, TimestampGtNow{val: Some(Timestamp::default())}, 1);
-    //
-    // test_case!(timestamp_within_valid, TimestampWithin{val: Some(timestamppb.Now())}, 0);
-    // test_case!(timestamp_within_valid_empty, TimestampWithin::default(), 0);
-    // test_case!(timestamp_within_invalid_below, TimestampWithin{val: Some(Timestamp::default())}, 1);
-    // test_case!(timestamp_within_invalid_above, TimestampWithin{val: Some(Timestamp{seconds: time.Now().Unix() + 7200})}, 1);
-    //
-    // test_case!(timestamp_lt_now_within_valid, TimestampLtNowWithin{val: Some(Timestamp{seconds: time.Now().Unix()_1800})}, 0);
-    // test_case!(timestamp_lt_now_within_valid_empty, TimestampLtNowWithin::default(), 0);
-    // test_case!(timestamp_lt_now_within_invalid_lt, TimestampLtNowWithin{val: Some(Timestamp{seconds: time.Now().Unix() + 1800})}, 1);
-    // test_case!(timestamp_lt_now_within_invalid_within, TimestampLtNowWithin{val: Some(Timestamp{seconds: time.Now().Unix()_7200})}, 1);
-    //
-    // test_case!(timestamp_gt_now_within_valid, TimestampGtNowWithin{val: Some(Timestamp{seconds: time.Now().Unix() + 1800})}, 0);
-    // test_case!(timestamp_gt_now_within_valid_empty, TimestampGtNowWithin::default(), 0);
-    // test_case!(timestamp_gt_now_within_invalid_gt, TimestampGtNowWithin{val: Some(Timestamp{seconds: time.Now().Unix()_1800})}, 1);
-    // test_case!(timestamp_gt_now_within_invalid_within, TimestampGtNowWithin{val: Some(Timestamp{seconds: time.Now().Unix() + 7200})}, 1);
+    test_case!(timestamp_lt_now_invalid, TimestampLtNow{val: Some(Timestamp{seconds: now() + 7200, nanos: 0})}, 1);
+
+    test_case!(timestamp_gt_now_valid, TimestampGtNow{val: Some(Timestamp{seconds: now() + 7200, nanos: 0})}, 0);
+    test_case!(timestamp_gt_now_valid_empty, TimestampGtNow::default(), 0);
+    test_case!(timestamp_gt_now_invalid, TimestampGtNow{val: Some(Timestamp::default())}, 1);
+
+    test_case!(timestamp_within_valid, TimestampWithin{val: Some(Timestamp{seconds: now(), nanos: 0})}, 0);
+    test_case!(timestamp_within_valid_empty, TimestampWithin::default(), 0);
+    test_case!(timestamp_within_invalid_below, TimestampWithin{val: Some(Timestamp::default())}, 1);
+    test_case!(timestamp_within_invalid_above, TimestampWithin{val: Some(Timestamp{seconds: now() + 7200, nanos: 0})}, 1);
+
+    test_case!(timestamp_lt_now_within_valid, TimestampLtNowWithin{val: Some(Timestamp{seconds: now() - 1800, nanos: 0})}, 0);
+    test_case!(timestamp_lt_now_within_valid_empty, TimestampLtNowWithin::default(), 0);
+    test_case!(timestamp_lt_now_within_invalid_lt, TimestampLtNowWithin{val: Some(Timestamp{seconds: now() + 1800, nanos: 0})}, 1);
+    test_case!(timestamp_lt_now_within_invalid_within, TimestampLtNowWithin{val: Some(Timestamp{seconds: now() - 7200, nanos: 0})}, 1);
+
+    test_case!(timestamp_gt_now_within_valid, TimestampGtNowWithin{val: Some(Timestamp{seconds: now() + 1800, nanos: 0})}, 0);
+    test_case!(timestamp_gt_now_within_valid_empty, TimestampGtNowWithin::default(), 0);
+    test_case!(timestamp_gt_now_within_invalid_gt, TimestampGtNowWithin{val: Some(Timestamp{seconds: now() - 1800, nanos: 0})}, 1);
+    test_case!(timestamp_gt_now_within_invalid_within, TimestampGtNowWithin{val: Some(Timestamp{seconds: now() + 7200, nanos: 0})}, 1);
 }
 #[cfg(test)]
 mod any {
-    // use super::*;
+    use super::*;
 
-    // 	test_case!(any_none_valid, AnyNone{val: &anypb.Any::default()}, 0);
-    //
-    // 	test_case!(any_required_valid, AnyRequired{val: &anypb.Any::default()}, 0);
-    // 	test_case!(any_required_invalid, AnyRequired{val: nil}, 1);
-    //
-    // 	test_case!(any_in_valid, AnyIn{val: &anypb.Any{TypeUrl: "type.googleapis.com/google.protobuf.Duration"}}, 0);
-    // 	test_case!(any_in_valid_empty, AnyIn::default(), 0);
-    // 	test_case!(any_in_invalid, AnyIn{val: &anypb.Any{TypeUrl: "type.googleapis.com/google.protobuf.Timestamp"}}, 1);
-    //
-    // 	test_case!(any_not_in_valid, AnyNotIn{val: &anypb.Any{TypeUrl: "type.googleapis.com/google.protobuf.Duration"}}, 0);
-    // 	test_case!(any_not_in_valid_empty, AnyNotIn::default(), 0);
-    // 	test_case!(any_not_in_invalid, AnyNotIn{val: &anypb.Any{TypeUrl: "type.googleapis.com/google.protobuf.Timestamp"}}, 1);
+    test_case!(any_none_valid, AnyNone{val: Some(Any::default())}, 0);
+
+    test_case!(any_required_valid, AnyRequired{val: Some(Any::default())}, 0);
+    test_case!(any_required_invalid, AnyRequired{val: None}, 1);
+
+    test_case!(any_in_valid, AnyIn{val: Some(Any{type_url: "type.googleapis.com/google.protobuf.Duration".to_string(), value: vec![]})}, 0);
+    test_case!(any_in_valid_empty, AnyIn::default(), 0);
+    test_case!(any_in_invalid, AnyIn{val: Some(Any{type_url: "type.googleapis.com/google.protobuf.Timestamp".to_string(), value: vec![]})}, 1);
+
+    test_case!(any_not_in_valid, AnyNotIn{val: Some(Any{type_url: "type.googleapis.com/google.protobuf.Duration".to_string(), value: vec![]})}, 0);
+    test_case!(any_not_in_valid_empty, AnyNotIn::default(), 0);
+    test_case!(any_not_in_invalid, AnyNotIn{val: Some(Any{type_url: "type.googleapis.com/google.protobuf.Timestamp".to_string(), value: vec![]})}, 1);
 }
 #[cfg(test)]
 mod kitchensink {
-    // use super::*;
+    use super::*;
 
-    // 	test_case!(kitchensink_field_valid", KitchenSinkMessage{val: ComplexTestMsg{Const: "abcd", IntConst: 5, BoolConst: false, Floatval: &wrapperspb.FloatValue{Value: 1}, Durval: Some(Duration{seconds: 3, nanos: 0}, Tsval: Timestamp{seconds: 17}, FloatConst: 7, DoubleIn: 123, EnumConst: cases.ComplexTestEnum_ComplexTWO, Anyval: &anypb.Any{TypeUrl: "type.googleapis.com/google.protobuf.Duration"}, RepTsval: []*timestamppb.Timestamp{{seconds: 3}}, Mapval: map[int32]string{-1: "a, -2: "b"}, Bytesval: []byte("\x00\x99"), O: ComplexTestMsg_X{X: "foobar"}})}, 0);
-    // 	test_case!(kitchensink_valid_unset, KitchenSinkMessage::default(), 0);
-    // 	test_case!(kitchensink_field_invalid, KitchenSinkMessage{val: ComplexTestMsg::default()}, 7);
-    // 	test_case!(kitchensink_field_embedded_invalid, KitchenSinkMessage{val: ComplexTestMsg{Another: ComplexTestMsg::default()}}, 14);
-    // 	test_case!(kitchensink_field_invalid_transitive", KitchenSinkMessage{val: ComplexTestMsg{Const: "abcd, BoolConst: true, Nested: ComplexTestMsg::default()}}, 14);
-    // 	test_case!(kitchensink_many_all non-message fields invalid, KitchenSinkMessage{val: ComplexTestMsg{BoolConst: true, Floatval: &wrapperspb.FloatValue::default(), Tsval: Timestamp::default(), FloatConst: 8, Anyval: &anypb.Any{TypeUrl: "asdf"}, RepTsval: []*timestamppb.Timestamp{{nanos: 1}}}}, 13);
+    test_case!(kitchensink_field_valid, KitchenSinkMessage{
+        val: Some(ComplexTestMsg{
+            r#const: "abcd".to_string(),
+            int_const: 5,
+            bool_const: false,
+            float_val: Some(1.),
+            dur_val: Some(Duration{seconds: 3, nanos: 0}),
+            ts_val: Some(Timestamp{seconds: 17, nanos: 0}),
+            float_const: 7.,
+            double_in: 123.,
+            enum_const: ComplexTestEnum::ComplexTwo.into(),
+            any_val: Some(Any{type_url: "type.googleapis.com/google.protobuf.Duration".to_string(), value: vec![]}),
+            rep_ts_val: vec![Timestamp{seconds: 3, nanos: 0}],
+            map_val: HashMap::from([(-1, "a".to_string()), (-2, "b".to_string())]),
+            bytes_val: b"\x00\x99".to_vec(),
+            o: Some(complex_test_msg::O::X("foobar".to_string())),
+            ..ComplexTestMsg::default()
+        })}, 0);
+    test_case!(kitchensink_valid_unset, KitchenSinkMessage::default(), 0);
+    test_case!(kitchensink_field_invalid, KitchenSinkMessage{val: Some(ComplexTestMsg::default())}, 7);
+    test_case!(kitchensink_field_embedded_invalid, KitchenSinkMessage{val: Some(ComplexTestMsg{another: Some(Box::new(ComplexTestMsg::default())), ..ComplexTestMsg::default()})}, 14);
+    test_case!(kitchensink_field_invalid_transitive, KitchenSinkMessage{val: Some(ComplexTestMsg{r#const: "abcd".to_string(), bool_const: true, nested: Some(Box::new(ComplexTestMsg::default())), ..ComplexTestMsg::default()})}, 14);
+    test_case!(kitchensink_many_all_non_message_fields_invalid, KitchenSinkMessage{val:
+        Some(ComplexTestMsg{
+            bool_const: true,
+            float_val: Some(0.),
+            ts_val: Some(Timestamp::default()),
+            float_const: 8.,
+            any_val: Some(Any{type_url: "asdf".to_string(), value: vec![]}),
+            rep_ts_val: vec![Timestamp{seconds: 0, nanos: 1}],
+            ..ComplexTestMsg::default()
+        })}, 13);
 }
 #[cfg(test)]
 mod nested {
-    // use super::*;
+    use super::*;
 
-    // 	test_case!(nested wkt uuid_field_valid, WktLevelOne{Two: WktLevelOne_WktLevelTwo{Three: WktLevelOne_WktLevelTwo_WktLevelThree{Uuid: "f81d16ef-40e2-40c6-bebc-89aaf5292f9a"}}}, 0);
-    // 	test_case!(nested wkt uuid_field_invalid, WktLevelOne{Two: WktLevelOne_WktLevelTwo{Three: WktLevelOne_WktLevelTwo_WktLevelThree{Uuid: "not-a-valid-uuid"}}}, 1);
+    test_case!(nested_wkt_uuid_field_valid, WktLevelOne{two: Some(cases::wkt_level_one::WktLevelTwo{three: Some(cases::wkt_level_one::wkt_level_two::WktLevelThree{uuid: "f81d16ef-40e2-40c6-bebc-89aaf5292f9a".to_string()})})}, 0);
+    test_case!(nested_wkt_uuid_field_invalid, WktLevelOne{two: Some(cases::wkt_level_one::WktLevelTwo{three: Some(cases::wkt_level_one::wkt_level_two::WktLevelThree{uuid: "not-a-valid-uuid".to_string()})})}, 1);
+}
+
+fn now() -> i64 {
+    time::OffsetDateTime::now_utc().unix_timestamp()
 }
