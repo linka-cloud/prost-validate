@@ -1,3 +1,4 @@
+#![doc = include_str!("../README.md")]
 #![deny(warnings)]
 #![warn(unused_extern_crates)]
 #![deny(clippy::todo)]
@@ -45,6 +46,23 @@ mod validate_proto {
     include!(concat!(env!("OUT_DIR"), "/validate.rs"));
 }
 
+/// Extension trait for validating messages using `prost-reflect`.
+/// 
+/// The implementation is provided for the `prost_reflect::ReflectMessage` trait:
+/// ```rust
+///  use prost_reflect_validate::ValidatorExt;
+///  use crate::proto::ExampleMessage;
+///  
+///  match ExampleMessage::default().validate() {
+///  Ok(_) => println!("Validation passed"),
+///  Err(e) => eprintln!("Validation failed: {}", e),
+///  }
+///  let msg = ExampleMessage{content: "Hello, world!".to_string()};
+///  match msg.validate() {
+///  Ok(_) => println!("Validation passed"),
+///  Err(e) => eprintln!("Validation failed: {}", e),
+///  }
+/// ```
 pub trait ValidatorExt {
     fn validate(&self) -> anyhow::Result<()>;
 }
