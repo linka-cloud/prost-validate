@@ -3,7 +3,7 @@ resolver = "2"
 members = [ "example","prost-reflect-validate", "prost-validate-tests"]
 
 [workspace.package]
-version = "0.0.1"
+version = "0.1.0"
 authors = ["Adphi"]
 edition = "2021"
 description = ""
