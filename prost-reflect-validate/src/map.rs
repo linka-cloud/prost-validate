@@ -38,7 +38,6 @@ pub(crate) fn make_validate_map(m: &mut HashMap<String, ValidationFn>, field: Fi
         (k.get_field(1).unwrap(), k.get_field(2).unwrap())
     };
     if let Some(Type::Map(rules)) = &rules.r#type {
-        // let vals = vals.unwrap_or(&default);
         if rules.ignore_empty() {
             push(&mut fns, name.clone(), Arc::new(move |vals: &HashMap<MapKey, Value>, _: &MapRules, _: &String, _: &HashMap<String, ValidationFn>| {
                 Ok(!vals.is_empty())

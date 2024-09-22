@@ -1203,11 +1203,6 @@ mod map {
     test_case!(map_recursive_invalid, MapRecursive{val: HashMap::from([(1, cases::map_recursive::Msg::default())])}, 1);
     test_case!(map_exact_valid_ignore_empty, MapExactIgnore::default(), 0);
     test_case!(map_multiple_valid, MultipleMaps{first: HashMap::from([(1, "a".to_string()), (2, "b".to_string())]), second: HashMap::from([(-1, true), (-2, false)]), third: HashMap::default()}, 0);
-
-    #[test]
-    fn debug() {
-        map_recursive_invalid()
-    }
 }
 #[cfg(test)]
 mod oneof {
@@ -1281,7 +1276,7 @@ mod wrapper {
     test_case!(wrapper_required_string_empty_valid, WrapperRequiredEmptyString{val: Some("".to_string())}, 0);
     test_case!(wrapper_required_string_empty_invalid, WrapperRequiredEmptyString{val: Some("foo".to_string())}, 1);
     test_case!(wrapper_required_string_empty_invalid_empty, WrapperRequiredEmptyString::default(), 1);
-    //
+
     test_case!(wrapper_optional_string_uuid_valid, WrapperOptionalUuidString{val: Some("8b72987b-024a-43b3-b4cf-647a1f925c5d".to_string())}, 0);
     test_case!(wrapper_optional_string_uuid_valid_empty, WrapperOptionalUuidString::default(), 0);
     test_case!(wrapper_optional_string_uuid_invalid, WrapperOptionalUuidString{val: Some("foo".to_string())}, 1);
@@ -1289,6 +1284,11 @@ mod wrapper {
     test_case!(wrapper_required_float_valid, WrapperRequiredFloat{val: Some(1.)}, 0);
     test_case!(wrapper_required_float_invalid, WrapperRequiredFloat{val: Some(-5.)}, 1);
     test_case!(wrapper_required_float_invalid_empty, WrapperRequiredFloat::default(), 1);
+
+    #[test]
+    fn debug() {
+        wrapper_string_invalid()
+    }
 }
 #[cfg(test)]
 mod duration {
