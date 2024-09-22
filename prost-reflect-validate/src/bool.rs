@@ -5,7 +5,10 @@ use anyhow::format_err;
 use prost_reflect::FieldDescriptor;
 use std::sync::Arc;
 
-pub(crate) fn make_validate_bool(field: &FieldDescriptor, rules: &FieldRules) -> Vec<FieldValidationFn<bool>> {
+pub(crate) fn make_validate_bool(
+    field: &FieldDescriptor,
+    rules: &FieldRules,
+) -> Vec<FieldValidationFn<bool>> {
     let mut fns: Vec<FieldValidationFn<bool>> = Vec::new();
     if !matches!(rules.r#type, Some(Type::Bool(_))) {
         return fns;

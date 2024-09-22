@@ -21,7 +21,15 @@ macro_rules! list_rules {
 
 fn push<F>(fns: &mut Vec<NestedValidationFn<Vec<Value>>>, name: &Arc<String>, f: Arc<F>)
 where
-    F: Fn(&[Value], &RepeatedRules, &String, &HashMap<String, ValidationFn>) -> anyhow::Result<bool> + Send + Sync + 'static,
+    F: Fn(
+            &[Value],
+            &RepeatedRules,
+            &String,
+            &HashMap<String, ValidationFn>,
+        ) -> anyhow::Result<bool>
+        + Send
+        + Sync
+        + 'static,
 {
     let name = name.clone();
     fns.push(Arc::new(move |val, rules, m| {
@@ -32,58 +40,107 @@ where
 }
 
 #[allow(clippy::unwrap_used)]
-pub(crate) fn make_validate_list(m: &mut HashMap<String, ValidationFn>, field: &FieldDescriptor, rules: &FieldRules) -> Vec<NestedValidationFn<Vec<Value>>> {
+pub(crate) fn make_validate_list(
+    m: &mut HashMap<String, ValidationFn>,
+    field: &FieldDescriptor,
+    rules: &FieldRules,
+) -> Vec<NestedValidationFn<Vec<Value>>> {
     let mut fns = Vec::new();
     let name = Arc::new(field.full_name().to_string());
     if let Some(Type::Repeated(rules)) = &rules.r#type {
         if rules.ignore_empty() {
-            push(&mut fns, &name, Arc::new(move |vals: &[Value], _: &RepeatedRules, _: &String, _: &HashMap<String, ValidationFn>| {
-                Ok(!vals.is_empty())
-            }));
+            push(
+                &mut fns,
+                &name,
+                Arc::new(
+                    move |vals: &[Value],
+                          _: &RepeatedRules,
+                          _: &String,
+                          _: &HashMap<String, ValidationFn>| {
+                        Ok(!vals.is_empty())
+                    },
+                ),
+            );
         }
         if rules.min_items.is_some() {
-            push(&mut fns, &name, Arc::new(move |vals: &[Value], rules: &RepeatedRules, name: &String, _: &HashMap<String, ValidationFn>| {
-                let v = rules.min_items.unwrap();
-                if vals.len() < v as usize {
-                    return Err(format_err!("{}: must have at least {} items", name, v));
-                }
-                Ok(true)
-            }));
+            push(
+                &mut fns,
+                &name,
+                Arc::new(
+                    move |vals: &[Value],
+                          rules: &RepeatedRules,
+                          name: &String,
+                          _: &HashMap<String, ValidationFn>| {
+                        let v = rules.min_items.unwrap();
+                        if vals.len() < v as usize {
+                            return Err(format_err!("{}: must have at least {} items", name, v));
+                        }
+                        Ok(true)
+                    },
+                ),
+            );
         }
         if rules.max_items.is_some() {
-            push(&mut fns, &name, Arc::new(move |vals: &[Value], rules: &RepeatedRules, name: &String, _: &HashMap<String, ValidationFn>| {
-                let v = rules.max_items.unwrap();
-                if vals.len() > v as usize {
-                    return Err(format_err!("{}: must have at most {} items", name, v));
-                }
-                Ok(true)
-            }));
+            push(
+                &mut fns,
+                &name,
+                Arc::new(
+                    move |vals: &[Value],
+                          rules: &RepeatedRules,
+                          name: &String,
+                          _: &HashMap<String, ValidationFn>| {
+                        let v = rules.max_items.unwrap();
+                        if vals.len() > v as usize {
+                            return Err(format_err!("{}: must have at most {} items", name, v));
+                        }
+                        Ok(true)
+                    },
+                ),
+            );
         }
         if rules.unique.unwrap_or(false) {
             let field = field.clone();
-            push(&mut fns, &name, Arc::new(move |vals: &[Value], _: &RepeatedRules, name: &String, _: &HashMap<String, ValidationFn>| {
-                if let Some(v) = unique_count(vals, &field) {
-                    if vals.len() != v {
-                        return Err(format_err!("{}: must have unique values", name));
-                    }
-                }
-                Ok(true)
-            }));
+            push(
+                &mut fns,
+                &name,
+                Arc::new(
+                    move |vals: &[Value],
+                          _: &RepeatedRules,
+                          name: &String,
+                          _: &HashMap<String, ValidationFn>| {
+                        if let Some(v) = unique_count(vals, &field) {
+                            if vals.len() != v {
+                                return Err(format_err!("{}: must have unique values", name));
+                            }
+                        }
+                        Ok(true)
+                    },
+                ),
+            );
         }
         if let Some(ref rules) = rules.items {
             if rules.message.map(|v| v.skip()).unwrap_or(false) {
                 return fns;
             }
             let validate = make_validate_field(m, field, rules);
-            push(&mut fns, &name, Arc::new(move |vals: &[Value], rules: &RepeatedRules, _: &String, m: &HashMap<String, ValidationFn>| {
-                let rules = rules.items.as_ref().unwrap();
-                for val in vals {
-                    if !validate(Cow::Borrowed(val), rules, m)? {
-                        return Ok(false);
-                    }
-                }
-                Ok(true)
-            }));
+            push(
+                &mut fns,
+                &name,
+                Arc::new(
+                    move |vals: &[Value],
+                          rules: &RepeatedRules,
+                          _: &String,
+                          m: &HashMap<String, ValidationFn>| {
+                        let rules = rules.items.as_ref().unwrap();
+                        for val in vals {
+                            if !validate(Cow::Borrowed(val), rules, m)? {
+                                return Ok(false);
+                            }
+                        }
+                        Ok(true)
+                    },
+                ),
+            );
         }
     }
 
@@ -108,22 +165,118 @@ pub(crate) fn make_validate_list(m: &mut HashMap<String, ValidationFn>, field: &
 #[allow(clippy::unwrap_used)]
 fn unique_count(vals: &[Value], field: &FieldDescriptor) -> Option<usize> {
     match field.kind() {
-        Kind::Double => Some(vals.iter().map(|v| v.as_f64().unwrap().to_bits()).unique().collect::<Vec<u64>>().len()),
-        Kind::Float => Some(vals.iter().map(|v| v.as_f32().unwrap().to_bits()).unique().collect::<Vec<u32>>().len()),
-        Kind::Int32 => Some(vals.iter().map(|v| v.as_i32().unwrap()).unique().collect::<Vec<i32>>().len()),
-        Kind::Int64 => Some(vals.iter().map(|v| v.as_i64().unwrap()).unique().collect::<Vec<i64>>().len()),
-        Kind::Uint32 => Some(vals.iter().map(|v| v.as_u32().unwrap()).unique().collect::<Vec<u32>>().len()),
-        Kind::Uint64 => Some(vals.iter().map(|v| v.as_u64().unwrap()).unique().collect::<Vec<u64>>().len()),
-        Kind::Sint32 => Some(vals.iter().map(|v| v.as_i32().unwrap()).unique().collect::<Vec<i32>>().len()),
-        Kind::Sint64 => Some(vals.iter().map(|v| v.as_i64().unwrap()).unique().collect::<Vec<i64>>().len()),
-        Kind::Fixed32 => Some(vals.iter().map(|v| v.as_u32().unwrap()).unique().collect::<Vec<u32>>().len()),
-        Kind::Fixed64 => Some(vals.iter().map(|v| v.as_u64().unwrap()).unique().collect::<Vec<u64>>().len()),
-        Kind::Sfixed32 => Some(vals.iter().map(|v| v.as_i32().unwrap()).unique().collect::<Vec<i32>>().len()),
-        Kind::Sfixed64 => Some(vals.iter().map(|v| v.as_i64().unwrap()).unique().collect::<Vec<i64>>().len()),
-        Kind::Bool => Some(vals.iter().map(|v| v.as_bool().unwrap()).unique().collect::<Vec<bool>>().len()),
-        Kind::String => Some(vals.iter().map(|v| v.as_str().unwrap()).unique().collect::<Vec<&str>>().len()),
-        Kind::Bytes => Some(vals.iter().map(|v| v.as_bytes().unwrap()).unique().collect::<Vec<&Bytes>>().len()),
+        Kind::Double => Some(
+            vals.iter()
+                .map(|v| v.as_f64().unwrap().to_bits())
+                .unique()
+                .collect::<Vec<u64>>()
+                .len(),
+        ),
+        Kind::Float => Some(
+            vals.iter()
+                .map(|v| v.as_f32().unwrap().to_bits())
+                .unique()
+                .collect::<Vec<u32>>()
+                .len(),
+        ),
+        Kind::Int32 => Some(
+            vals.iter()
+                .map(|v| v.as_i32().unwrap())
+                .unique()
+                .collect::<Vec<i32>>()
+                .len(),
+        ),
+        Kind::Int64 => Some(
+            vals.iter()
+                .map(|v| v.as_i64().unwrap())
+                .unique()
+                .collect::<Vec<i64>>()
+                .len(),
+        ),
+        Kind::Uint32 => Some(
+            vals.iter()
+                .map(|v| v.as_u32().unwrap())
+                .unique()
+                .collect::<Vec<u32>>()
+                .len(),
+        ),
+        Kind::Uint64 => Some(
+            vals.iter()
+                .map(|v| v.as_u64().unwrap())
+                .unique()
+                .collect::<Vec<u64>>()
+                .len(),
+        ),
+        Kind::Sint32 => Some(
+            vals.iter()
+                .map(|v| v.as_i32().unwrap())
+                .unique()
+                .collect::<Vec<i32>>()
+                .len(),
+        ),
+        Kind::Sint64 => Some(
+            vals.iter()
+                .map(|v| v.as_i64().unwrap())
+                .unique()
+                .collect::<Vec<i64>>()
+                .len(),
+        ),
+        Kind::Fixed32 => Some(
+            vals.iter()
+                .map(|v| v.as_u32().unwrap())
+                .unique()
+                .collect::<Vec<u32>>()
+                .len(),
+        ),
+        Kind::Fixed64 => Some(
+            vals.iter()
+                .map(|v| v.as_u64().unwrap())
+                .unique()
+                .collect::<Vec<u64>>()
+                .len(),
+        ),
+        Kind::Sfixed32 => Some(
+            vals.iter()
+                .map(|v| v.as_i32().unwrap())
+                .unique()
+                .collect::<Vec<i32>>()
+                .len(),
+        ),
+        Kind::Sfixed64 => Some(
+            vals.iter()
+                .map(|v| v.as_i64().unwrap())
+                .unique()
+                .collect::<Vec<i64>>()
+                .len(),
+        ),
+        Kind::Bool => Some(
+            vals.iter()
+                .map(|v| v.as_bool().unwrap())
+                .unique()
+                .collect::<Vec<bool>>()
+                .len(),
+        ),
+        Kind::String => Some(
+            vals.iter()
+                .map(|v| v.as_str().unwrap())
+                .unique()
+                .collect::<Vec<&str>>()
+                .len(),
+        ),
+        Kind::Bytes => Some(
+            vals.iter()
+                .map(|v| v.as_bytes().unwrap())
+                .unique()
+                .collect::<Vec<&Bytes>>()
+                .len(),
+        ),
         Kind::Message(_) => None,
-        Kind::Enum(_) => Some(vals.iter().map(|v| v.as_enum_number().unwrap()).unique().collect::<Vec<i32>>().len()),
+        Kind::Enum(_) => Some(
+            vals.iter()
+                .map(|v| v.as_enum_number().unwrap())
+                .unique()
+                .collect::<Vec<i32>>()
+                .len(),
+        ),
     }
 }

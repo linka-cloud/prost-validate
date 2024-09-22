@@ -6,7 +6,6 @@ use prost_reflect::{DynamicMessage, FieldDescriptor};
 use prost_types::Any;
 use std::sync::Arc;
 
-
 macro_rules! any_rules {
     ($rules:ident) => {
         match &$rules.r#type {
@@ -31,7 +30,10 @@ where
     }))
 }
 
-pub(crate) fn make_validate_any(field: &FieldDescriptor, rules: &FieldRules) -> Vec<NestedValidationFn<Box<DynamicMessage>>> {
+pub(crate) fn make_validate_any(
+    field: &FieldDescriptor,
+    rules: &FieldRules,
+) -> Vec<NestedValidationFn<Box<DynamicMessage>>> {
     let mut fns = Vec::new();
     if !matches!(rules.r#type, Some(Type::Any(_))) {
         return fns;
@@ -50,25 +52,31 @@ pub(crate) fn make_validate_any(field: &FieldDescriptor, rules: &FieldRules) -> 
             Ok(true)
         }));
     } else {
-        fns.push(Arc::new(move |val, _, _| {
-            Ok(val.is_some())
-        }));
+        fns.push(Arc::new(move |val, _, _| Ok(val.is_some())));
     }
     if !rules.r#in.is_empty() {
-        push(&mut fns, &name, Arc::new(move |val: &Any, rules: &AnyRules, name: &String| {
-            if !rules.r#in.contains(&val.type_url) {
-                return Err(format_err!("{}: must be in {:?}", name, rules.r#in));
-            }
-            Ok(true)
-        }));
+        push(
+            &mut fns,
+            &name,
+            Arc::new(move |val: &Any, rules: &AnyRules, name: &String| {
+                if !rules.r#in.contains(&val.type_url) {
+                    return Err(format_err!("{}: must be in {:?}", name, rules.r#in));
+                }
+                Ok(true)
+            }),
+        );
     }
     if !rules.not_in.is_empty() {
-        push(&mut fns, &name, Arc::new(move |val: &Any, rules: &AnyRules, name: &String| {
-            if rules.not_in.contains(&val.type_url) {
-                return Err(format_err!("{}: must not be in {:?}", name, rules.not_in));
-            }
-            Ok(true)
-        }));
+        push(
+            &mut fns,
+            &name,
+            Arc::new(move |val: &Any, rules: &AnyRules, name: &String| {
+                if rules.not_in.contains(&val.type_url) {
+                    return Err(format_err!("{}: must not be in {:?}", name, rules.not_in));
+                }
+                Ok(true)
+            }),
+        );
     }
     fns
 }

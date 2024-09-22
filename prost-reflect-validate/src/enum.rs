@@ -26,7 +26,10 @@ where
     }))
 }
 
-pub(crate) fn make_validate_enum(field: &FieldDescriptor, rules: &FieldRules) -> Vec<FieldValidationFn<i32>> {
+pub(crate) fn make_validate_enum(
+    field: &FieldDescriptor,
+    rules: &FieldRules,
+) -> Vec<FieldValidationFn<i32>> {
     let mut fns: Vec<FieldValidationFn<i32>> = Vec::new();
     let name = Arc::new(field.full_name().to_string());
     if !matches!(rules.r#type, Some(Type::Enum(_))) {
@@ -41,36 +44,52 @@ pub(crate) fn make_validate_enum(field: &FieldDescriptor, rules: &FieldRules) ->
         _ => return Vec::new(),
     };
     if let Some(v) = rules.r#const {
-        push(&mut fns, &name, Arc::new(move |val: i32, _: &EnumRules, name: &String| {
-            if val != v {
-                return Err(format_err!("{}: must be {}", name, v));
-            }
-            Ok(true)
-        }));
+        push(
+            &mut fns,
+            &name,
+            Arc::new(move |val: i32, _: &EnumRules, name: &String| {
+                if val != v {
+                    return Err(format_err!("{}: must be {}", name, v));
+                }
+                Ok(true)
+            }),
+        );
     }
     if !rules.r#in.is_empty() {
-        push(&mut fns, &name, Arc::new(move |val: i32, rules: &EnumRules, name: &String| {
-            if !rules.r#in.contains(&val) {
-                return Err(format_err!("{}: must be in {:?}", name, rules.r#in));
-            }
-            Ok(true)
-        }));
+        push(
+            &mut fns,
+            &name,
+            Arc::new(move |val: i32, rules: &EnumRules, name: &String| {
+                if !rules.r#in.contains(&val) {
+                    return Err(format_err!("{}: must be in {:?}", name, rules.r#in));
+                }
+                Ok(true)
+            }),
+        );
     }
     if !rules.not_in.is_empty() {
-        push(&mut fns, &name, Arc::new(move |val: i32, rules: &EnumRules, name: &String| {
-            if rules.not_in.contains(&val) {
-                return Err(format_err!("{}: must not be in {:?}", name, rules.not_in));
-            }
-            Ok(true)
-        }));
+        push(
+            &mut fns,
+            &name,
+            Arc::new(move |val: i32, rules: &EnumRules, name: &String| {
+                if rules.not_in.contains(&val) {
+                    return Err(format_err!("{}: must not be in {:?}", name, rules.not_in));
+                }
+                Ok(true)
+            }),
+        );
     }
     if rules.defined_only() {
-        push(&mut fns, &name, Arc::new(move |val: i32, _: &EnumRules, name: &String| {
-            if desc.get_value(val).is_none() {
-                return Err(format_err!("{}: must be a defined enumeration value", name));
-            }
-            Ok(true)
-        }));
+        push(
+            &mut fns,
+            &name,
+            Arc::new(move |val: i32, _: &EnumRules, name: &String| {
+                if desc.get_value(val).is_none() {
+                    return Err(format_err!("{}: must be a defined enumeration value", name));
+                }
+                Ok(true)
+            }),
+        );
     }
     fns
 }

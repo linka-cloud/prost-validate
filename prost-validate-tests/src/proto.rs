@@ -6,10 +6,16 @@ pub(crate) mod cases {
         include!(concat!(env!("OUT_DIR"), "/tests.harness.cases.sort.rs"));
     }
     pub(crate) mod yet_another_package {
-        include!(concat!(env!("OUT_DIR"), "/tests.harness.cases.yet_another_package.rs"));
+        include!(concat!(
+            env!("OUT_DIR"),
+            "/tests.harness.cases.yet_another_package.rs"
+        ));
     }
     pub(crate) mod other_package {
-        include!(concat!(env!("OUT_DIR"), "/tests.harness.cases.other_package.rs"));
+        include!(concat!(
+            env!("OUT_DIR"),
+            "/tests.harness.cases.other_package.rs"
+        ));
     }
 }
 
@@ -18,4 +24,3 @@ pub(crate) mod cases {
 pub(crate) mod harness {
     include!(concat!(env!("OUT_DIR"), "/tests.harness.rs"));
 }
-

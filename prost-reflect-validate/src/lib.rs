@@ -13,21 +13,21 @@
 use crate::registry::REGISTRY;
 use prost_reflect::ReflectMessage;
 
-mod number;
-mod string;
-mod r#enum;
-mod duration;
-mod timestamp;
-mod message;
-mod bool;
 mod any;
-mod utils;
+mod bool;
 mod bytes;
-mod registry;
-mod validate;
+mod duration;
+mod r#enum;
+mod field;
 mod list;
 mod map;
-mod field;
+mod message;
+mod number;
+mod registry;
+mod string;
+mod timestamp;
+mod utils;
+mod validate;
 
 #[allow(clippy::trivially_copy_pass_by_ref)]
 #[allow(clippy::enum_variant_names)]
@@ -36,8 +36,12 @@ mod validate_proto {
     use prost_reflect::DescriptorPool;
 
     #[allow(clippy::unwrap_used)]
-    pub(crate) static DESCRIPTOR_POOL: Lazy<DescriptorPool>
-    = Lazy::new(|| DescriptorPool::decode(include_bytes!(concat!(env!("OUT_DIR"), "/file_descriptor_set.bin")).as_ref()).unwrap());
+    pub(crate) static DESCRIPTOR_POOL: Lazy<DescriptorPool> = Lazy::new(|| {
+        DescriptorPool::decode(
+            include_bytes!(concat!(env!("OUT_DIR"), "/file_descriptor_set.bin")).as_ref(),
+        )
+        .unwrap()
+    });
     include!(concat!(env!("OUT_DIR"), "/validate.rs"));
 }
 

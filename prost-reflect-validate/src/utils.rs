@@ -1,10 +1,10 @@
-use std::borrow::Cow;
-use std::sync::Arc;
-use prost_reflect::{FieldDescriptor, Value};
-use time::{Duration as TimeDelta, OffsetDateTime};
-use prost_types::{Duration, Timestamp};
 use crate::validate::VALIDATION_FIELD_RULES;
 use crate::validate_proto::FieldRules;
+use prost_reflect::{FieldDescriptor, Value};
+use prost_types::{Duration, Timestamp};
+use std::borrow::Cow;
+use std::sync::Arc;
+use time::{Duration as TimeDelta, OffsetDateTime};
 
 pub(crate) trait AsDateTime {
     fn as_datetime(&self) -> OffsetDateTime;
@@ -13,7 +13,9 @@ pub(crate) trait AsDateTime {
 impl AsDateTime for Timestamp {
     #[allow(clippy::unwrap_used)]
     fn as_datetime(&self) -> OffsetDateTime {
-        OffsetDateTime::from_unix_timestamp(self.seconds).unwrap_or(OffsetDateTime::from_unix_timestamp(0).unwrap()) + TimeDelta::nanoseconds(self.nanos as i64)
+        OffsetDateTime::from_unix_timestamp(self.seconds)
+            .unwrap_or(OffsetDateTime::from_unix_timestamp(0).unwrap())
+            + TimeDelta::nanoseconds(self.nanos as i64)
     }
 }
 
@@ -28,7 +30,7 @@ impl AsDuration for Duration {
 }
 
 impl AsDuration for Option<Duration> {
-    fn as_duration(&self) -> TimeDelta{
+    fn as_duration(&self) -> TimeDelta {
         self.map(|d| d.as_duration()).unwrap_or_default()
     }
 }
