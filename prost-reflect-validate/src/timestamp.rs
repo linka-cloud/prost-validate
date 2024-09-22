@@ -1,4 +1,4 @@
-use crate::registry::FieldValidationFn;
+use crate::registry::NestedValidationFn;
 use crate::utils::{AsDateTime, AsDuration};
 use crate::validate_proto::field_rules::Type;
 use crate::validate_proto::{FieldRules, TimestampRules};
@@ -8,12 +8,12 @@ use prost_types::Timestamp;
 use std::sync::Arc;
 use time::OffsetDateTime;
 
-fn push<F>(fns: &mut Vec<FieldValidationFn<Box<DynamicMessage>>>, name: Arc<String>, f: Arc<F>)
+fn push<F>(fns: &mut Vec<NestedValidationFn<Box<DynamicMessage>>>, name: Arc<String>, f: Arc<F>)
 where
     F: Fn(&OffsetDateTime, &TimestampRules, &String) -> anyhow::Result<bool> + Send + Sync + 'static,
 {
     let name = name.clone();
-    fns.push(Arc::new(move |val, rules| {
+    fns.push(Arc::new(move |val, rules, _| {
         let val = match val {
             Some(val) => val.transcode_to::<Timestamp>().unwrap().as_datetime(),
             _ => OffsetDateTime::from_unix_timestamp(0).unwrap(),
@@ -26,7 +26,7 @@ where
     }))
 }
 
-pub(crate) fn make_validate_timestamp(field: &FieldDescriptor, rules: &FieldRules) -> Vec<FieldValidationFn<Box<DynamicMessage>>> {
+pub(crate) fn make_validate_timestamp(field: &FieldDescriptor, rules: &FieldRules) -> Vec<NestedValidationFn<Box<DynamicMessage>>> {
     let mut fns = Vec::new();
     let rules = match rules.r#type {
         Some(Type::Timestamp(rules)) => rules,
@@ -35,14 +35,14 @@ pub(crate) fn make_validate_timestamp(field: &FieldDescriptor, rules: &FieldRule
     let name = Arc::new(field.full_name().to_string());
     if rules.required() {
         let name = name.clone();
-        fns.push(Arc::new(move |val, _| {
+        fns.push(Arc::new(move |val, _, _| {
             if val.is_none() {
                 return Err(format_err!("{}: is required", name));
             }
             Ok(true)
         }));
     } else {
-        fns.push(Arc::new(move |val, _| {
+        fns.push(Arc::new(move |val, _, _| {
             Ok(val.is_some())
         }));
     }

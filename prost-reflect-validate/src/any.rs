@@ -1,10 +1,11 @@
-use crate::registry::FieldValidationFn;
+use crate::registry::NestedValidationFn;
 use crate::validate_proto::field_rules::Type;
 use crate::validate_proto::{AnyRules, FieldRules};
-use anyhow::{format_err};
+use anyhow::format_err;
 use prost_reflect::{DynamicMessage, FieldDescriptor};
 use prost_types::Any;
 use std::sync::Arc;
+
 
 macro_rules! any_rules {
     ($rules:ident) => {
@@ -15,12 +16,12 @@ macro_rules! any_rules {
     };
 }
 
-fn push<F>(fns: &mut Vec<FieldValidationFn<Box<DynamicMessage>>>, name: Arc<String>, f: Arc<F>)
+fn push<F>(fns: &mut Vec<NestedValidationFn<Box<DynamicMessage>>>, name: Arc<String>, f: Arc<F>)
 where
     F: Fn(&Any, &AnyRules, &String) -> anyhow::Result<bool> + Send + Sync + 'static,
 {
     let name = name.clone();
-    fns.push(Arc::new(move |val, rules| {
+    fns.push(Arc::new(move |val, rules, _| {
         let val = match val {
             Some(v) => v.transcode_to::<Any>()?,
             None => Any::default(),
@@ -30,7 +31,7 @@ where
     }))
 }
 
-pub(crate) fn make_validate_any(field: &FieldDescriptor, rules: &FieldRules) -> Vec<FieldValidationFn<Box<DynamicMessage>>> {
+pub(crate) fn make_validate_any(field: &FieldDescriptor, rules: &FieldRules) -> Vec<NestedValidationFn<Box<DynamicMessage>>> {
     let mut fns = Vec::new();
     if !matches!(rules.r#type, Some(Type::Any(_))) {
         return fns;
@@ -42,11 +43,15 @@ pub(crate) fn make_validate_any(field: &FieldDescriptor, rules: &FieldRules) -> 
     let name = Arc::new(field.full_name().to_string());
     if rules.required() {
         let name = name.clone();
-        fns.push(Arc::new(move |val, _| {
+        fns.push(Arc::new(move |val, _, _| {
             if val.is_none() {
                 return Err(format_err!("{}: is required", name));
             }
             Ok(true)
+        }));
+    } else {
+        fns.push(Arc::new(move |val, _, _| {
+            Ok(val.is_some())
         }));
     }
     if !rules.r#in.is_empty() {

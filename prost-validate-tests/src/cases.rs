@@ -1076,18 +1076,18 @@ mod repeated {
 
     #[test]
     fn debug() {
-        repeated_cross_package_embed_none_invalid()
+        repeated_cross_package_embed_none_valid()
     }
 
     test_case!(repeated_none_valid, RepeatedNone{val: vec![1, 2, 3]}, 0);
 
     test_case!(repeated_embed_none_valid, RepeatedEmbedNone{val: vec![cases::Embed{val: 1}]}, 0);
     test_case!(repeated_embed_none_valid_nil, RepeatedEmbedNone::default(), 0);
-    test_case!(repeated_embed_none_valid_empty, RepeatedEmbedNone{val: vec![cases::Embed::default()]}, 0);
+    test_case!(repeated_embed_none_valid_empty, RepeatedEmbedNone{val: vec![]}, 0);
     test_case!(repeated_embed_none_invalid, RepeatedEmbedNone{val: vec![cases::Embed{val: -1}]}, 1);
     test_case!(repeated_cross_package_embed_none_valid, RepeatedEmbedCrossPackageNone{val: vec![other_package::Embed{val: 1}]}, 0);
     test_case!(repeated_cross_package_embed_none_valid_nil, RepeatedEmbedCrossPackageNone::default(), 0);
-    test_case!(repeated_cross_package_embed_none_valid_empty, RepeatedEmbedCrossPackageNone{val: vec![other_package::Embed::default()]}, 0);
+    test_case!(repeated_cross_package_embed_none_valid_empty, RepeatedEmbedCrossPackageNone{val: vec![]}, 0);
     test_case!(repeated_cross_package_embed_none_invalid, RepeatedEmbedCrossPackageNone{val: vec![other_package::Embed{val: -1}]}, 1);
 
     test_case!(repeated_min_valid, RepeatedMin{val: vec![cases::Embed{val: 1}, cases::Embed{val: 2}, cases::Embed{val: 3}]}, 0);
@@ -1203,6 +1203,11 @@ mod map {
     test_case!(map_recursive_invalid, MapRecursive{val: HashMap::from([(1, cases::map_recursive::Msg::default())])}, 1);
     test_case!(map_exact_valid_ignore_empty, MapExactIgnore::default(), 0);
     test_case!(map_multiple_valid, MultipleMaps{first: HashMap::from([(1, "a".to_string()), (2, "b".to_string())]), second: HashMap::from([(-1, true), (-2, false)]), third: HashMap::default()}, 0);
+
+    #[test]
+    fn debug() {
+        map_recursive_invalid()
+    }
 }
 #[cfg(test)]
 mod oneof {

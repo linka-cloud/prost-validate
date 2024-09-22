@@ -1,5 +1,5 @@
 use crate::validate_proto::DESCRIPTOR_POOL;
-use anyhow::{anyhow};
+use anyhow::anyhow;
 use once_cell::sync::Lazy;
 use prost_reflect::{ExtensionDescriptor, Value};
 use std::borrow::Cow;

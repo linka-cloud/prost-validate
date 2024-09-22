@@ -1,7 +1,7 @@
 use crate::registry::FieldValidationFn;
 use crate::validate_proto::field_rules::Type;
 use crate::validate_proto::FieldRules;
-use anyhow::{format_err};
+use anyhow::format_err;
 use prost_reflect::FieldDescriptor;
 use std::sync::Arc;
 

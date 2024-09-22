@@ -1,10 +1,10 @@
-use crate::bool::{make_validate_bool};
-use crate::bytes::{make_validate_bytes};
-use crate::message::{make_validate_message};
+use crate::bool::make_validate_bool;
+use crate::bytes::make_validate_bytes;
+use crate::message::make_validate_message;
 use crate::number::{make_validate_double, make_validate_fixed32, make_validate_fixed64, make_validate_float, make_validate_i32, make_validate_i64, make_validate_sfixed32, make_validate_sfixed64, make_validate_sint32, make_validate_sint64, make_validate_u32, make_validate_u64};
-use crate::r#enum::{make_validate_enum};
+use crate::r#enum::make_validate_enum;
 use crate::registry::ValidationFn;
-use crate::string::{make_validate_string};
+use crate::string::make_validate_string;
 use crate::validate_proto::FieldRules;
 use anyhow::Result;
 use prost_reflect::{FieldDescriptor, Kind, Value};
@@ -12,13 +12,13 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-type ValueValidationFn = Arc<dyn Fn(Cow<Value>, &FieldRules) -> Result<bool> + Send + Sync>;
+type ValueValidationFn = Arc<dyn Fn(Cow<Value>, &FieldRules, &HashMap<String, ValidationFn>) -> Result<bool> + Send + Sync>;
 
 macro_rules! as_validation_func {
     ($fns:expr,$typ:ident,$conv:ident) => {
         {
             let fns = $fns;
-            Arc::new(move |val: Cow<Value>, rules: &FieldRules| -> Result<bool> {
+            Arc::new(move |val: Cow<Value>, rules: &FieldRules, _: &HashMap<String, ValidationFn>| -> Result<bool> {
                 for f in &fns {
                     if !f(val.$conv(), &rules)? {
                         return Ok(false);
@@ -49,7 +49,7 @@ pub(crate) fn make_validate_field(m: &mut HashMap<String, ValidationFn>, field: 
         Kind::Enum(_) => as_validation_func!(make_validate_enum(&field, &rules), i32, as_enum_number),
         Kind::Bytes => {
             let fns = make_validate_bytes(&field, &rules);
-            Arc::new(move |val: Cow<Value>, rules: &FieldRules| -> anyhow::Result<bool> {
+            Arc::new(move |val: Cow<Value>, rules: &FieldRules, _| -> anyhow::Result<bool> {
                 let bytes = val.as_bytes().map(|v| Arc::new(v.clone()));
                 for f in &fns {
                     let bytes = bytes.clone();
@@ -62,7 +62,7 @@ pub(crate) fn make_validate_field(m: &mut HashMap<String, ValidationFn>, field: 
         }
         Kind::Message(_) => {
             let fns = make_validate_message(m, &field, &rules);
-            Arc::new(move |val: Cow<Value>, rules: &FieldRules| -> anyhow::Result<bool> {
+            Arc::new(move |val: Cow<Value>, rules: &FieldRules, m| -> anyhow::Result<bool> {
                 // When the value is not set the Value is a Cow::Owned(desc.default_value())
                 let msg = match val {
                     Cow::Borrowed(_) => val.as_message().map(|v| Box::new(v.clone())),
@@ -70,7 +70,7 @@ pub(crate) fn make_validate_field(m: &mut HashMap<String, ValidationFn>, field: 
                 };
                 for f in &fns {
                     let msg = msg.clone();
-                    if !f(msg, &rules)? {
+                    if !f(msg, &rules, m)? {
                         break;
                     }
                 }

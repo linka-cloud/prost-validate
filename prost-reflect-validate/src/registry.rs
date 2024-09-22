@@ -1,20 +1,25 @@
 use crate::field::make_validate_field;
 use crate::list::make_validate_list;
 use crate::map::make_validate_map;
-use crate::validate::{IsTrue, VALIDATION_DISABLED, VALIDATION_FIELD_RULES, VALIDATION_IGNORED, VALIDATION_ONE_OF_RULES};
-use crate::validate_proto::field_rules::Type;
+use crate::utils::{get_field_rules, is_set};
+use crate::validate::{IsTrue, VALIDATION_DISABLED, VALIDATION_IGNORED, VALIDATION_ONE_OF_RULES};
 use crate::validate_proto::FieldRules;
 use anyhow::{format_err, Result};
+use no_deadlocks::RwLock;
 use once_cell::sync::Lazy;
-use prost_reflect::{DynamicMessage, FieldDescriptor, MessageDescriptor, OneofDescriptor, ReflectMessage};
+use prost_reflect::{DynamicMessage, MessageDescriptor, OneofDescriptor, ReflectMessage};
 use std::collections::HashMap;
 use std::rc::Rc;
-use std::sync::{Arc};
-use no_deadlocks::RwLock;
-use crate::utils::is_set;
+use std::sync::Arc;
 
-pub(crate) type ValidationFn = Arc<dyn Fn(&DynamicMessage) -> Result<()> + Send + Sync>;
+pub(crate) struct Args<'a> {
+    pub(crate) m: &'a HashMap<String, ValidationFn>,
+    pub(crate) msg: &'a DynamicMessage,
+}
+
+pub(crate) type ValidationFn = Arc<dyn Fn(&Args) -> Result<()> + Send + Sync>;
 pub(crate) type FieldValidationFn<T> = Arc<dyn Fn(Option<T>, &FieldRules) -> Result<bool> + Send + Sync>;
+pub(crate) type NestedValidationFn<T> = Arc<dyn Fn(Option<T>, &FieldRules, &HashMap<String, ValidationFn>) -> Result<bool> + Send + Sync>;
 
 pub(crate) static REGISTRY: Lazy<Registry> = Lazy::new(|| Registry::default());
 
@@ -40,7 +45,7 @@ impl Registry {
         let mut fns: Vec<ValidationFn> = Vec::new();
         let mut oneofs: HashMap<String, Rc<OneofDescriptor>> = HashMap::new();
         for field in desc.fields() {
-            let rules = match field_rules(&field)? {
+            let rules = match get_field_rules(&field)? {
                 Some(r) => r,
                 None => continue,
             };
@@ -52,23 +57,23 @@ impl Registry {
                 for field in desc.fields() {
                     let field = field.clone();
                     oneofs.insert(field.full_name().to_string(), desc.clone());
-                    let rules = match field_rules(&field)? {
+                    let rules = match get_field_rules(&field)? {
                         Some(r) => r,
                         None => continue,
                     };
                     let validate_field = make_validate_field(m, &field, &rules);
-                    fns.push(Arc::new(move |msg| {
+                    fns.push(Arc::new(move |Args { msg, m }| {
                         let val = msg.get_field(&field);
                         if !is_set(&val) {
                             return Ok(());
                         }
-                        validate_field(val, &rules)?;
+                        validate_field(val, &rules, m)?;
                         Ok(())
                     }));
                 }
                 let field = field.clone();
                 if desc.options().get_extension(&VALIDATION_ONE_OF_RULES).is_true() {
-                    fns.push(Arc::new(move |msg| {
+                    fns.push(Arc::new(move |Args { msg, .. }| {
                         let mut has = false;
                         for field in field.containing_oneof().unwrap().fields() {
                             let ok = is_set(&msg.get_field(&field));
@@ -88,42 +93,38 @@ impl Registry {
                 continue;
             }
             if field.is_list() {
-                if let Some(Type::Repeated(r)) = &rules.r#type {
-                    let validate_list = make_validate_list(m, field.clone(), r.clone());
-                    fns.push(Arc::new(move |v| {
-                        let v = v.get_field(&field).as_list().map(|v| Box::new(v.to_owned()));
-                        for f in &validate_list {
-                            let v = v.clone();
-                            if !f(v, &rules)? {
-                                break;
-                            }
+                let validate_list = make_validate_list(m, field.clone(), &rules);
+                fns.push(Arc::new(move |Args { msg, m }| {
+                    let v = msg.get_field(&field).as_list().map(|v| Box::new(v.to_owned()));
+                    for f in &validate_list {
+                        let v = v.clone();
+                        if !f(v, &rules, m)? {
+                            break;
                         }
-                        Ok(())
-                    }));
-                }
+                    }
+                    Ok(())
+                }));
                 continue;
             }
             if field.is_map() {
-                if let Some(Type::Map(r)) = &rules.r#type {
-                    let validate_map = make_validate_map(m, field.clone(), r.clone());
-                    fns.push(Arc::new(move |v| {
-                        let v = v.get_field(&field).as_map().map(|v| Box::new(v.to_owned()));
-                        for f in &validate_map {
-                            let v = v.clone();
-                            if !f(v, &rules)? {
-                                break;
-                            }
+                let validate_map = make_validate_map(m, field.clone(), &rules);
+                fns.push(Arc::new(move |Args { msg, m }| {
+                    let v = msg.get_field(&field).as_map().map(|v| Box::new(v.to_owned()));
+                    for f in &validate_map {
+                        let v = v.clone();
+                        if !f(v, &rules, m)? {
+                            break;
                         }
-                        Ok(())
-                    }))
-                }
+                    }
+                    Ok(())
+                }));
                 continue;
             }
             let validate_field = make_validate_field(m, &field, &rules);
             let field = field.clone();
-            fns.push(Arc::new(move |v| {
-                let v = v.get_field(&field);
-                validate_field(v, &rules)?;
+            fns.push(Arc::new(move |Args { msg, m }| {
+                let v = msg.get_field(&field);
+                validate_field(v, &rules, m)?;
                 Ok(())
             }));
         }
@@ -137,9 +138,12 @@ impl Registry {
     }
 
     pub(crate) fn validate(&self, msg: &DynamicMessage) -> Result<()> {
-        if let Some(f) = self.m.read().unwrap().get(msg.descriptor().full_name()) {
-            let _ = f(msg)?;
-            return Ok(());
+        {
+            let m = self.m.read().unwrap();
+            if let Some(f) = m.get(msg.descriptor().full_name()) {
+                let _ = f(&Args { msg, m: &m })?;
+                return Ok(());
+            }
         }
         {
             let mut m = self.m.write().unwrap();
@@ -148,14 +152,13 @@ impl Registry {
         }
         self.validate(msg)
     }
-}
 
-fn field_rules(field: &FieldDescriptor) -> Result<Option<Arc<FieldRules>>> {
-    let opts = field.options();
-    let rules = opts.get_extension(&VALIDATION_FIELD_RULES);
-    let rules = match rules.as_message() {
-        Some(r) => r,
-        None => return Ok(None),
-    };
-    Ok(Some(Arc::new(rules.transcode_to::<FieldRules>()?)))
+    pub(crate) fn do_validate(&self, msg: &DynamicMessage, m: &HashMap<String, ValidationFn>) -> Result<()> {
+        if let Some(f) = m.get(msg.descriptor().full_name()) {
+            let _ = f(&Args { msg, m })?;
+            Ok(())
+        } else {
+            Err(format_err!("no validator for {}", msg.descriptor().full_name()))
+        }
+    }
 }

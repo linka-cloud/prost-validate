@@ -1,19 +1,19 @@
-use crate::registry::FieldValidationFn;
-use crate::utils::{AsDuration};
+use crate::registry::NestedValidationFn;
+use crate::utils::AsDuration;
 use crate::validate_proto::field_rules::Type;
 use crate::validate_proto::{DurationRules, FieldRules};
-use anyhow::{format_err};
+use anyhow::format_err;
 use prost_reflect::{DynamicMessage, FieldDescriptor};
 use prost_types::Duration;
 use std::sync::Arc;
 use time::Duration as TimeDelta;
 
-fn push<F>(fns: &mut Vec<FieldValidationFn<Box<DynamicMessage>>>, name: Arc<String>, f: Arc<F>)
+fn push<F>(fns: &mut Vec<NestedValidationFn<Box<DynamicMessage>>>, name: Arc<String>, f: Arc<F>)
 where
     F: Fn(TimeDelta, &DurationRules, &String) -> anyhow::Result<bool> + Send + Sync + 'static,
 {
     let name = name.clone();
-    fns.push(Arc::new(move |val, rules| {
+    fns.push(Arc::new(move |val, rules, _| {
         let val = match val {
             Some(val) => val.transcode_to::<Duration>().unwrap().as_duration(),
             _ => TimeDelta::default(),
@@ -26,7 +26,7 @@ where
     }))
 }
 
-pub(crate) fn make_validate_duration(field: &FieldDescriptor, rules: &FieldRules) -> Vec<FieldValidationFn<Box<DynamicMessage>>> {
+pub(crate) fn make_validate_duration(field: &FieldDescriptor, rules: &FieldRules) -> Vec<NestedValidationFn<Box<DynamicMessage>>> {
     let mut fns = Vec::new();
     let rules = match &rules.r#type {
         Some(Type::Duration(rules)) => rules,
@@ -35,14 +35,14 @@ pub(crate) fn make_validate_duration(field: &FieldDescriptor, rules: &FieldRules
     let name = Arc::new(field.full_name().to_string());
     if rules.required() {
         let name = name.clone();
-        fns.push(Arc::new(move |val, _| {
+        fns.push(Arc::new(move |val, _, _| {
             if val.is_none() {
                 return Err(format_err!("{}: is required", name));
             }
             Ok(true)
         }));
     } else {
-        fns.push(Arc::new(move |val, _| {
+        fns.push(Arc::new(move |val, _, _| {
             Ok(val.is_some())
         }));
     }
@@ -57,7 +57,7 @@ pub(crate) fn make_validate_duration(field: &FieldDescriptor, rules: &FieldRules
     }
     // reference implementation: https://github.com/bufbuild/protoc-gen-validate/blob/v1.1.0/templates/goshared/duration.go
     if let Some(lt) = rules.lt.map(|v| v.as_duration()) {
-        if let Some(gt) = rules.gt.map(|v|v.as_duration()) {
+        if let Some(gt) = rules.gt.map(|v| v.as_duration()) {
             if lt > gt {
                 push(&mut fns, name.clone(), Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
                     let lt = rules.lt.unwrap().as_duration();
@@ -77,7 +77,7 @@ pub(crate) fn make_validate_duration(field: &FieldDescriptor, rules: &FieldRules
                     Ok(true)
                 }));
             }
-        } else if let Some(gte) = rules.gte.map(|v|v.as_duration()) {
+        } else if let Some(gte) = rules.gte.map(|v| v.as_duration()) {
             if lt > gte {
                 push(&mut fns, name.clone(), Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
                     let lt = rules.lt.unwrap().as_duration();
@@ -107,7 +107,7 @@ pub(crate) fn make_validate_duration(field: &FieldDescriptor, rules: &FieldRules
             }));
         }
     } else if let Some(lte) = rules.lte.map(|v| v.as_duration()) {
-        if let Some(gt) = rules.gt.map(|v|v.as_duration()) {
+        if let Some(gt) = rules.gt.map(|v| v.as_duration()) {
             if lte > gt {
                 push(&mut fns, name.clone(), Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
                     let lte = rules.lte.unwrap().as_duration();
@@ -127,7 +127,7 @@ pub(crate) fn make_validate_duration(field: &FieldDescriptor, rules: &FieldRules
                     Ok(true)
                 }));
             }
-        } else if let Some(gte) = rules.gte.map(|v|v.as_duration()) {
+        } else if let Some(gte) = rules.gte.map(|v| v.as_duration()) {
             if lte > gte {
                 push(&mut fns, name.clone(), Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
                     let lte = rules.lte.unwrap().as_duration();

@@ -1,7 +1,10 @@
 use std::borrow::Cow;
-use prost_reflect::Value;
+use std::sync::Arc;
+use prost_reflect::{FieldDescriptor, Value};
 use time::{Duration as TimeDelta, OffsetDateTime};
 use prost_types::{Duration, Timestamp};
+use crate::validate::VALIDATION_FIELD_RULES;
+use crate::validate_proto::FieldRules;
 
 pub(crate) trait AsDateTime {
     fn as_datetime(&self) -> OffsetDateTime;
@@ -34,4 +37,14 @@ pub(crate) fn is_set(val: &Cow<Value>) -> bool {
         Cow::Borrowed(_) => true,
         Cow::Owned(_) => false,
     }
+}
+
+pub(crate) fn get_field_rules(field: &FieldDescriptor) -> anyhow::Result<Option<Arc<FieldRules>>> {
+    let opts = field.options();
+    let rules = opts.get_extension(&VALIDATION_FIELD_RULES);
+    let rules = match rules.as_message() {
+        Some(r) => r,
+        None => return Ok(None),
+    };
+    Ok(Some(Arc::new(rules.transcode_to::<FieldRules>()?)))
 }

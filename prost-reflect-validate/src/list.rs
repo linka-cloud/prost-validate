@@ -1,8 +1,7 @@
-use crate::field::{make_validate_field};
-use crate::registry::{FieldValidationFn, ValidationFn, REGISTRY};
+use crate::field::make_validate_field;
+use crate::registry::{NestedValidationFn, ValidationFn, REGISTRY};
 use crate::validate_proto::field_rules::Type;
-use crate::validate_proto::RepeatedRules;
-use crate::ValidatorExt;
+use crate::validate_proto::{FieldRules, RepeatedRules};
 use anyhow::format_err;
 use itertools::Itertools;
 use prost_reflect::bytes::Bytes;
@@ -20,80 +19,91 @@ macro_rules! list_rules {
     };
 }
 
-fn push<F>(fns: &mut Vec<FieldValidationFn<Box<Vec<Value>>>>, name: Arc<String>, f: Arc<F>)
+fn push<F>(fns: &mut Vec<NestedValidationFn<Box<Vec<Value>>>>, name: Arc<String>, f: Arc<F>)
 where
-    F: Fn(&[Value], &RepeatedRules, &String) -> anyhow::Result<bool> + Send + Sync + 'static,
+    F: Fn(&[Value], &RepeatedRules, &String, &HashMap<String, ValidationFn>) -> anyhow::Result<bool> + Send + Sync + 'static,
 {
     let name = name.clone();
-    fns.push(Arc::new(move |val, rules| {
+    fns.push(Arc::new(move |val, rules, m| {
         let val = val.unwrap_or(Box::new(Vec::new()));
         let rules = list_rules!(rules);
-        f(&val, rules, &name)
+        f(&val, rules, &name, m)
     }))
 }
 
-pub(crate) fn make_validate_list(m: &mut HashMap<String, ValidationFn>, field: FieldDescriptor, rules: Box<RepeatedRules>) -> Vec<FieldValidationFn<Box<Vec<Value>>>> {
+pub(crate) fn make_validate_list(m: &mut HashMap<String, ValidationFn>, field: FieldDescriptor, rules: &FieldRules) -> Vec<NestedValidationFn<Box<Vec<Value>>>> {
     let mut fns = Vec::new();
     let name = Arc::new(field.full_name().to_string());
-    if rules.ignore_empty() {
-        push(&mut fns, name.clone(), Arc::new(move |vals: &[Value], _: &RepeatedRules, _: &String| {
-            Ok(!vals.is_empty())
-        }));
-    }
-    if let Some(_) = rules.min_items {
-        push(&mut fns, name.clone(), Arc::new(move |vals: &[Value], rules: &RepeatedRules, name: &String| {
-            let v = rules.min_items.unwrap();
-            if vals.len() < v as usize {
-                return Err(format_err!("{}: must have at least {} items", name, v));
-            }
-            Ok(true)
-        }));
-    }
-    if let Some(_) = rules.max_items {
-        push(&mut fns, name.clone(), Arc::new(move |vals: &[Value], rules: &RepeatedRules, name: &String| {
-            let v = rules.max_items.unwrap();
-            if vals.len() > v as usize {
-                return Err(format_err!("{}: must have at most {} items", name, v));
-            }
-            Ok(true)
-        }));
-    }
-    if rules.unique.unwrap_or(false) {
-        let field = field.clone();
-        push(&mut fns, name.clone(), Arc::new(move |vals: &[Value], _: &RepeatedRules, name: &String| {
-            if let Some(v) = unique_count(vals, &field) {
-                if vals.len() != v {
-                    return Err(format_err!("{}: must have unique values", name));
-                }
-            }
-            Ok(true)
-        }));
-    }
-    if let Some(rules) = rules.items {
-        let validate = make_validate_field(m, &field, &rules);
-        push(&mut fns, name.clone(), Arc::new(move |vals: &[Value], rules: &RepeatedRules, _: &String| {
-            let rules = rules.items.as_ref().unwrap();
-            for val in vals {
-                if !validate(Cow::Borrowed(val), rules)? {
-                    return Ok(false);
-                }
-            }
-            Ok(true)
-        }));
-    }
-    if let Kind::Message(desc) = field.kind() {
-        if REGISTRY.register(m, &desc).is_err() {
-            return fns;
+    if let Some(Type::Repeated(rules)) = &rules.r#type {
+        if rules.ignore_empty() {
+            push(&mut fns, name.clone(), Arc::new(move |vals: &[Value], _: &RepeatedRules, _: &String, _: &HashMap<String, ValidationFn>| {
+                Ok(!vals.is_empty())
+            }));
         }
-        push(&mut fns, name.clone(), Arc::new(move |vals: &[Value], _: &RepeatedRules, _: &String| {
-            for val in vals {
-                match val.as_message().map(|v| v.validate()) {
-                    Some(Err(err)) => return Err(err),
-                    _ => {}
+        if let Some(_) = rules.min_items {
+            push(&mut fns, name.clone(), Arc::new(move |vals: &[Value], rules: &RepeatedRules, name: &String, _: &HashMap<String, ValidationFn>| {
+                let v = rules.min_items.unwrap();
+                if vals.len() < v as usize {
+                    return Err(format_err!("{}: must have at least {} items", name, v));
                 }
+                Ok(true)
+            }));
+        }
+        if let Some(_) = rules.max_items {
+            push(&mut fns, name.clone(), Arc::new(move |vals: &[Value], rules: &RepeatedRules, name: &String, _: &HashMap<String, ValidationFn>| {
+                let v = rules.max_items.unwrap();
+                if vals.len() > v as usize {
+                    return Err(format_err!("{}: must have at most {} items", name, v));
+                }
+                Ok(true)
+            }));
+        }
+        if rules.unique.unwrap_or(false) {
+            let field = field.clone();
+            push(&mut fns, name.clone(), Arc::new(move |vals: &[Value], _: &RepeatedRules, name: &String, _: &HashMap<String, ValidationFn>| {
+                if let Some(v) = unique_count(vals, &field) {
+                    if vals.len() != v {
+                        return Err(format_err!("{}: must have unique values", name));
+                    }
+                }
+                Ok(true)
+            }));
+        }
+        if let Some(ref rules) = rules.items {
+            if rules.message.map(|v| v.skip()).unwrap_or(false) {
+                return fns;
             }
-            Ok(true)
-        }));
+            let validate = make_validate_field(m, &field, rules);
+            push(&mut fns, name.clone(), Arc::new(move |vals: &[Value], rules: &RepeatedRules, _: &String, m: &HashMap<String, ValidationFn>| {
+                let rules = rules.items.as_ref().unwrap();
+                for val in vals {
+                    if !validate(Cow::Borrowed(val), rules, m)? {
+                        return Ok(false);
+                    }
+                }
+                Ok(true)
+            }));
+        }
+    }
+
+    match &field.kind() {
+        Kind::Message(ref desc) => {
+            if REGISTRY.register(m, &desc).is_err() {
+                return fns;
+            }
+            fns.push(Arc::new(move |vals, _, m| {
+                if let Some(vals) = vals {
+                    for val in vals.iter() {
+                        match val.as_message().map(|v| REGISTRY.do_validate(v, m)) {
+                            Some(Err(err)) => return Err(err),
+                            _ => {}
+                        }
+                    }
+                }
+                Ok(true)
+            }));
+        },
+        _ => {},
     }
     fns
 }
