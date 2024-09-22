@@ -1,6 +1,7 @@
 # prost-validate
 
-A protobuf library extending prost and prost-reflect with validation support.
+A protobuf library extending [prost](https://github.com/tokio-rs/prost)
+and [prost-reflect](https://github.com/andrewhickman/prost-reflect) with validation support.
 
 This a rust implementation [protoc-gen-validate](https://github.com/bufbuild/protoc-gen-validate).
 
@@ -10,6 +11,9 @@ It currently supports validation using reflection.
 
 It must be used with [prost](https://github.com/tokio-rs/prost) 
 and [prost-reflect](https://github.com/andrewhickman/prost-reflect) generated code.
+
+All validation rules are documented in the [proto file](prost-reflect-validate/proto/validate/validate.proto) 
+or in the [protoc-gen-validate](https://github.com/bufbuild/protoc-gen-validate/blob/v1.1.0/README.md#constraint-rules) documentation.
 
 **Proto definition**
 
