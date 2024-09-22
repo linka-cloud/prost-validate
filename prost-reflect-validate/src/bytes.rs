@@ -9,13 +9,13 @@ use regex::bytes::Regex;
 use std::ops::Deref;
 use std::sync::Arc;
 
-fn push<F>(fns: &mut Vec<FieldValidationFn<Arc<Bytes>>>, name: &Arc<String>, f: Arc<F>)
+fn push<F>(fns: &mut Vec<FieldValidationFn<Box<Bytes>>>, name: &Arc<String>, f: Box<F>)
 where
     F: Fn(&Bytes, &BytesRules, &String) -> anyhow::Result<bool> + Send + Sync + 'static,
 {
     let name = name.clone();
-    fns.push(Arc::new(move |val, rules| {
-        let default = Arc::new(Bytes::default());
+    fns.push(Box::new(move |val, rules| {
+        let default = Box::new(Bytes::default());
         let val = val.unwrap_or(default);
         let rules = match &rules.r#type {
             Some(Type::Bytes(rules)) => rules,
@@ -28,7 +28,7 @@ where
 pub(crate) fn make_validate_bytes(
     field: &FieldDescriptor,
     rules: &FieldRules,
-) -> Vec<FieldValidationFn<Arc<Bytes>>> {
+) -> Vec<FieldValidationFn<Box<Bytes>>> {
     let mut fns = Vec::new();
     if !matches!(rules.r#type, Some(Type::Bytes(_))) {
         return fns;
@@ -42,14 +42,14 @@ pub(crate) fn make_validate_bytes(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: &Bytes, _: &BytesRules, _: &String| Ok(!val.is_empty())),
+            Box::new(move |val: &Bytes, _: &BytesRules, _: &String| Ok(!val.is_empty())),
         );
     }
     if rules.r#const.is_some() {
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
+            Box::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
                 if val != rules.r#const() {
                     return Err(format_err!("{}: must be {:?}", name, rules.r#const()));
                 }
@@ -61,7 +61,7 @@ pub(crate) fn make_validate_bytes(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
+            Box::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
                 if val.len() != rules.len() as usize {
                     return Err(format_err!(
                         "{}: must be {} characters long",
@@ -77,7 +77,7 @@ pub(crate) fn make_validate_bytes(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
+            Box::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
                 if val.len() < rules.min_len() as usize {
                     return Err(format_err!(
                         "{}: must be minimum {} characters long",
@@ -93,7 +93,7 @@ pub(crate) fn make_validate_bytes(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
+            Box::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
                 if val.len() > rules.max_len() as usize {
                     return Err(format_err!(
                         "{}: must be maximum {} characters long",
@@ -109,7 +109,7 @@ pub(crate) fn make_validate_bytes(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
+            Box::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
                 let regex = Regex::new(rules.pattern())?;
                 if !regex.is_match(val.iter().as_slice()) {
                     return Err(format_err!("{}: must matches {}", name, rules.pattern()));
@@ -122,7 +122,7 @@ pub(crate) fn make_validate_bytes(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
+            Box::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
                 if !val.starts_with(rules.prefix()) {
                     return Err(format_err!(
                         "{}: must have prefix {:?}",
@@ -138,7 +138,7 @@ pub(crate) fn make_validate_bytes(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
+            Box::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
                 if !val.ends_with(rules.suffix()) {
                     return Err(format_err!(
                         "{}: must have suffix {:?}",
@@ -154,7 +154,7 @@ pub(crate) fn make_validate_bytes(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
+            Box::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
                 let v = Bytes::from(rules.contains().to_vec());
                 if !contains_slice(val, &v) {
                     return Err(format_err!("{}: must contains {:?}", name, v));
@@ -167,7 +167,7 @@ pub(crate) fn make_validate_bytes(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
+            Box::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
                 if !rules.r#in.contains(&val.deref().into()) {
                     return Err(format_err!("{}: must be in {:?}", name, rules.r#in));
                 }
@@ -179,7 +179,7 @@ pub(crate) fn make_validate_bytes(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
+            Box::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
                 if rules.not_in.contains(&val.deref().into()) {
                     return Err(format_err!("{}: must not be in {:?}", name, rules.not_in));
                 }
@@ -197,7 +197,7 @@ pub(crate) fn make_validate_bytes(
                 push(
                     &mut fns,
                     &name,
-                    Arc::new(move |val: &Bytes, _: &BytesRules, name: &String| {
+                    Box::new(move |val: &Bytes, _: &BytesRules, name: &String| {
                         if val.len() != 16 && val.len() != 4 {
                             return Err(format_err!("{}: must be a valid ip", name));
                         }
@@ -211,7 +211,7 @@ pub(crate) fn make_validate_bytes(
                 push(
                     &mut fns,
                     &name,
-                    Arc::new(move |val: &Bytes, _: &BytesRules, name: &String| {
+                    Box::new(move |val: &Bytes, _: &BytesRules, name: &String| {
                         if val.len() != 4 {
                             return Err(format_err!("{}: must be a valid ipv4", name));
                         }
@@ -225,7 +225,7 @@ pub(crate) fn make_validate_bytes(
                 push(
                     &mut fns,
                     &name,
-                    Arc::new(move |val: &Bytes, _: &BytesRules, name: &String| {
+                    Box::new(move |val: &Bytes, _: &BytesRules, name: &String| {
                         if val.len() != 16 {
                             return Err(format_err!("{}: must be a valid ipv6", name));
                         }

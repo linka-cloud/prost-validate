@@ -6,6 +6,29 @@ pub struct TestCase {
     pub failures: i32,
 }
 
+#[cfg(test)]
+mod concurrent {
+    use std::sync::Arc;
+    use tokio::task::JoinSet;
+    use prost_reflect_validate::ValidatorExt;
+    use crate::proto::cases::StringConst;
+
+    #[tokio::test]
+    async fn concurrent() {
+        let msg = Arc::new(StringConst {
+            val: "foo".to_string()
+        });
+        let mut set = JoinSet::new();
+        for _ in 0..10 {
+            let msg = msg.clone();
+            set.spawn(async move {
+                msg.validate()
+            });
+        }
+        set.join_all().await;
+    }
+}
+
 #[allow(unused)]
 macro_rules! test_cases {
     ($($name:ident,)*) => {

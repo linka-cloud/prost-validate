@@ -19,8 +19,8 @@ pub(crate) struct Args<'a> {
 
 pub(crate) type ValidationFn = Arc<dyn Fn(&Args) -> Result<()> + Send + Sync>;
 pub(crate) type FieldValidationFn<T> =
-    Arc<dyn Fn(Option<T>, &FieldRules) -> Result<bool> + Send + Sync>;
-pub(crate) type NestedValidationFn<T> = Arc<
+    Box<dyn Fn(Option<T>, &FieldRules) -> Result<bool> + Send + Sync>;
+pub(crate) type NestedValidationFn<T> = Box<
     dyn Fn(Option<T>, &FieldRules, &HashMap<String, ValidationFn>) -> Result<bool> + Send + Sync,
 >;
 

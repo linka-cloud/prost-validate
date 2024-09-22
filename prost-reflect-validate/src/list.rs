@@ -19,7 +19,7 @@ macro_rules! list_rules {
     };
 }
 
-fn push<F>(fns: &mut Vec<NestedValidationFn<Vec<Value>>>, name: &Arc<String>, f: Arc<F>)
+fn push<F>(fns: &mut Vec<NestedValidationFn<Vec<Value>>>, name: &Arc<String>, f: Box<F>)
 where
     F: Fn(
             &[Value],
@@ -32,7 +32,7 @@ where
         + 'static,
 {
     let name = name.clone();
-    fns.push(Arc::new(move |val, rules, m| {
+    fns.push(Box::new(move |val, rules, m| {
         let val = val.unwrap_or_default();
         let rules = list_rules!(rules);
         f(&val, rules, &name, m)
@@ -52,7 +52,7 @@ pub(crate) fn make_validate_list(
             push(
                 &mut fns,
                 &name,
-                Arc::new(
+                Box::new(
                     move |vals: &[Value],
                           _: &RepeatedRules,
                           _: &String,
@@ -66,7 +66,7 @@ pub(crate) fn make_validate_list(
             push(
                 &mut fns,
                 &name,
-                Arc::new(
+                Box::new(
                     move |vals: &[Value],
                           rules: &RepeatedRules,
                           name: &String,
@@ -84,7 +84,7 @@ pub(crate) fn make_validate_list(
             push(
                 &mut fns,
                 &name,
-                Arc::new(
+                Box::new(
                     move |vals: &[Value],
                           rules: &RepeatedRules,
                           name: &String,
@@ -103,7 +103,7 @@ pub(crate) fn make_validate_list(
             push(
                 &mut fns,
                 &name,
-                Arc::new(
+                Box::new(
                     move |vals: &[Value],
                           _: &RepeatedRules,
                           name: &String,
@@ -126,7 +126,7 @@ pub(crate) fn make_validate_list(
             push(
                 &mut fns,
                 &name,
-                Arc::new(
+                Box::new(
                     move |vals: &[Value],
                           rules: &RepeatedRules,
                           _: &String,
@@ -148,7 +148,7 @@ pub(crate) fn make_validate_list(
         if REGISTRY.register(m, desc).is_err() {
             return fns;
         }
-        fns.push(Arc::new(move |vals, _, m| {
+        fns.push(Box::new(move |vals, _, m| {
             if let Some(vals) = vals {
                 for val in vals.iter() {
                     if let Some(Err(err)) = val.as_message().map(|v| REGISTRY.do_validate(v, m)) {

@@ -14,12 +14,12 @@ macro_rules! enum_rules {
     };
 }
 
-fn push<F>(fns: &mut Vec<FieldValidationFn<i32>>, name: &Arc<String>, f: Arc<F>)
+fn push<F>(fns: &mut Vec<FieldValidationFn<i32>>, name: &Arc<String>, f: Box<F>)
 where
     F: Fn(i32, &EnumRules, &String) -> Result<bool> + Send + Sync + 'static,
 {
     let name = name.clone();
-    fns.push(Arc::new(move |val, rules| {
+    fns.push(Box::new(move |val, rules| {
         let val = val.unwrap_or(0);
         let rules = enum_rules!(rules);
         f(val, rules, &name)
@@ -47,7 +47,7 @@ pub(crate) fn make_validate_enum(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: i32, _: &EnumRules, name: &String| {
+            Box::new(move |val: i32, _: &EnumRules, name: &String| {
                 if val != v {
                     return Err(format_err!("{}: must be {}", name, v));
                 }
@@ -59,7 +59,7 @@ pub(crate) fn make_validate_enum(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: i32, rules: &EnumRules, name: &String| {
+            Box::new(move |val: i32, rules: &EnumRules, name: &String| {
                 if !rules.r#in.contains(&val) {
                     return Err(format_err!("{}: must be in {:?}", name, rules.r#in));
                 }
@@ -71,7 +71,7 @@ pub(crate) fn make_validate_enum(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: i32, rules: &EnumRules, name: &String| {
+            Box::new(move |val: i32, rules: &EnumRules, name: &String| {
                 if rules.not_in.contains(&val) {
                     return Err(format_err!("{}: must not be in {:?}", name, rules.not_in));
                 }
@@ -83,7 +83,7 @@ pub(crate) fn make_validate_enum(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: i32, _: &EnumRules, name: &String| {
+            Box::new(move |val: i32, _: &EnumRules, name: &String| {
                 if desc.get_value(val).is_none() {
                     return Err(format_err!("{}: must be a defined enumeration value", name));
                 }

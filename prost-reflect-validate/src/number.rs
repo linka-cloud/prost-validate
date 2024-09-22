@@ -30,14 +30,14 @@ macro_rules! make_validate_number {
                 _ => return fns,
             };
             if rules.ignore_empty() {
-                fns.push(Arc::new(|val, _| {
+                fns.push(Box::new(|val, _| {
                     Ok(val.is_some() && val.unwrap() != $default)
                 }))
             }
             let name = Arc::new(field.full_name().to_string());
             if let Some(_) = rules.r#const {
                 let name = name.clone();
-                fns.push(Arc::new(move |val, rules| {
+                fns.push(Box::new(move |val, rules| {
                     let val = val.unwrap_or($default);
                     let v = number_rules!(rules, $enum_value).r#const.unwrap();
                     if val != v {
@@ -51,7 +51,7 @@ macro_rules! make_validate_number {
                 let name = name.clone();
                 if let Some(gt) = rules.gt {
                     if lt > gt {
-                        fns.push(Arc::new(move |val, _| {
+                        fns.push(Box::new(move |val, _| {
                             let val = val.unwrap_or($default);
                             if val <= gt || val >= lt {
                                 return Err(format_err!(
@@ -64,7 +64,7 @@ macro_rules! make_validate_number {
                             Ok(true)
                         }));
                     } else {
-                        fns.push(Arc::new(move |val, _| {
+                        fns.push(Box::new(move |val, _| {
                             let val = val.unwrap_or($default);
                             if val >= lt && val <= gt {
                                 return Err(format_err!(
@@ -79,7 +79,7 @@ macro_rules! make_validate_number {
                     }
                 } else if let Some(gte) = rules.gte {
                     if lt > gte {
-                        fns.push(Arc::new(move |val, _| {
+                        fns.push(Box::new(move |val, _| {
                             let val = val.unwrap_or($default);
                             if val < gte || val >= lt {
                                 return Err(format_err!(
@@ -92,7 +92,7 @@ macro_rules! make_validate_number {
                             Ok(true)
                         }));
                     } else {
-                        fns.push(Arc::new(move |val, _| {
+                        fns.push(Box::new(move |val, _| {
                             let val = val.unwrap_or($default);
                             if val >= lt && val < gte {
                                 return Err(format_err!(
@@ -106,7 +106,7 @@ macro_rules! make_validate_number {
                         }));
                     }
                 } else {
-                    fns.push(Arc::new(move |val, _| {
+                    fns.push(Box::new(move |val, _| {
                         let val = val.unwrap_or($default);
                         if val >= lt {
                             return Err(format_err!("{}: must be less than {}", name, lt));
@@ -118,7 +118,7 @@ macro_rules! make_validate_number {
                 let name = name.clone();
                 if let Some(gt) = rules.gt {
                     if lte > gt {
-                        fns.push(Arc::new(move |val, _| {
+                        fns.push(Box::new(move |val, _| {
                             let val = val.unwrap_or($default);
                             if val <= gt || val > lte {
                                 return Err(format_err!(
@@ -131,7 +131,7 @@ macro_rules! make_validate_number {
                             Ok(true)
                         }));
                     } else {
-                        fns.push(Arc::new(move |val, _| {
+                        fns.push(Box::new(move |val, _| {
                             let val = val.unwrap_or($default);
                             if val > lte && val <= gt {
                                 return Err(format_err!(
@@ -146,7 +146,7 @@ macro_rules! make_validate_number {
                     }
                 } else if let Some(gte) = rules.gte {
                     if lte > gte {
-                        fns.push(Arc::new(move |val, _| {
+                        fns.push(Box::new(move |val, _| {
                             let val = val.unwrap_or($default);
                             if val < gte || val > lte {
                                 return Err(format_err!(
@@ -159,7 +159,7 @@ macro_rules! make_validate_number {
                             Ok(true)
                         }));
                     } else {
-                        fns.push(Arc::new(move |val, _| {
+                        fns.push(Box::new(move |val, _| {
                             let val = val.unwrap_or($default);
                             if val > lte && val < gte {
                                 return Err(format_err!(
@@ -173,7 +173,7 @@ macro_rules! make_validate_number {
                         }));
                     }
                 } else {
-                    fns.push(Arc::new(move |val, _| {
+                    fns.push(Box::new(move |val, _| {
                         let val = val.unwrap_or($default);
                         if val > lte {
                             return Err(format_err!("{}: must be less or equal to {}", name, lte));
@@ -183,7 +183,7 @@ macro_rules! make_validate_number {
                 }
             } else if let Some(gt) = rules.gt {
                 let name = name.clone();
-                fns.push(Arc::new(move |val, _| {
+                fns.push(Box::new(move |val, _| {
                     let val = val.unwrap_or($default);
                     if val <= gt {
                         return Err(format_err!("{}: must be greater than {}", name, gt));
@@ -192,7 +192,7 @@ macro_rules! make_validate_number {
                 }));
             } else if let Some(gte) = rules.gte {
                 let name = name.clone();
-                fns.push(Arc::new(move |val, _| {
+                fns.push(Box::new(move |val, _| {
                     let val = val.unwrap_or($default);
                     if val < gte {
                         return Err(format_err!("{}: must be greater or equal to {}", name, gte));
@@ -203,7 +203,7 @@ macro_rules! make_validate_number {
 
             if !rules.r#in.is_empty() {
                 let name = name.clone();
-                fns.push(Arc::new(move |val, rules| {
+                fns.push(Box::new(move |val, rules| {
                     let val = val.unwrap_or($default);
                     let rules = number_rules!(rules, $enum_value);
                     if !rules.r#in.contains(&val) {
@@ -214,7 +214,7 @@ macro_rules! make_validate_number {
             }
             if !rules.not_in.is_empty() {
                 let name = name.clone();
-                fns.push(Arc::new(move |val, rules| {
+                fns.push(Box::new(move |val, rules| {
                     let val = val.unwrap_or($default);
                     let rules = number_rules!(rules, $enum_value);
                     if rules.not_in.contains(&val) {

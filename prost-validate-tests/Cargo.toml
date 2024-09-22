@@ -24,6 +24,7 @@ time = { workspace = true }
 
 [dev-dependencies]
 criterion = { workspace = true }
+tokio = { workspace = true }
 
 [build-dependencies]
 prost-reflect-build = { workspace = true }

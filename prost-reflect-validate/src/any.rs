@@ -15,12 +15,12 @@ macro_rules! any_rules {
     };
 }
 
-fn push<F>(fns: &mut Vec<NestedValidationFn<Box<DynamicMessage>>>, name: &Arc<String>, f: Arc<F>)
+fn push<F>(fns: &mut Vec<NestedValidationFn<Box<DynamicMessage>>>, name: &Arc<String>, f: Box<F>)
 where
     F: Fn(&Any, &AnyRules, &String) -> anyhow::Result<bool> + Send + Sync + 'static,
 {
     let name = name.clone();
-    fns.push(Arc::new(move |val, rules, _| {
+    fns.push(Box::new(move |val, rules, _| {
         let val = match val {
             Some(v) => v.transcode_to::<Any>()?,
             None => Any::default(),
@@ -45,20 +45,20 @@ pub(crate) fn make_validate_any(
     let name = Arc::new(field.full_name().to_string());
     if rules.required() {
         let name = name.clone();
-        fns.push(Arc::new(move |val, _, _| {
+        fns.push(Box::new(move |val, _, _| {
             if val.is_none() {
                 return Err(format_err!("{}: is required", name));
             }
             Ok(true)
         }));
     } else {
-        fns.push(Arc::new(move |val, _, _| Ok(val.is_some())));
+        fns.push(Box::new(move |val, _, _| Ok(val.is_some())));
     }
     if !rules.r#in.is_empty() {
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: &Any, rules: &AnyRules, name: &String| {
+            Box::new(move |val: &Any, rules: &AnyRules, name: &String| {
                 if !rules.r#in.contains(&val.type_url) {
                     return Err(format_err!("{}: must be in {:?}", name, rules.r#in));
                 }
@@ -70,7 +70,7 @@ pub(crate) fn make_validate_any(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: &Any, rules: &AnyRules, name: &String| {
+            Box::new(move |val: &Any, rules: &AnyRules, name: &String| {
                 if rules.not_in.contains(&val.type_url) {
                     return Err(format_err!("{}: must not be in {:?}", name, rules.not_in));
                 }

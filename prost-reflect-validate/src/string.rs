@@ -112,12 +112,12 @@ macro_rules! string_rules {
     };
 }
 
-fn push<F>(fns: &mut Vec<FieldValidationFn<String>>, name: &Arc<String>, f: Arc<F>)
+fn push<F>(fns: &mut Vec<FieldValidationFn<String>>, name: &Arc<String>, f: Box<F>)
 where
     F: Fn(String, &StringRules, &String) -> anyhow::Result<bool> + Send + Sync + 'static,
 {
     let name = name.clone();
-    fns.push(Arc::new(move |val, rules| {
+    fns.push(Box::new(move |val, rules| {
         let val = val.unwrap_or("".to_string());
         let rules = string_rules!(rules);
         f(val, rules, &name)
@@ -137,7 +137,7 @@ pub(crate) fn make_validate_string(
         _ => return fns,
     };
     if rules.ignore_empty() {
-        fns.push(Arc::new(|val, _| {
+        fns.push(Box::new(|val, _| {
             Ok(val.map(|v| !v.is_empty()).unwrap_or(false))
         }));
     }
@@ -146,7 +146,7 @@ pub(crate) fn make_validate_string(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: String, rules: &StringRules, name: &String| {
+            Box::new(move |val: String, rules: &StringRules, name: &String| {
                 let v = rules.r#const();
                 if val != v {
                     return Err(format_err!("{}: must be {}", name, v));
@@ -159,7 +159,7 @@ pub(crate) fn make_validate_string(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: String, rules: &StringRules, name: &String| {
+            Box::new(move |val: String, rules: &StringRules, name: &String| {
                 let v = rules.len();
                 if val.chars().count() != v as usize {
                     return Err(format_err!("{}: must be {} characters long", name, v));
@@ -172,7 +172,7 @@ pub(crate) fn make_validate_string(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: String, rules: &StringRules, name: &String| {
+            Box::new(move |val: String, rules: &StringRules, name: &String| {
                 let v = rules.min_len();
                 if val.chars().count() < v as usize {
                     return Err(format_err!(
@@ -189,7 +189,7 @@ pub(crate) fn make_validate_string(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: String, rules: &StringRules, name: &String| {
+            Box::new(move |val: String, rules: &StringRules, name: &String| {
                 let v = rules.max_len();
                 if val.chars().count() > v as usize {
                     return Err(format_err!(
@@ -206,7 +206,7 @@ pub(crate) fn make_validate_string(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: String, rules: &StringRules, name: &String| {
+            Box::new(move |val: String, rules: &StringRules, name: &String| {
                 let v = rules.len_bytes();
                 if val.len() != v as usize {
                     return Err(format_err!("{}: must be {} characters long", name, v));
@@ -219,7 +219,7 @@ pub(crate) fn make_validate_string(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: String, rules: &StringRules, name: &String| {
+            Box::new(move |val: String, rules: &StringRules, name: &String| {
                 let v = rules.min_bytes();
                 if val.len() < v as usize {
                     return Err(format_err!("{}: must be minimum {} bytes long", name, v));
@@ -232,7 +232,7 @@ pub(crate) fn make_validate_string(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: String, rules: &StringRules, name: &String| {
+            Box::new(move |val: String, rules: &StringRules, name: &String| {
                 let v = rules.max_bytes();
                 if val.len() > v as usize {
                     return Err(format_err!("{}: must be maximum {} bytes long", name, v));
@@ -246,7 +246,7 @@ pub(crate) fn make_validate_string(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: String, rules: &StringRules, name: &String| {
+            Box::new(move |val: String, rules: &StringRules, name: &String| {
                 let v = rules.pattern();
                 let regex = match &regex {
                     Ok(r) => r,
@@ -265,7 +265,7 @@ pub(crate) fn make_validate_string(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: String, rules: &StringRules, name: &String| {
+            Box::new(move |val: String, rules: &StringRules, name: &String| {
                 let v = rules.prefix();
                 if !val.as_str().starts_with(v) {
                     return Err(format_err!("{}: must have prefix {}", name, v));
@@ -278,7 +278,7 @@ pub(crate) fn make_validate_string(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: String, rules: &StringRules, name: &String| {
+            Box::new(move |val: String, rules: &StringRules, name: &String| {
                 let v = rules.suffix();
                 if !val.as_str().ends_with(v) {
                     return Err(format_err!("{}: must have suffix {}", name, v));
@@ -291,7 +291,7 @@ pub(crate) fn make_validate_string(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: String, rules: &StringRules, name: &String| {
+            Box::new(move |val: String, rules: &StringRules, name: &String| {
                 let v = rules.contains();
                 if !val.contains(v) {
                     return Err(format_err!("{}: must contains {}", name, v));
@@ -304,7 +304,7 @@ pub(crate) fn make_validate_string(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: String, rules: &StringRules, name: &String| {
+            Box::new(move |val: String, rules: &StringRules, name: &String| {
                 let v = rules.not_contains();
                 if val.contains(v) {
                     return Err(format_err!("{}: must not contains {}", name, v));
@@ -317,7 +317,7 @@ pub(crate) fn make_validate_string(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: String, rules: &StringRules, name: &String| {
+            Box::new(move |val: String, rules: &StringRules, name: &String| {
                 let v = rules.r#in.deref();
                 if !v.contains(&val.to_string()) {
                     return Err(format_err!("{}: must be in {:?}", name, v));
@@ -330,7 +330,7 @@ pub(crate) fn make_validate_string(
         push(
             &mut fns,
             &name,
-            Arc::new(move |val: String, rules: &StringRules, name: &String| {
+            Box::new(move |val: String, rules: &StringRules, name: &String| {
                 let v = rules.not_in.deref();
                 if v.contains(&val.to_string()) {
                     return Err(format_err!("{}: must not be in {:?}", name, v));
@@ -347,7 +347,7 @@ pub(crate) fn make_validate_string(
     match rules.well_known.unwrap() {
         WellKnown::Email(v) => {
             if v {
-                fns.push(Arc::new(move |val, _| {
+                fns.push(Box::new(move |val, _| {
                     let val = val.unwrap_or("".to_string());
                     if let Err(err) = validate_email(val.as_str()) {
                         return Err(format_err!("{}: {}", name, err));
@@ -358,7 +358,7 @@ pub(crate) fn make_validate_string(
         }
         WellKnown::Hostname(v) => {
             if v {
-                fns.push(Arc::new(move |val, _| {
+                fns.push(Box::new(move |val, _| {
                     let val = val.unwrap_or("".to_string());
                     if let Err(err) = validate_hostname(val.as_str()) {
                         return Err(format_err!("{}: {}", name, err));
@@ -369,7 +369,7 @@ pub(crate) fn make_validate_string(
         }
         WellKnown::Ip(v) => {
             if v {
-                fns.push(Arc::new(move |val, _| {
+                fns.push(Box::new(move |val, _| {
                     let val = val.unwrap_or("".to_string());
                     if !val.validate_ip() {
                         return Err(format_err!("{}: must be a valid ip", name));
@@ -380,7 +380,7 @@ pub(crate) fn make_validate_string(
         }
         WellKnown::Ipv4(v) => {
             if v {
-                fns.push(Arc::new(move |val, _| {
+                fns.push(Box::new(move |val, _| {
                     let val = val.unwrap_or("".to_string());
                     if !val.validate_ipv4() {
                         return Err(format_err!("{}: must be a valid ipv4", name));
@@ -391,7 +391,7 @@ pub(crate) fn make_validate_string(
         }
         WellKnown::Ipv6(v) => {
             if v {
-                fns.push(Arc::new(move |val, _| {
+                fns.push(Box::new(move |val, _| {
                     let val = val.unwrap_or("".to_string());
                     if !val.validate_ipv6() {
                         return Err(format_err!("{}: must be a valid ipv6", name));
@@ -402,7 +402,7 @@ pub(crate) fn make_validate_string(
         }
         WellKnown::Uri(v) => {
             if v {
-                fns.push(Arc::new(move |val, _| {
+                fns.push(Box::new(move |val, _| {
                     let val = val.unwrap_or("".to_string());
                     if !validate_uri(val.as_str()) {
                         return Err(format_err!("{}: must be a valid absolute URI", name));
@@ -413,7 +413,7 @@ pub(crate) fn make_validate_string(
         }
         WellKnown::UriRef(v) => {
             if v {
-                fns.push(Arc::new(move |val, _| {
+                fns.push(Box::new(move |val, _| {
                     let val = val.unwrap_or("".to_string());
                     if !validate_uri_ref(val.as_str()) {
                         return Err(format_err!("{}: must be a valid URI", name));
@@ -424,7 +424,7 @@ pub(crate) fn make_validate_string(
         }
         WellKnown::Address(v) => {
             if v {
-                fns.push(Arc::new(move |val, _| {
+                fns.push(Box::new(move |val, _| {
                     let val = val.unwrap_or("".to_string());
                     if val.validate_ip() {
                         return Ok(true);
@@ -441,7 +441,7 @@ pub(crate) fn make_validate_string(
         }
         WellKnown::Uuid(v) => {
             if v {
-                fns.push(Arc::new(move |val, _| {
+                fns.push(Box::new(move |val, _| {
                     let val = val.unwrap_or("".to_string());
                     if !UUID_RE.is_match(val.as_str()) {
                         return Err(format_err!("{}: must be a valid uuid", name));
@@ -452,7 +452,7 @@ pub(crate) fn make_validate_string(
         }
         WellKnown::WellKnownRegex(v) => match KnownRegex::try_from(v) {
             Ok(KnownRegex::HttpHeaderName) => {
-                fns.push(Arc::new(move |val, _| {
+                fns.push(Box::new(move |val, _| {
                     let val = val.unwrap_or("".to_string());
                     let mut regex = &HEADER_NAME_RE;
                     if !strict {
@@ -468,7 +468,7 @@ pub(crate) fn make_validate_string(
                 }));
             }
             Ok(KnownRegex::HttpHeaderValue) => {
-                fns.push(Arc::new(move |val, _| {
+                fns.push(Box::new(move |val, _| {
                     let val = val.unwrap_or("".to_string());
                     let mut regex = &HEADER_VALUE_RE;
                     if !strict {

@@ -3,7 +3,6 @@ use crate::validate_proto::field_rules::Type;
 use crate::validate_proto::FieldRules;
 use anyhow::format_err;
 use prost_reflect::FieldDescriptor;
-use std::sync::Arc;
 
 pub(crate) fn make_validate_bool(
     field: &FieldDescriptor,
@@ -19,7 +18,7 @@ pub(crate) fn make_validate_bool(
     };
     if let Some(v) = rules.r#const {
         let name = field.full_name().to_string();
-        fns.push(Arc::new(move |val, _| {
+        fns.push(Box::new(move |val, _| {
             let val = val.unwrap_or(false);
             if val != v {
                 return Err(format_err!("{}: must be {}", name, v));

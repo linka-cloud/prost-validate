@@ -8,7 +8,7 @@ use prost_types::Timestamp;
 use std::sync::Arc;
 use time::OffsetDateTime;
 
-fn push<F>(fns: &mut Vec<NestedValidationFn<Box<DynamicMessage>>>, name: &Arc<String>, f: Arc<F>)
+fn push<F>(fns: &mut Vec<NestedValidationFn<Box<DynamicMessage>>>, name: &Arc<String>, f: Box<F>)
 where
     F: Fn(&OffsetDateTime, &TimestampRules, &String) -> anyhow::Result<bool>
         + Send
@@ -16,7 +16,7 @@ where
         + 'static,
 {
     let name = name.clone();
-    fns.push(Arc::new(move |val, rules, _| {
+    fns.push(Box::new(move |val, rules, _| {
         let val = match val.map(|v| v.transcode_to::<Timestamp>()) {
             Some(Ok(val)) => val.as_datetime(),
             #[allow(clippy::unwrap_used)]
@@ -43,20 +43,20 @@ pub(crate) fn make_validate_timestamp(
     let name = Arc::new(field.full_name().to_string());
     if rules.required() {
         let name = name.clone();
-        fns.push(Arc::new(move |val, _, _| {
+        fns.push(Box::new(move |val, _, _| {
             if val.is_none() {
                 return Err(format_err!("{}: is required", name));
             }
             Ok(true)
         }));
     } else {
-        fns.push(Arc::new(move |val, _, _| Ok(val.is_some())));
+        fns.push(Box::new(move |val, _, _| Ok(val.is_some())));
     }
     if rules.r#const.is_some() {
         push(
             &mut fns,
             &name,
-            Arc::new(
+            Box::new(
                 move |val: &OffsetDateTime, rules: &TimestampRules, name: &String| {
                     let want = rules.r#const.unwrap().as_datetime();
                     if *val != want {
@@ -74,7 +74,7 @@ pub(crate) fn make_validate_timestamp(
                 push(
                     &mut fns,
                     &name,
-                    Arc::new(
+                    Box::new(
                         move |val: &OffsetDateTime, rules: &TimestampRules, name: &String| {
                             let lt = rules.lt.unwrap().as_datetime();
                             let gt = rules.gt.unwrap().as_datetime();
@@ -94,7 +94,7 @@ pub(crate) fn make_validate_timestamp(
                 push(
                     &mut fns,
                     &name,
-                    Arc::new(
+                    Box::new(
                         move |val: &OffsetDateTime, rules: &TimestampRules, name: &String| {
                             let lt = rules.lt.unwrap().as_datetime();
                             let gt = rules.gt.unwrap().as_datetime();
@@ -116,7 +116,7 @@ pub(crate) fn make_validate_timestamp(
                 push(
                     &mut fns,
                     &name,
-                    Arc::new(
+                    Box::new(
                         move |val: &OffsetDateTime, rules: &TimestampRules, name: &String| {
                             let gte = rules.gte.unwrap().as_datetime();
                             let lt = rules.lt.unwrap().as_datetime();
@@ -136,7 +136,7 @@ pub(crate) fn make_validate_timestamp(
                 push(
                     &mut fns,
                     &name,
-                    Arc::new(
+                    Box::new(
                         move |val: &OffsetDateTime, rules: &TimestampRules, name: &String| {
                             let gte = rules.gte.unwrap().as_datetime();
                             let lt = rules.lt.unwrap().as_datetime();
@@ -157,7 +157,7 @@ pub(crate) fn make_validate_timestamp(
             push(
                 &mut fns,
                 &name,
-                Arc::new(
+                Box::new(
                     move |val: &OffsetDateTime, rules: &TimestampRules, name: &String| {
                         let lt = rules.lt.unwrap().as_datetime();
                         if *val >= lt {
@@ -174,7 +174,7 @@ pub(crate) fn make_validate_timestamp(
                 push(
                     &mut fns,
                     &name,
-                    Arc::new(
+                    Box::new(
                         move |val: &OffsetDateTime, rules: &TimestampRules, name: &String| {
                             let gt = rules.gt.unwrap().as_datetime();
                             let lte = rules.lte.unwrap().as_datetime();
@@ -194,7 +194,7 @@ pub(crate) fn make_validate_timestamp(
                 push(
                     &mut fns,
                     &name,
-                    Arc::new(
+                    Box::new(
                         move |val: &OffsetDateTime, rules: &TimestampRules, name: &String| {
                             let gt = rules.gt.unwrap().as_datetime();
                             let lte = rules.lte.unwrap().as_datetime();
@@ -216,7 +216,7 @@ pub(crate) fn make_validate_timestamp(
                 push(
                     &mut fns,
                     &name,
-                    Arc::new(
+                    Box::new(
                         move |val: &OffsetDateTime, rules: &TimestampRules, name: &String| {
                             let gte = rules.gte.unwrap().as_datetime();
                             let lte = rules.lte.unwrap().as_datetime();
@@ -236,7 +236,7 @@ pub(crate) fn make_validate_timestamp(
                 push(
                     &mut fns,
                     &name,
-                    Arc::new(
+                    Box::new(
                         move |val: &OffsetDateTime, rules: &TimestampRules, name: &String| {
                             let gte = rules.gte.unwrap().as_datetime();
                             let lte = rules.lte.unwrap().as_datetime();
@@ -257,7 +257,7 @@ pub(crate) fn make_validate_timestamp(
             push(
                 &mut fns,
                 &name,
-                Arc::new(
+                Box::new(
                     move |val: &OffsetDateTime, rules: &TimestampRules, name: &String| {
                         let lte = rules.lte.unwrap().as_datetime();
                         if *val > lte {
@@ -276,7 +276,7 @@ pub(crate) fn make_validate_timestamp(
         push(
             &mut fns,
             &name,
-            Arc::new(
+            Box::new(
                 move |val: &OffsetDateTime, rules: &TimestampRules, name: &String| {
                     let gt = rules.gt.unwrap().as_datetime();
                     if *val <= gt {
@@ -290,7 +290,7 @@ pub(crate) fn make_validate_timestamp(
         push(
             &mut fns,
             &name,
-            Arc::new(
+            Box::new(
                 move |val: &OffsetDateTime, rules: &TimestampRules, name: &String| {
                     let gte = rules.gte.unwrap().as_datetime();
                     if *val < gte {
@@ -309,7 +309,7 @@ pub(crate) fn make_validate_timestamp(
             push(
                 &mut fns,
                 &name,
-                Arc::new(
+                Box::new(
                     move |val: &OffsetDateTime, rules: &TimestampRules, name: &String| {
                         // let now = Utc::now();
                         let now = time::OffsetDateTime::now_utc();
@@ -330,7 +330,7 @@ pub(crate) fn make_validate_timestamp(
             push(
                 &mut fns,
                 &name,
-                Arc::new(
+                Box::new(
                     move |val: &OffsetDateTime, _: &TimestampRules, name: &String| {
                         let now = OffsetDateTime::now_utc();
                         if *val >= now {
@@ -346,7 +346,7 @@ pub(crate) fn make_validate_timestamp(
             push(
                 &mut fns,
                 &name,
-                Arc::new(
+                Box::new(
                     move |val: &OffsetDateTime, rules: &TimestampRules, name: &String| {
                         let now = OffsetDateTime::now_utc();
                         let d = rules.within.unwrap().as_duration();
@@ -365,7 +365,7 @@ pub(crate) fn make_validate_timestamp(
             push(
                 &mut fns,
                 &name,
-                Arc::new(
+                Box::new(
                     move |val: &OffsetDateTime, _: &TimestampRules, name: &String| {
                         let now = OffsetDateTime::now_utc();
                         if *val <= now {
@@ -380,7 +380,7 @@ pub(crate) fn make_validate_timestamp(
         push(
             &mut fns,
             &name,
-            Arc::new(
+            Box::new(
                 move |val: &OffsetDateTime, rules: &TimestampRules, name: &String| {
                     let now = OffsetDateTime::now_utc();
                     let d = rules.within.unwrap().as_duration();

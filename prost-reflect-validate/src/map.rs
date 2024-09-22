@@ -17,7 +17,7 @@ macro_rules! list_rules {
     };
 }
 
-fn push<F>(fns: &mut Vec<NestedValidationFn<HashMap<MapKey, Value>>>, name: &Arc<String>, f: Arc<F>)
+fn push<F>(fns: &mut Vec<NestedValidationFn<HashMap<MapKey, Value>>>, name: &Arc<String>, f: Box<F>)
 where
     F: Fn(
             &HashMap<MapKey, Value>,
@@ -30,7 +30,7 @@ where
         + 'static,
 {
     let name = name.clone();
-    fns.push(Arc::new(move |val, rules, m| {
+    fns.push(Box::new(move |val, rules, m| {
         let val = val.unwrap_or_default();
         let rules = list_rules!(rules);
         f(&val, rules, &name, m)
@@ -55,7 +55,7 @@ pub(crate) fn make_validate_map(
             push(
                 &mut fns,
                 &name,
-                Arc::new(
+                Box::new(
                     move |vals: &HashMap<MapKey, Value>,
                           _: &MapRules,
                           _: &String,
@@ -69,7 +69,7 @@ pub(crate) fn make_validate_map(
             push(
                 &mut fns,
                 &name,
-                Arc::new(
+                Box::new(
                     move |vals: &HashMap<MapKey, Value>,
                           rules: &MapRules,
                           name: &String,
@@ -87,7 +87,7 @@ pub(crate) fn make_validate_map(
             push(
                 &mut fns,
                 &name,
-                Arc::new(
+                Box::new(
                     move |vals: &HashMap<MapKey, Value>,
                           rules: &MapRules,
                           name: &String,
@@ -106,7 +106,7 @@ pub(crate) fn make_validate_map(
             push(
                 &mut fns,
                 &name,
-                Arc::new(
+                Box::new(
                     move |vals: &HashMap<MapKey, Value>,
                           rules: &MapRules,
                           _: &String,
@@ -131,7 +131,7 @@ pub(crate) fn make_validate_map(
             push(
                 &mut fns,
                 &name,
-                Arc::new(
+                Box::new(
                     move |vals: &HashMap<MapKey, Value>,
                           rules: &MapRules,
                           _: &String,
@@ -153,7 +153,7 @@ pub(crate) fn make_validate_map(
             push(
                 &mut fns,
                 &name,
-                Arc::new(
+                Box::new(
                     move |vals: &HashMap<MapKey, Value>,
                           _: &MapRules,
                           name: &String,
@@ -174,7 +174,7 @@ pub(crate) fn make_validate_map(
         if REGISTRY.register(m, &desc).is_err() {
             return fns;
         }
-        fns.push(Arc::new(move |vals, _, m| {
+        fns.push(Box::new(move |vals, _, m| {
             if let Some(vals) = vals {
                 for (_, val) in vals.iter() {
                     if let Some(Err(err)) = val.as_message().map(|v| REGISTRY.do_validate(v, m)) {

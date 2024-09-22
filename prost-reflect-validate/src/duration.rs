@@ -8,12 +8,12 @@ use prost_types::Duration;
 use std::sync::Arc;
 use time::Duration as TimeDelta;
 
-fn push<F>(fns: &mut Vec<NestedValidationFn<Box<DynamicMessage>>>, name: &Arc<String>, f: Arc<F>)
+fn push<F>(fns: &mut Vec<NestedValidationFn<Box<DynamicMessage>>>, name: &Arc<String>, f: Box<F>)
 where
     F: Fn(TimeDelta, &DurationRules, &String) -> anyhow::Result<bool> + Send + Sync + 'static,
 {
     let name = name.clone();
-    fns.push(Arc::new(move |val, rules, _| {
+    fns.push(Box::new(move |val, rules, _| {
         let val = match val.map(|v| v.transcode_to::<Duration>()) {
             Some(Ok(val)) => val.as_duration(),
             _ => TimeDelta::default(),
@@ -39,20 +39,20 @@ pub(crate) fn make_validate_duration(
     let name = Arc::new(field.full_name().to_string());
     if rules.required() {
         let name = name.clone();
-        fns.push(Arc::new(move |val, _, _| {
+        fns.push(Box::new(move |val, _, _| {
             if val.is_none() {
                 return Err(format_err!("{}: is required", name));
             }
             Ok(true)
         }));
     } else {
-        fns.push(Arc::new(move |val, _, _| Ok(val.is_some())));
+        fns.push(Box::new(move |val, _, _| Ok(val.is_some())));
     }
     if rules.r#const.is_some() {
         push(
             &mut fns,
             &name,
-            Arc::new(
+            Box::new(
                 move |val: TimeDelta, rules: &DurationRules, name: &String| {
                     let want = rules.r#const.unwrap().as_duration();
                     if val != want {
@@ -70,7 +70,7 @@ pub(crate) fn make_validate_duration(
                 push(
                     &mut fns,
                     &name,
-                    Arc::new(
+                    Box::new(
                         move |val: TimeDelta, rules: &DurationRules, name: &String| {
                             let lt = rules.lt.unwrap().as_duration();
                             let gt = rules.gt.unwrap().as_duration();
@@ -90,7 +90,7 @@ pub(crate) fn make_validate_duration(
                 push(
                     &mut fns,
                     &name,
-                    Arc::new(
+                    Box::new(
                         move |val: TimeDelta, rules: &DurationRules, name: &String| {
                             let lt = rules.lt.unwrap().as_duration();
                             let gt = rules.gt.unwrap().as_duration();
@@ -112,7 +112,7 @@ pub(crate) fn make_validate_duration(
                 push(
                     &mut fns,
                     &name,
-                    Arc::new(
+                    Box::new(
                         move |val: TimeDelta, rules: &DurationRules, name: &String| {
                             let lt = rules.lt.unwrap().as_duration();
                             let gte = rules.gte.unwrap().as_duration();
@@ -132,7 +132,7 @@ pub(crate) fn make_validate_duration(
                 push(
                     &mut fns,
                     &name,
-                    Arc::new(
+                    Box::new(
                         move |val: TimeDelta, rules: &DurationRules, name: &String| {
                             let lt = rules.lt.unwrap().as_duration();
                             let gte = rules.gte.unwrap().as_duration();
@@ -153,7 +153,7 @@ pub(crate) fn make_validate_duration(
             push(
                 &mut fns,
                 &name,
-                Arc::new(
+                Box::new(
                     move |val: TimeDelta, rules: &DurationRules, name: &String| {
                         let lt = rules.lt.unwrap().as_duration();
                         if val >= lt {
@@ -174,7 +174,7 @@ pub(crate) fn make_validate_duration(
                 push(
                     &mut fns,
                     &name,
-                    Arc::new(
+                    Box::new(
                         move |val: TimeDelta, rules: &DurationRules, name: &String| {
                             let lte = rules.lte.unwrap().as_duration();
                             let gt = rules.gt.unwrap().as_duration();
@@ -194,7 +194,7 @@ pub(crate) fn make_validate_duration(
                 push(
                     &mut fns,
                     &name,
-                    Arc::new(
+                    Box::new(
                         move |val: TimeDelta, rules: &DurationRules, name: &String| {
                             let lte = rules.lte.unwrap().as_duration();
                             let gt = rules.gt.unwrap().as_duration();
@@ -216,7 +216,7 @@ pub(crate) fn make_validate_duration(
                 push(
                     &mut fns,
                     &name,
-                    Arc::new(
+                    Box::new(
                         move |val: TimeDelta, rules: &DurationRules, name: &String| {
                             let lte = rules.lte.unwrap().as_duration();
                             let gte = rules.gte.unwrap().as_duration();
@@ -236,7 +236,7 @@ pub(crate) fn make_validate_duration(
                 push(
                     &mut fns,
                     &name,
-                    Arc::new(
+                    Box::new(
                         move |val: TimeDelta, rules: &DurationRules, name: &String| {
                             let lte = rules.lte.unwrap().as_duration();
                             let gte = rules.gte.unwrap().as_duration();
@@ -257,7 +257,7 @@ pub(crate) fn make_validate_duration(
             push(
                 &mut fns,
                 &name,
-                Arc::new(
+                Box::new(
                     move |val: TimeDelta, rules: &DurationRules, name: &String| {
                         let lte = rules.lte.unwrap().as_duration();
                         if val > lte {
@@ -276,7 +276,7 @@ pub(crate) fn make_validate_duration(
         push(
             &mut fns,
             &name,
-            Arc::new(
+            Box::new(
                 move |val: TimeDelta, rules: &DurationRules, name: &String| {
                     let gt = rules.gt.unwrap().as_duration();
                     if val <= gt {
@@ -294,7 +294,7 @@ pub(crate) fn make_validate_duration(
         push(
             &mut fns,
             &name,
-            Arc::new(
+            Box::new(
                 move |val: TimeDelta, rules: &DurationRules, name: &String| {
                     let gte = rules.gte.unwrap().as_duration();
                     if val < gte {
@@ -314,7 +314,7 @@ pub(crate) fn make_validate_duration(
         push(
             &mut fns,
             &name,
-            Arc::new(
+            Box::new(
                 move |val: TimeDelta, rules: &DurationRules, name: &String| {
                     let vals = rules
                         .r#in
@@ -333,7 +333,7 @@ pub(crate) fn make_validate_duration(
         push(
             &mut fns,
             &name,
-            Arc::new(
+            Box::new(
                 move |val: TimeDelta, rules: &DurationRules, name: &String| {
                     let vals = rules
                         .not_in

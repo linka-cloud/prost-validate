@@ -14,16 +14,15 @@ use anyhow::Result;
 use prost_reflect::{FieldDescriptor, Kind, Value};
 use std::borrow::Cow;
 use std::collections::HashMap;
-use std::sync::Arc;
 
-type ValueValidationFn = Arc<
+type ValueValidationFn = Box<
     dyn Fn(Cow<Value>, &FieldRules, &HashMap<String, ValidationFn>) -> Result<bool> + Send + Sync,
 >;
 
 macro_rules! as_validation_func {
     ($fns:expr,$typ:ident,$conv:ident) => {{
         let fns = $fns;
-        Arc::new(
+        Box::new(
             move |val: Cow<Value>,
                   rules: &FieldRules,
                   _: &HashMap<String, ValidationFn>|
@@ -62,9 +61,9 @@ pub(crate) fn make_validate_field(
         Kind::Enum(_) => as_validation_func!(make_validate_enum(field, rules), i32, as_enum_number),
         Kind::Bytes => {
             let fns = make_validate_bytes(field, rules);
-            Arc::new(
+            Box::new(
                 move |val: Cow<Value>, rules: &FieldRules, _| -> anyhow::Result<bool> {
-                    let bytes = val.as_bytes().map(|v| Arc::new(v.clone()));
+                    let bytes = val.as_bytes().map(|v| Box::new(v.clone()));
                     for f in &fns {
                         let bytes = bytes.clone();
                         if !f(bytes, rules)? {
@@ -77,7 +76,7 @@ pub(crate) fn make_validate_field(
         }
         Kind::Message(_) => {
             let fns = make_validate_message(m, field, rules);
-            Arc::new(
+            Box::new(
                 move |val: Cow<Value>, rules: &FieldRules, m| -> anyhow::Result<bool> {
                     // When the value is not set the Value is a Cow::Owned(desc.default_value())
                     let msg = match val {

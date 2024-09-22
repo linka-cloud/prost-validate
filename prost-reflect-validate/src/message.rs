@@ -13,7 +13,6 @@ use crate::validate_proto::FieldRules;
 use anyhow::format_err;
 use prost_reflect::{DynamicMessage, FieldDescriptor, Kind};
 use std::collections::HashMap;
-use std::sync::Arc;
 
 macro_rules! append {
     ($fns:ident, $other:expr) => {{
@@ -41,19 +40,19 @@ pub(crate) fn make_validate_message(
         .unwrap_or(false);
     if rules.required() && !optional {
         let name = field.full_name().to_string();
-        fns.push(Arc::new(move |val, _, _| {
+        fns.push(Box::new(move |val, _, _| {
             if val.is_none() {
                 return Err(format_err!("{}: is required", name));
             }
             Ok(true)
         }))
     } else {
-        fns.push(Arc::new(move |val, rules, _| {
+        fns.push(Box::new(move |val, rules, _| {
             Ok(val.is_some() || rules.r#type.is_some())
         }))
     }
     if rules.skip() {
-        fns.push(Arc::new(move |_, _, _| Ok(false)));
+        fns.push(Box::new(move |_, _, _| Ok(false)));
         return fns;
     }
 
@@ -61,7 +60,7 @@ pub(crate) fn make_validate_message(
         ($make:ident,$conv:ident) => {{
             let wkt_field = desc.get_field(1).unwrap();
             let wkt_fns = $make(field, field_rules);
-            let f: NestedValidationFn<Box<DynamicMessage>> = Arc::new(move |val, rules, _| {
+            let f: NestedValidationFn<Box<DynamicMessage>> = Box::new(move |val, rules, _| {
                 let val: Box<DynamicMessage> = match val {
                     Some(v) => v,
                     None => return Ok(true),
@@ -82,7 +81,7 @@ pub(crate) fn make_validate_message(
         "google.protobuf.StringValue" => {
             let wkt_field = desc.get_field(1).unwrap();
             let wkt_fns = make_validate_string(field, field_rules);
-            let f: NestedValidationFn<Box<DynamicMessage>> = Arc::new(move |val, rules, _| {
+            let f: NestedValidationFn<Box<DynamicMessage>> = Box::new(move |val, rules, _| {
                 let val: Box<DynamicMessage> = match val {
                     Some(v) => v,
                     None => return Ok(true),
@@ -101,7 +100,7 @@ pub(crate) fn make_validate_message(
         "google.protobuf.BytesValue" => {
             let wkt_field = desc.get_field(1).unwrap();
             let wkt_fns = make_validate_bytes(field, field_rules);
-            let f: NestedValidationFn<Box<DynamicMessage>> = Arc::new(move |val, rules, _| {
+            let f: NestedValidationFn<Box<DynamicMessage>> = Box::new(move |val, rules, _| {
                 let val: Box<DynamicMessage> = match val {
                     Some(v) => v,
                     None => return Ok(true),
@@ -109,7 +108,7 @@ pub(crate) fn make_validate_message(
                 let val = val
                     .get_field(&wkt_field)
                     .as_bytes()
-                    .map(|v| Arc::new(v.clone()));
+                    .map(|v| Box::new(v.clone()));
                 for f in &wkt_fns {
                     let val = val.clone();
                     if !f(val, rules)? {
@@ -141,7 +140,7 @@ pub(crate) fn make_validate_message(
     if REGISTRY.register(m, &desc).is_err() {
         return fns;
     }
-    fns.push(Arc::new(move |val, _, m| {
+    fns.push(Box::new(move |val, _, m| {
         let validate = m
             .get(&desc.full_name().to_string())
             .ok_or(format_err!("no validator for {}", desc.full_name()))?;
