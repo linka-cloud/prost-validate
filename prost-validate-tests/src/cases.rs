@@ -1074,11 +1074,6 @@ mod message {
 mod repeated {
     use super::*;
 
-    #[test]
-    fn debug() {
-        repeated_cross_package_embed_none_valid()
-    }
-
     test_case!(repeated_none_valid, RepeatedNone{val: vec![1, 2, 3]}, 0);
 
     test_case!(repeated_embed_none_valid, RepeatedEmbedNone{val: vec![cases::Embed{val: 1}]}, 0);
@@ -1284,11 +1279,6 @@ mod wrapper {
     test_case!(wrapper_required_float_valid, WrapperRequiredFloat{val: Some(1.)}, 0);
     test_case!(wrapper_required_float_invalid, WrapperRequiredFloat{val: Some(-5.)}, 1);
     test_case!(wrapper_required_float_invalid_empty, WrapperRequiredFloat::default(), 1);
-
-    #[test]
-    fn debug() {
-        wrapper_string_invalid()
-    }
 }
 #[cfg(test)]
 mod duration {
@@ -1504,6 +1494,7 @@ mod nested {
     test_case!(nested_wkt_uuid_field_invalid, WktLevelOne{two: Some(cases::wkt_level_one::WktLevelTwo{three: Some(cases::wkt_level_one::wkt_level_two::WktLevelThree{uuid: "not-a-valid-uuid".to_string()})})}, 1);
 }
 
+#[allow(unused)]
 fn now() -> i64 {
     time::OffsetDateTime::now_utc().unix_timestamp()
 }

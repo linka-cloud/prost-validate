@@ -8,24 +8,25 @@ use prost_types::Duration;
 use std::sync::Arc;
 use time::Duration as TimeDelta;
 
-fn push<F>(fns: &mut Vec<NestedValidationFn<Box<DynamicMessage>>>, name: Arc<String>, f: Arc<F>)
+fn push<F>(fns: &mut Vec<NestedValidationFn<Box<DynamicMessage>>>, name: &Arc<String>, f: Arc<F>)
 where
     F: Fn(TimeDelta, &DurationRules, &String) -> anyhow::Result<bool> + Send + Sync + 'static,
 {
     let name = name.clone();
     fns.push(Arc::new(move |val, rules, _| {
-        let val = match val {
-            Some(val) => val.transcode_to::<Duration>().unwrap().as_duration(),
+        let val = match val.map(|v| v.transcode_to::<Duration>()) {
+            Some(Ok(val)) => val.as_duration(),
             _ => TimeDelta::default(),
         };
         let rules = match &rules.r#type {
             Some(Type::Duration(rules)) => rules,
             _ => return Err(format_err!("unexpected duration rules")),
         };
-        f(val, &rules, &name)
+        f(val, rules, &name)
     }))
 }
 
+#[allow(clippy::unwrap_used)]
 pub(crate) fn make_validate_duration(field: &FieldDescriptor, rules: &FieldRules) -> Vec<NestedValidationFn<Box<DynamicMessage>>> {
     let mut fns = Vec::new();
     let rules = match &rules.r#type {
@@ -47,7 +48,7 @@ pub(crate) fn make_validate_duration(field: &FieldDescriptor, rules: &FieldRules
         }));
     }
     if rules.r#const.is_some() {
-        push(&mut fns, name.clone(), Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
+        push(&mut fns, &name, Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
             let want = rules.r#const.unwrap().as_duration();
             if val != want {
                 return Err(format_err!("{}: must be {}", name, want.to_string()));
@@ -59,7 +60,7 @@ pub(crate) fn make_validate_duration(field: &FieldDescriptor, rules: &FieldRules
     if let Some(lt) = rules.lt.map(|v| v.as_duration()) {
         if let Some(gt) = rules.gt.map(|v| v.as_duration()) {
             if lt > gt {
-                push(&mut fns, name.clone(), Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
+                push(&mut fns, &name, Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
                     let lt = rules.lt.unwrap().as_duration();
                     let gt = rules.gt.unwrap().as_duration();
                     if val <= gt || val >= lt {
@@ -68,7 +69,7 @@ pub(crate) fn make_validate_duration(field: &FieldDescriptor, rules: &FieldRules
                     Ok(true)
                 }));
             } else {
-                push(&mut fns, name.clone(), Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
+                push(&mut fns, &name, Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
                     let lt = rules.lt.unwrap().as_duration();
                     let gt = rules.gt.unwrap().as_duration();
                     if val >= lt && val <= gt {
@@ -79,7 +80,7 @@ pub(crate) fn make_validate_duration(field: &FieldDescriptor, rules: &FieldRules
             }
         } else if let Some(gte) = rules.gte.map(|v| v.as_duration()) {
             if lt > gte {
-                push(&mut fns, name.clone(), Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
+                push(&mut fns, &name, Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
                     let lt = rules.lt.unwrap().as_duration();
                     let gte = rules.gte.unwrap().as_duration();
                     if val < gte || val >= lt {
@@ -88,7 +89,7 @@ pub(crate) fn make_validate_duration(field: &FieldDescriptor, rules: &FieldRules
                     Ok(true)
                 }));
             } else {
-                push(&mut fns, name.clone(), Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
+                push(&mut fns, &name, Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
                     let lt = rules.lt.unwrap().as_duration();
                     let gte = rules.gte.unwrap().as_duration();
                     if val >= lt && val < gte {
@@ -98,7 +99,7 @@ pub(crate) fn make_validate_duration(field: &FieldDescriptor, rules: &FieldRules
                 }));
             }
         } else {
-            push(&mut fns, name.clone(), Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
+            push(&mut fns, &name, Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
                 let lt = rules.lt.unwrap().as_duration();
                 if val >= lt {
                     return Err(format_err!("{}: must be less than {}", name, lt.to_string()));
@@ -109,7 +110,7 @@ pub(crate) fn make_validate_duration(field: &FieldDescriptor, rules: &FieldRules
     } else if let Some(lte) = rules.lte.map(|v| v.as_duration()) {
         if let Some(gt) = rules.gt.map(|v| v.as_duration()) {
             if lte > gt {
-                push(&mut fns, name.clone(), Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
+                push(&mut fns, &name, Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
                     let lte = rules.lte.unwrap().as_duration();
                     let gt = rules.gt.unwrap().as_duration();
                     if val <= gt || val > lte {
@@ -118,7 +119,7 @@ pub(crate) fn make_validate_duration(field: &FieldDescriptor, rules: &FieldRules
                     Ok(true)
                 }));
             } else {
-                push(&mut fns, name.clone(), Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
+                push(&mut fns, &name, Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
                     let lte = rules.lte.unwrap().as_duration();
                     let gt = rules.gt.unwrap().as_duration();
                     if val >= lte && val < gt {
@@ -129,7 +130,7 @@ pub(crate) fn make_validate_duration(field: &FieldDescriptor, rules: &FieldRules
             }
         } else if let Some(gte) = rules.gte.map(|v| v.as_duration()) {
             if lte > gte {
-                push(&mut fns, name.clone(), Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
+                push(&mut fns, &name, Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
                     let lte = rules.lte.unwrap().as_duration();
                     let gte = rules.gte.unwrap().as_duration();
                     if val < gte || val > lte {
@@ -138,7 +139,7 @@ pub(crate) fn make_validate_duration(field: &FieldDescriptor, rules: &FieldRules
                     Ok(true)
                 }));
             } else {
-                push(&mut fns, name.clone(), Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
+                push(&mut fns, &name, Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
                     let lte = rules.lte.unwrap().as_duration();
                     let gte = rules.gte.unwrap().as_duration();
                     if val > lte && val < gte {
@@ -148,7 +149,7 @@ pub(crate) fn make_validate_duration(field: &FieldDescriptor, rules: &FieldRules
                 }));
             }
         } else {
-            push(&mut fns, name.clone(), Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
+            push(&mut fns, &name, Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
                 let lte = rules.lte.unwrap().as_duration();
                 if val > lte {
                     return Err(format_err!("{}: must be less than or equal to {}", name.to_string(), lte.to_string()));
@@ -157,7 +158,7 @@ pub(crate) fn make_validate_duration(field: &FieldDescriptor, rules: &FieldRules
             }));
         }
     } else if rules.gt.is_some() {
-        push(&mut fns, name.clone(), Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
+        push(&mut fns, &name, Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
             let gt = rules.gt.unwrap().as_duration();
             if val <= gt {
                 return Err(format_err!("{}: must be greater than {}", name, gt.to_string()));
@@ -165,7 +166,7 @@ pub(crate) fn make_validate_duration(field: &FieldDescriptor, rules: &FieldRules
             Ok(true)
         }));
     } else if rules.gte.is_some() {
-        push(&mut fns, name.clone(), Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
+        push(&mut fns, &name, Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
             let gte = rules.gte.unwrap().as_duration();
             if val < gte {
                 return Err(format_err!("{}: must be greater or equal to {}", name, gte.to_string()));
@@ -175,7 +176,7 @@ pub(crate) fn make_validate_duration(field: &FieldDescriptor, rules: &FieldRules
     }
 
     if !rules.r#in.is_empty() {
-        push(&mut fns, name.clone(), Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
+        push(&mut fns, &name, Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
             let vals = rules.r#in.iter().map(|v| v.as_duration()).collect::<Vec<TimeDelta>>();
             if !vals.contains(&val) {
                 return Err(format_err!("{}: must be in {:?}", name, vals));
@@ -184,7 +185,7 @@ pub(crate) fn make_validate_duration(field: &FieldDescriptor, rules: &FieldRules
         }));
     }
     if !rules.not_in.is_empty() {
-        push(&mut fns, name.clone(), Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
+        push(&mut fns, &name, Arc::new(move |val: TimeDelta, rules: &DurationRules, name: &String| {
             let vals = rules.not_in.iter().map(|v| v.as_duration()).collect::<Vec<TimeDelta>>();
             if vals.contains(&val) {
                 return Err(format_err!("{}: must not be in {:?}", name, vals));

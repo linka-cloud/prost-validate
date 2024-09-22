@@ -14,12 +14,12 @@ pub(crate) fn make_validate_bool(field: &FieldDescriptor, rules: &FieldRules) ->
         Some(Type::Bool(rules)) => rules,
         _ => return fns,
     };
-    if rules.r#const.is_some() {
+    if let Some(v) = rules.r#const {
         let name = field.full_name().to_string();
         fns.push(Arc::new(move |val, _| {
             let val = val.unwrap_or(false);
-            if rules.r#const.unwrap() != val {
-                return Err(format_err!("{}: must be {}", name, rules.r#const.unwrap()));
+            if val != v {
+                return Err(format_err!("{}: must be {}", name, v));
             }
             Ok(true)
         }))

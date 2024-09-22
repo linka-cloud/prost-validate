@@ -16,7 +16,7 @@ macro_rules! any_rules {
     };
 }
 
-fn push<F>(fns: &mut Vec<NestedValidationFn<Box<DynamicMessage>>>, name: Arc<String>, f: Arc<F>)
+fn push<F>(fns: &mut Vec<NestedValidationFn<Box<DynamicMessage>>>, name: &Arc<String>, f: Arc<F>)
 where
     F: Fn(&Any, &AnyRules, &String) -> anyhow::Result<bool> + Send + Sync + 'static,
 {
@@ -55,7 +55,7 @@ pub(crate) fn make_validate_any(field: &FieldDescriptor, rules: &FieldRules) -> 
         }));
     }
     if !rules.r#in.is_empty() {
-        push(&mut fns, name.clone(), Arc::new(move |val: &Any, rules: &AnyRules, name: &String| {
+        push(&mut fns, &name, Arc::new(move |val: &Any, rules: &AnyRules, name: &String| {
             if !rules.r#in.contains(&val.type_url) {
                 return Err(format_err!("{}: must be in {:?}", name, rules.r#in));
             }
@@ -63,7 +63,7 @@ pub(crate) fn make_validate_any(field: &FieldDescriptor, rules: &FieldRules) -> 
         }));
     }
     if !rules.not_in.is_empty() {
-        push(&mut fns, name.clone(), Arc::new(move |val: &Any, rules: &AnyRules, name: &String| {
+        push(&mut fns, &name, Arc::new(move |val: &Any, rules: &AnyRules, name: &String| {
             if rules.not_in.contains(&val.type_url) {
                 return Err(format_err!("{}: must not be in {:?}", name, rules.not_in));
             }

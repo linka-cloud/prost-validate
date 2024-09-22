@@ -43,12 +43,16 @@ fn validate_email(addr: &str) -> Result<()> {
     Ok(())
 }
 
+#[allow(clippy::unwrap_used)]
 pub(crate) static UUID_RE: Lazy<Regex> = Lazy::new(|| Regex::new(
     r"^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$"
 ).unwrap());
 
+#[allow(clippy::unwrap_used)]
 static HEADER_NAME_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^:?[0-9a-zA-Z!#$%&'*+-.^_|~`]+$").unwrap());
+#[allow(clippy::unwrap_used)]
 static HEADER_VALUE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[^\x00-\x08\x0A-\x1F\x7F]*$").unwrap());
+#[allow(clippy::unwrap_used)]
 static HEADER_STRING_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[^\x00\n\r]*$").unwrap());
 
 pub(crate) trait ValidateIp {
@@ -82,17 +86,11 @@ fn validate_uri(val: &str) -> bool {
         Ok(uri) => uri,
         Err(_) => return false,
     };
-    match uri.scheme() {
-        Some(_) => true,
-        None => false
-    }
+    uri.scheme().is_some()
 }
 
 fn validate_uri_ref(val: &str) -> bool {
-    match Uri::from_str(val) {
-        Ok(_) => true,
-        Err(_) => false,
-    }
+    Uri::from_str(val).is_ok()
 }
 
 macro_rules! string_rules {
@@ -104,7 +102,7 @@ macro_rules! string_rules {
     };
 }
 
-fn push<F>(fns: &mut Vec<FieldValidationFn<String>>, name: Arc<String>, f: Arc<F>)
+fn push<F>(fns: &mut Vec<FieldValidationFn<String>>, name: &Arc<String>, f: Arc<F>)
 where
     F: Fn(String, &StringRules, &String) -> anyhow::Result<bool> + Send + Sync + 'static,
 {
@@ -126,11 +124,11 @@ pub(crate) fn make_validate_string(field: &FieldDescriptor, rules: &FieldRules) 
         _ => return fns,
     };
     if rules.ignore_empty() {
-        fns.push(Arc::new(|val, _| Ok(val.is_some() && val.unwrap() != "")));
+        fns.push(Arc::new(|val, _| Ok(val.map(|v|!v.is_empty()).unwrap_or(false))));
     }
     let name = Arc::new(field.full_name().to_string());
     if rules.r#const.is_some() {
-        push(&mut fns, name.clone(), Arc::new(move |val: String, rules: &StringRules, name: &String| {
+        push(&mut fns, &name, Arc::new(move |val: String, rules: &StringRules, name: &String| {
             let v = rules.r#const();
             if val != v {
                 return Err(format_err!("{}: must be {}", name, v));
@@ -139,7 +137,7 @@ pub(crate) fn make_validate_string(field: &FieldDescriptor, rules: &FieldRules) 
         }));
     }
     if rules.len.is_some() {
-        push(&mut fns, name.clone(), Arc::new(move |val: String, rules: &StringRules, name: &String| {
+        push(&mut fns, &name, Arc::new(move |val: String, rules: &StringRules, name: &String| {
             let v = rules.len();
             if val.chars().count() != v as usize {
                 return Err(format_err!("{}: must be {} characters long", name, v));
@@ -148,7 +146,7 @@ pub(crate) fn make_validate_string(field: &FieldDescriptor, rules: &FieldRules) 
         }))
     }
     if rules.min_len.is_some() {
-        push(&mut fns, name.clone(), Arc::new(move |val: String, rules: &StringRules, name: &String| {
+        push(&mut fns, &name, Arc::new(move |val: String, rules: &StringRules, name: &String| {
             let v = rules.min_len();
             if val.chars().count() < v as usize {
                 return Err(format_err!("{}: must be minimum {} characters long", name, v));
@@ -157,7 +155,7 @@ pub(crate) fn make_validate_string(field: &FieldDescriptor, rules: &FieldRules) 
         }));
     }
     if rules.max_len.is_some() {
-        push(&mut fns, name.clone(), Arc::new(move |val: String, rules: &StringRules, name: &String| {
+        push(&mut fns, &name, Arc::new(move |val: String, rules: &StringRules, name: &String| {
             let v = rules.max_len();
             if val.chars().count() > v as usize {
                 return Err(format_err!("{}: must be maximum {} characters long", name, v));
@@ -166,7 +164,7 @@ pub(crate) fn make_validate_string(field: &FieldDescriptor, rules: &FieldRules) 
         }));
     }
     if rules.len_bytes.is_some() {
-        push(&mut fns, name.clone(), Arc::new(move |val: String, rules: &StringRules, name: &String| {
+        push(&mut fns, &name, Arc::new(move |val: String, rules: &StringRules, name: &String| {
             let v = rules.len_bytes();
             if val.len() != v as usize {
                 return Err(format_err!("{}: must be {} characters long", name, v));
@@ -175,7 +173,7 @@ pub(crate) fn make_validate_string(field: &FieldDescriptor, rules: &FieldRules) 
         }))
     }
     if rules.min_bytes.is_some() {
-        push(&mut fns, name.clone(), Arc::new(move |val: String, rules: &StringRules, name: &String| {
+        push(&mut fns, &name, Arc::new(move |val: String, rules: &StringRules, name: &String| {
             let v = rules.min_bytes();
             if val.len() < v as usize {
                 return Err(format_err!("{}: must be minimum {} bytes long", name, v));
@@ -184,7 +182,7 @@ pub(crate) fn make_validate_string(field: &FieldDescriptor, rules: &FieldRules) 
         }));
     }
     if rules.max_bytes.is_some() {
-        push(&mut fns, name.clone(), Arc::new(move |val: String, rules: &StringRules, name: &String| {
+        push(&mut fns, &name, Arc::new(move |val: String, rules: &StringRules, name: &String| {
             let v = rules.max_bytes();
             if val.len() > v as usize {
                 return Err(format_err!("{}: must be maximum {} bytes long", name, v));
@@ -194,7 +192,7 @@ pub(crate) fn make_validate_string(field: &FieldDescriptor, rules: &FieldRules) 
     }
     if let Some(v) = &rules.pattern {
         let regex = Regex::new(v.as_str());
-        push(&mut fns, name.clone(), Arc::new(move |val: String, rules: &StringRules, name: &String| {
+        push(&mut fns, &name, Arc::new(move |val: String, rules: &StringRules, name: &String| {
             let v = rules.pattern();
             let regex = match &regex {
                 Ok(r) => r,
@@ -207,7 +205,7 @@ pub(crate) fn make_validate_string(field: &FieldDescriptor, rules: &FieldRules) 
         }));
     }
     if rules.prefix.is_some() {
-        push(&mut fns, name.clone(), Arc::new(move |val: String, rules: &StringRules, name: &String| {
+        push(&mut fns, &name, Arc::new(move |val: String, rules: &StringRules, name: &String| {
             let v = rules.prefix();
             if !val.as_str().starts_with(v) {
                 return Err(format_err!("{}: must have prefix {}", name, v));
@@ -216,7 +214,7 @@ pub(crate) fn make_validate_string(field: &FieldDescriptor, rules: &FieldRules) 
         }));
     }
     if rules.suffix.is_some() {
-        push(&mut fns, name.clone(), Arc::new(move |val: String, rules: &StringRules, name: &String| {
+        push(&mut fns, &name, Arc::new(move |val: String, rules: &StringRules, name: &String| {
             let v = rules.suffix();
             if !val.as_str().ends_with(v) {
                 return Err(format_err!("{}: must have suffix {}", name, v));
@@ -225,7 +223,7 @@ pub(crate) fn make_validate_string(field: &FieldDescriptor, rules: &FieldRules) 
         }));
     }
     if rules.contains.is_some() {
-        push(&mut fns, name.clone(), Arc::new(move |val: String, rules: &StringRules, name: &String| {
+        push(&mut fns, &name, Arc::new(move |val: String, rules: &StringRules, name: &String| {
             let v = rules.contains();
             if !val.contains(v) {
                 return Err(format_err!("{}: must contains {}", name, v));
@@ -234,7 +232,7 @@ pub(crate) fn make_validate_string(field: &FieldDescriptor, rules: &FieldRules) 
         }));
     }
     if rules.not_contains.is_some() {
-        push(&mut fns, name.clone(), Arc::new(move |val: String, rules: &StringRules, name: &String| {
+        push(&mut fns, &name, Arc::new(move |val: String, rules: &StringRules, name: &String| {
             let v = rules.not_contains();
             if val.contains(v) {
                 return Err(format_err!("{}: must not contains {}", name, v));
@@ -243,7 +241,7 @@ pub(crate) fn make_validate_string(field: &FieldDescriptor, rules: &FieldRules) 
         }));
     }
     if !rules.r#in.is_empty() {
-        push(&mut fns, name.clone(), Arc::new(move |val: String, rules: &StringRules, name: &String| {
+        push(&mut fns, &name, Arc::new(move |val: String, rules: &StringRules, name: &String| {
             let v = rules.r#in.deref();
             if !v.contains(&val.to_string()) {
                 return Err(format_err!("{}: must be in {:?}", name, v));
@@ -252,7 +250,7 @@ pub(crate) fn make_validate_string(field: &FieldDescriptor, rules: &FieldRules) 
         }));
     }
     if !rules.not_in.is_empty() {
-        push(&mut fns, name.clone(), Arc::new(move |val: String, rules: &StringRules, name: &String| {
+        push(&mut fns, &name, Arc::new(move |val: String, rules: &StringRules, name: &String| {
             let v = rules.not_in.deref();
             if v.contains(&val.to_string()) {
                 return Err(format_err!("{}: must not be in {:?}", name, v));
@@ -264,6 +262,7 @@ pub(crate) fn make_validate_string(field: &FieldDescriptor, rules: &FieldRules) 
         return fns;
     }
     let strict = rules.strict();
+    #[allow(clippy::unwrap_used)]
     match rules.well_known.unwrap() {
         WellKnown::Email(v) => {
             if v {
@@ -349,7 +348,7 @@ pub(crate) fn make_validate_string(field: &FieldDescriptor, rules: &FieldRules) 
                     if val.validate_ip() {
                         return Ok(true);
                     }
-                    if let Err(_) = validate_hostname(val.as_str()) {
+                    if validate_hostname(val.as_str()).is_err() {
                         return Err(format_err!("{}: must be a valid hostname or ip address", name));
                     }
                     Ok(true)

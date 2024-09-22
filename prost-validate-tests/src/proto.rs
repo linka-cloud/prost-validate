@@ -1,3 +1,5 @@
+#[allow(clippy::trivially_copy_pass_by_ref)]
+#[allow(clippy::enum_variant_names)]
 pub(crate) mod cases {
     include!(concat!(env!("OUT_DIR"), "/tests.harness.cases.rs"));
     pub(crate) mod sort {
@@ -11,6 +13,8 @@ pub(crate) mod cases {
     }
 }
 
+#[allow(clippy::trivially_copy_pass_by_ref)]
+#[allow(clippy::enum_variant_names)]
 pub(crate) mod harness {
     include!(concat!(env!("OUT_DIR"), "/tests.harness.rs"));
 }

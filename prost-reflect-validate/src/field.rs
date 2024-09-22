@@ -32,28 +32,28 @@ macro_rules! as_validation_func {
 
 pub(crate) fn make_validate_field(m: &mut HashMap<String, ValidationFn>, field: &FieldDescriptor, rules: &FieldRules) -> ValueValidationFn {
     match field.kind() {
-        Kind::Uint64 => as_validation_func!(make_validate_u64(&field, &rules), Uint64, as_u64),
-        Kind::Uint32 => as_validation_func!(make_validate_u32(&field, &rules), Uint32, as_u32),
-        Kind::Int64 => as_validation_func!(make_validate_i64(&field, &rules), Int64, as_i64),
-        Kind::Int32 => as_validation_func!(make_validate_i32(&field, &rules), Int32, as_i32),
-        Kind::Double => as_validation_func!(make_validate_double(&field, &rules), Double, as_f64),
-        Kind::Float => as_validation_func!(make_validate_float(&field, &rules), Float, as_f32),
-        Kind::Sint32 => as_validation_func!(make_validate_sint32(&field, &rules), Int32, as_i32),
-        Kind::Sint64 => as_validation_func!(make_validate_sint64(&field, &rules), Int64, as_i64),
-        Kind::Fixed32 => as_validation_func!(make_validate_fixed32(&field, &rules), Uint32, as_u32),
-        Kind::Fixed64 => as_validation_func!(make_validate_fixed64(&field, &rules), Uint64, as_u64),
-        Kind::Sfixed32 => as_validation_func!(make_validate_sfixed32(&field, &rules), Int32, as_i32),
-        Kind::Sfixed64 => as_validation_func!(make_validate_sfixed64(&field, &rules), Int64, as_i64),
-        Kind::Bool => as_validation_func!(make_validate_bool(&field, &rules), Bool, as_bool),
-        Kind::String => as_validation_func!(make_validate_string(&field, &rules), String, as_string),
-        Kind::Enum(_) => as_validation_func!(make_validate_enum(&field, &rules), i32, as_enum_number),
+        Kind::Uint64 => as_validation_func!(make_validate_u64(field, rules), Uint64, as_u64),
+        Kind::Uint32 => as_validation_func!(make_validate_u32(field, rules), Uint32, as_u32),
+        Kind::Int64 => as_validation_func!(make_validate_i64(field, rules), Int64, as_i64),
+        Kind::Int32 => as_validation_func!(make_validate_i32(field, rules), Int32, as_i32),
+        Kind::Double => as_validation_func!(make_validate_double(field, rules), Double, as_f64),
+        Kind::Float => as_validation_func!(make_validate_float(field, rules), Float, as_f32),
+        Kind::Sint32 => as_validation_func!(make_validate_sint32(field, rules), Int32, as_i32),
+        Kind::Sint64 => as_validation_func!(make_validate_sint64(field, rules), Int64, as_i64),
+        Kind::Fixed32 => as_validation_func!(make_validate_fixed32(field, rules), Uint32, as_u32),
+        Kind::Fixed64 => as_validation_func!(make_validate_fixed64(field, rules), Uint64, as_u64),
+        Kind::Sfixed32 => as_validation_func!(make_validate_sfixed32(field, rules), Int32, as_i32),
+        Kind::Sfixed64 => as_validation_func!(make_validate_sfixed64(field, rules), Int64, as_i64),
+        Kind::Bool => as_validation_func!(make_validate_bool(field, rules), Bool, as_bool),
+        Kind::String => as_validation_func!(make_validate_string(field, rules), String, as_string),
+        Kind::Enum(_) => as_validation_func!(make_validate_enum(field, rules), i32, as_enum_number),
         Kind::Bytes => {
-            let fns = make_validate_bytes(&field, &rules);
+            let fns = make_validate_bytes(field, rules);
             Arc::new(move |val: Cow<Value>, rules: &FieldRules, _| -> anyhow::Result<bool> {
                 let bytes = val.as_bytes().map(|v| Arc::new(v.clone()));
                 for f in &fns {
                     let bytes = bytes.clone();
-                    if !f(bytes, &rules)? {
+                    if !f(bytes, rules)? {
                         return Ok(false);
                     }
                 }
@@ -61,7 +61,7 @@ pub(crate) fn make_validate_field(m: &mut HashMap<String, ValidationFn>, field: 
             })
         }
         Kind::Message(_) => {
-            let fns = make_validate_message(m, &field, &rules);
+            let fns = make_validate_message(m, field, rules);
             Arc::new(move |val: Cow<Value>, rules: &FieldRules, m| -> anyhow::Result<bool> {
                 // When the value is not set the Value is a Cow::Owned(desc.default_value())
                 let msg = match val {
@@ -70,7 +70,7 @@ pub(crate) fn make_validate_field(m: &mut HashMap<String, ValidationFn>, field: 
                 };
                 for f in &fns {
                     let msg = msg.clone();
-                    if !f(msg, &rules, m)? {
+                    if !f(msg, rules, m)? {
                         break;
                     }
                 }
@@ -86,9 +86,6 @@ trait AsOptionStringExt {
 
 impl AsOptionStringExt for Value {
     fn as_string(&self) -> Option<String> {
-        match self.as_str() {
-            Some(s) => Some(s.to_string()),
-            None => None,
-        }
+        self.as_str().map(|s| s.to_string())
     }
 }

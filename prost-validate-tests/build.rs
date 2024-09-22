@@ -4,7 +4,7 @@ use walkdir::{WalkDir};
 use anyhow::{Result};
 
 fn main() -> Result<()> {
-    let dirs = vec![
+    let dirs = [
         "proto/harness",
         "proto/cases",
         "proto/cases/other_package",
@@ -12,7 +12,7 @@ fn main() -> Result<()> {
         "proto/cases/subdirectory",
         "proto/cases/yet_another_package",
     ];
-    let includes = vec![
+    let includes = [
         "proto/harness",
         "proto/cases",
         "proto/cases/other_package",
@@ -23,7 +23,7 @@ fn main() -> Result<()> {
     ];
 
     for dir in dirs.iter() {
-        let files = WalkDir::new(&dir)
+        let files = WalkDir::new(dir)
             .into_iter()
             .filter_map(Result::ok)
             .filter(|e| !e.file_type().is_dir())
@@ -36,7 +36,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn gen(name: &str, files: &Vec<String>, includes: &Vec<&str>) -> Result<()> {
+fn gen(name: &str, files: &[String], includes: &[&str]) -> Result<()> {
     if files.is_empty() {
         return Ok(());
     }
@@ -49,6 +49,6 @@ fn gen(name: &str, files: &Vec<String>, includes: &Vec<&str>) -> Result<()> {
             .map(PathBuf::from)
             .unwrap_or_else(|| PathBuf::from("."))
             .join(format!("{}_file_descriptor_set.bin", name)))
-        .compile_protos(files, &includes)?;
+        .compile_protos(files, includes)?;
     Ok(())
 }

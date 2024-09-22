@@ -6,7 +6,7 @@ use crate::number::{make_validate_double, make_validate_float, make_validate_i32
 use crate::registry::{Args, NestedValidationFn, ValidationFn, REGISTRY};
 use crate::string::make_validate_string;
 use crate::timestamp::make_validate_timestamp;
-use crate::validate_proto::{FieldRules, MessageRules};
+use crate::validate_proto::FieldRules;
 use anyhow::format_err;
 use prost_reflect::{DynamicMessage, FieldDescriptor, Kind};
 use std::collections::HashMap;
@@ -21,16 +21,17 @@ macro_rules! append {
     };
 }
 
+#[allow(clippy::unwrap_used)]
 pub(crate) fn make_validate_message(m: &mut HashMap<String, ValidationFn>, field: &FieldDescriptor, field_rules: &FieldRules) -> Vec<NestedValidationFn<Box<DynamicMessage>>> {
     let mut fns = Vec::new();
     let desc = match field.kind() {
         Kind::Message(desc) => desc,
         _ => return fns,
     };
-    let rules = field_rules.message.unwrap_or_else(MessageRules::default);
+    let rules = field_rules.message.unwrap_or_default();
     // there is no way currently to check for "synthetic" oneof
     let optional = field.containing_oneof()
-        .map(|d| d.fields().len() == 1 && d.fields().find(|f| f == field).is_some())
+        .map(|d| d.fields().len() == 1 && d.fields().any(|f| &f == field))
         .unwrap_or(false);
     if rules.required() && !optional {
         let name = field.full_name().to_string();
@@ -56,7 +57,7 @@ pub(crate) fn make_validate_message(m: &mut HashMap<String, ValidationFn>, field
         ($make:ident,$conv:ident) => {
             {
                 let wkt_field = desc.get_field(1).unwrap();
-                let wkt_fns = $make(&field, &field_rules);
+                let wkt_fns = $make(field, field_rules);
                 let f: NestedValidationFn<Box<DynamicMessage>> = Arc::new(move |val, rules, _| {
                     let val: Box<DynamicMessage> = match val {
                         Some(v) => v,
@@ -78,7 +79,7 @@ pub(crate) fn make_validate_message(m: &mut HashMap<String, ValidationFn>, field
     match desc.full_name() {
         "google.protobuf.StringValue" => {
             let wkt_field = desc.get_field(1).unwrap();
-            let wkt_fns = make_validate_string(&field, &field_rules);
+            let wkt_fns = make_validate_string(field, field_rules);
             let f: NestedValidationFn<Box<DynamicMessage>> = Arc::new(move |val, rules, _| {
                 let val: Box<DynamicMessage> = match val {
                     Some(v) => v,
@@ -97,7 +98,7 @@ pub(crate) fn make_validate_message(m: &mut HashMap<String, ValidationFn>, field
         }
         "google.protobuf.BytesValue" => {
             let wkt_field = desc.get_field(1).unwrap();
-            let wkt_fns = make_validate_bytes(&field, &field_rules);
+            let wkt_fns = make_validate_bytes(field, field_rules);
             let f: NestedValidationFn<Box<DynamicMessage>> = Arc::new(move |val, rules, _| {
                 let val: Box<DynamicMessage> = match val {
                     Some(v) => v,

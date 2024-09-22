@@ -21,7 +21,7 @@ pub(crate) type ValidationFn = Arc<dyn Fn(&Args) -> Result<()> + Send + Sync>;
 pub(crate) type FieldValidationFn<T> = Arc<dyn Fn(Option<T>, &FieldRules) -> Result<bool> + Send + Sync>;
 pub(crate) type NestedValidationFn<T> = Arc<dyn Fn(Option<T>, &FieldRules, &HashMap<String, ValidationFn>) -> Result<bool> + Send + Sync>;
 
-pub(crate) static REGISTRY: Lazy<Registry> = Lazy::new(|| Registry::default());
+pub(crate) static REGISTRY: Lazy<Registry> = Lazy::new(Registry::default);
 
 #[derive(Default, Clone)]
 pub(crate) struct Registry {
@@ -29,6 +29,7 @@ pub(crate) struct Registry {
 }
 
 impl Registry {
+    #[allow(clippy::unwrap_used)]
     pub(crate) fn register(&self, m: &mut HashMap<String, ValidationFn>, desc: &MessageDescriptor) -> Result<()> {
         if m.get(desc.full_name()).is_some() {
             return Ok(());
@@ -93,9 +94,9 @@ impl Registry {
                 continue;
             }
             if field.is_list() {
-                let validate_list = make_validate_list(m, field.clone(), &rules);
+                let validate_list = make_validate_list(m, &field, &rules);
                 fns.push(Arc::new(move |Args { msg, m }| {
-                    let v = msg.get_field(&field).as_list().map(|v| Box::new(v.to_owned()));
+                    let v = msg.get_field(&field).as_list().map(|v|v.to_vec());
                     for f in &validate_list {
                         let v = v.clone();
                         if !f(v, &rules, m)? {
@@ -107,9 +108,9 @@ impl Registry {
                 continue;
             }
             if field.is_map() {
-                let validate_map = make_validate_map(m, field.clone(), &rules);
+                let validate_map = make_validate_map(m, &field, &rules);
                 fns.push(Arc::new(move |Args { msg, m }| {
-                    let v = msg.get_field(&field).as_map().map(|v| Box::new(v.to_owned()));
+                    let v = msg.get_field(&field).as_map().map(|v|v.to_owned());
                     for f in &validate_map {
                         let v = v.clone();
                         if !f(v, &rules, m)? {
@@ -139,13 +140,15 @@ impl Registry {
 
     pub(crate) fn validate(&self, msg: &DynamicMessage) -> Result<()> {
         {
+            #[allow(clippy::unwrap_used)]
             let m = self.m.read().unwrap();
             if let Some(f) = m.get(msg.descriptor().full_name()) {
-                let _ = f(&Args { msg, m: &m })?;
+                f(&Args { msg, m: &m })?;
                 return Ok(());
             }
         }
         {
+            #[allow(clippy::unwrap_used)]
             let mut m = self.m.write().unwrap();
             let desc = msg.descriptor();
             self.register(&mut m, &desc)?;
@@ -155,7 +158,7 @@ impl Registry {
 
     pub(crate) fn do_validate(&self, msg: &DynamicMessage, m: &HashMap<String, ValidationFn>) -> Result<()> {
         if let Some(f) = m.get(msg.descriptor().full_name()) {
-            let _ = f(&Args { msg, m })?;
+            f(&Args { msg, m })?;
             Ok(())
         } else {
             Err(format_err!("no validator for {}", msg.descriptor().full_name()))
