@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["prost-reflect-validate", "prost-validate-tests"]
+members = [ "example","prost-reflect-validate", "prost-validate-tests"]
 
 [workspace.package]
 version = "0.0.1"

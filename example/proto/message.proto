@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package validate.example;
+
+import "validate/validate.proto";
+
+message ExampleMessage {
+  string content = 1 [(validate.rules).string = {const: "Hello, world!"}];
+}

@@ -123,6 +123,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "example"
+version = "0.0.1"
+dependencies = [
+ "once_cell",
+ "prost",
+ "prost-reflect",
+ "prost-reflect-build",
+ "prost-reflect-validate",
+]
+
+[[package]]
 name = "fastrand"
 version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
