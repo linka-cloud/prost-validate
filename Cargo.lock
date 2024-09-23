@@ -275,6 +275,18 @@ dependencies = [
 name = "example"
 version = "0.1.0"
 dependencies = [
+ "example-proto",
+ "once_cell",
+ "prost",
+ "prost-reflect",
+ "prost-reflect-build",
+ "prost-reflect-validate",
+]
+
+[[package]]
+name = "example-proto"
+version = "0.1.0"
+dependencies = [
  "once_cell",
  "prost",
  "prost-reflect",
@@ -409,12 +421,6 @@ checksum = "1868808506b929d7b0cfa8f75951347aa71bb21144b7791bae35d9bccfcfe37a"
 dependencies = [
  "wasm-bindgen",
 ]
-
-[[package]]
-name = "lazy_static"
-version = "1.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 
 [[package]]
 name = "libc"
@@ -656,9 +662,9 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "email_address",
+ "example-proto",
  "http",
  "itertools 0.13.0",
- "lazy_static",
  "no_deadlocks",
  "once_cell",
  "prost",

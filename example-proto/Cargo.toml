@@ -1,5 +1,5 @@
 [package]
-name = "example"
+name = "example-proto"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
@@ -14,7 +14,6 @@ prost = { workspace = true }
 prost-reflect = { workspace = true }
 prost-reflect-validate = { path = "../prost-reflect-validate" }
 once_cell = { workspace = true }
-example-proto = { path = "../example-proto" }
 
 [build-dependencies]
 prost-reflect-build = { workspace = true }

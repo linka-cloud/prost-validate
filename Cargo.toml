@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = [ "example","prost-reflect-validate", "prost-validate-tests"]
+members = [ "example", "example-proto","prost-reflect-validate", "prost-validate-tests"]
 
 [workspace.package]
 version = "0.1.0"
@@ -19,7 +19,6 @@ prost-reflect = { version = "0.14.1", features = ["derive"] }
 prost-reflect-build = "0.14.0"
 anyhow = "1.0.86"
 thiserror = "1.0.63"
-lazy_static = "1.5.0"
 http = "1.1.0"
 itertools = "0.13.0"
 once_cell = "1.19.0"

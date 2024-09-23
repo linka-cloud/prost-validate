@@ -51,7 +51,7 @@ mod validate_proto {
 /// The implementation is provided for the `prost_reflect::ReflectMessage` trait:
 /// ```rust
 ///  use prost_reflect_validate::ValidatorExt;
-///  use crate::proto::ExampleMessage;
+///  use example_proto::ExampleMessage;
 ///
 ///  match ExampleMessage::default().validate() {
 ///     Ok(_) => println!("Validation passed"),
