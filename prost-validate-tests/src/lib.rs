@@ -3799,7 +3799,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
             Box::new(|| {
                 (
                     Box::new(StringPattern {
-                        val: "a\000".to_string(),
+                        val: "a\x0000".to_string(),
                     }) as Box<dyn ValidatorExt>,
                     1,
                 )

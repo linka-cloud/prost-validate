@@ -34,19 +34,17 @@ message ExampleMessage {
 It exposes a single extension trait `ValidatorExt` which can be used to validate protobuf reflect messages.
 
 ```rust
-fn main() {
-    use prost_reflect_validate::ValidatorExt;
-    use example_proto::ExampleMessage;
+use example_proto::ExampleMessage;
+use prost_reflect_validate::ValidatorExt;
 
-    match ExampleMessage::default().validate() {
-        Ok(_) => println!("Validation passed"),
-        Err(e) => eprintln!("Validation failed: {}", e),
-    }
-    let msg = ExampleMessage{content: "Hello, world!".to_string()};
-    match msg.validate() {
-        Ok(_) => println!("Validation passed"),
-        Err(e) => eprintln!("Validation failed: {}", e),
-    }
+match ExampleMessage::default ().validate() {
+    Ok(_) => println ! ("Validation passed"),
+    Err(e) => eprintln ! ("Validation failed: {}", e),
+}
+let msg = ExampleMessage{content: "Hello, world!".to_string()};
+match msg.validate() {
+    Ok(_) => println ! ("Validation passed"),
+    Err(e) => eprintln ! ("Validation failed: {}", e),
 }
 ```
 
