@@ -46,9 +46,9 @@ mod validate_proto {
     include!(concat!(env!("OUT_DIR"), "/validate.rs"));
 }
 
-/// Extension trait for validating messages using `prost-reflect`.
+/// Extension trait for validating messages using [`prost-reflect`](https://docs.rs/prost-reflect/latest/prost_reflect/).
 ///
-/// The implementation is provided for the `prost_reflect::ReflectMessage` trait:
+/// The implementation is provided for the [`prost_reflect::ReflectMessage`](https://docs.rs/prost-reflect/latest/prost_reflect/trait.ReflectMessage.html) trait:
 /// ```rust
 ///  use prost_reflect_validate::ValidatorExt;
 ///  use example_proto::ExampleMessage;
