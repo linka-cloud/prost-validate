@@ -11,6 +11,9 @@ exclude = [
     "tests"
 ]
 
+[lib]
+doctest = false
+
 [dependencies]
 prost = { workspace = true }
 prost-types = { workspace = true }

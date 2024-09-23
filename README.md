@@ -3,7 +3,7 @@
 A protobuf library extending [prost](https://github.com/tokio-rs/prost)
 and [prost-reflect](https://github.com/andrewhickman/prost-reflect) with validation support.
 
-This a rust implementation [protoc-gen-validate](https://github.com/bufbuild/protoc-gen-validate).
+This is a rust implementation [protoc-gen-validate](https://github.com/bufbuild/protoc-gen-validate).
 
 ## Usage
 
@@ -58,12 +58,12 @@ fn main() {
 }
 ```
 
-**Ouput**
+**Output**
 
-```
-Validation failed: validate.example.ExampleMessage.content: must be Hello, world!
-Validation passed
-```
+> Validation failed: validate.example.ExampleMessage.content: must be Hello, world!
+>
+> Validation passed
+
 
 ## Minimum Supported Rust Version
 

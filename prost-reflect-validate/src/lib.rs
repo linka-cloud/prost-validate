@@ -47,20 +47,20 @@ mod validate_proto {
 }
 
 /// Extension trait for validating messages using `prost-reflect`.
-/// 
+///
 /// The implementation is provided for the `prost_reflect::ReflectMessage` trait:
 /// ```rust
 ///  use prost_reflect_validate::ValidatorExt;
 ///  use crate::proto::ExampleMessage;
-///  
+///
 ///  match ExampleMessage::default().validate() {
-///  Ok(_) => println!("Validation passed"),
-///  Err(e) => eprintln!("Validation failed: {}", e),
+///     Ok(_) => println!("Validation passed"),
+///     Err(e) => eprintln!("Validation failed: {}", e),
 ///  }
 ///  let msg = ExampleMessage{content: "Hello, world!".to_string()};
 ///  match msg.validate() {
-///  Ok(_) => println!("Validation passed"),
-///  Err(e) => eprintln!("Validation failed: {}", e),
+///     Ok(_) => println!("Validation passed"),
+///     Err(e) => eprintln!("Validation failed: {}", e),
 ///  }
 /// ```
 pub trait ValidatorExt {
