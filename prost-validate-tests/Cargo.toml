@@ -9,6 +9,10 @@ license.workspace = true
 repository.workspace = true
 publish = false
 
+[[bench]]
+name = "harness"
+harness = false
+
 [dependencies]
 prost = { workspace = true }
 prost-types = { workspace = true }
@@ -17,6 +21,9 @@ anyhow = { workspace = true }
 once_cell = { workspace = true }
 prost-reflect-validate = { path = "../prost-reflect-validate" }
 time = { workspace = true }
+
+[dev-dependencies]
+criterion = { workspace = true }
 
 [build-dependencies]
 prost-reflect-build = { workspace = true }

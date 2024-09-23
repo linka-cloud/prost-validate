@@ -63,7 +63,7 @@ mod validate_proto {
 ///     Err(e) => eprintln!("Validation failed: {}", e),
 ///  }
 /// ```
-pub trait ValidatorExt {
+pub trait ValidatorExt: Send + Sync {
     fn validate(&self) -> anyhow::Result<()>;
 }
 
