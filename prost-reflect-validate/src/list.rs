@@ -1,11 +1,11 @@
 use crate::field::make_validate_field;
 use crate::registry::{NestedValidationFn, ValidationFn, REGISTRY};
-use crate::validate_proto::field_rules::Type;
-use crate::validate_proto::{FieldRules, RepeatedRules};
 use anyhow::format_err;
 use itertools::Itertools;
 use prost_reflect::bytes::Bytes;
 use prost_reflect::{FieldDescriptor, Kind, Value};
+use prost_validate_types::field_rules::Type;
+use prost_validate_types::{FieldRules, RepeatedRules};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::sync::Arc;

@@ -12,7 +12,7 @@ It currently supports validation using reflection.
 It must be used with [prost](https://github.com/tokio-rs/prost) 
 and [prost-reflect](https://github.com/andrewhickman/prost-reflect) generated code.
 
-All validation rules are documented in the [proto file](prost-reflect-validate/proto/validate/validate.proto) 
+All validation rules are documented in the [proto file](prost-validate-types/proto/validate/validate.proto) 
 or in the [protoc-gen-validate](https://github.com/bufbuild/protoc-gen-validate/blob/v1.1.0/README.md#constraint-rules) documentation.
 
 **Proto definition**

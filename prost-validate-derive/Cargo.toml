@@ -1,0 +1,16 @@
+[package]
+name = "prost-validate-derive"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+description.workspace = true
+documentation.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = { workspace = true }
+prost-validate-derive-core = { workspace = true }

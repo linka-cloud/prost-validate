@@ -9,9 +9,9 @@ use crate::number::{
 use crate::r#enum::make_validate_enum;
 use crate::registry::ValidationFn;
 use crate::string::make_validate_string;
-use crate::validate_proto::FieldRules;
 use anyhow::Result;
 use prost_reflect::{FieldDescriptor, Kind, Value};
+use prost_validate_types::FieldRules;
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::sync::Arc;

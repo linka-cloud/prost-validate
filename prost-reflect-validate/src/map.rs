@@ -1,9 +1,9 @@
 use crate::field::make_validate_field;
 use crate::registry::{NestedValidationFn, ValidationFn, REGISTRY};
-use crate::validate_proto::field_rules::Type;
-use crate::validate_proto::{FieldRules, MapRules};
 use anyhow::format_err;
 use prost_reflect::{FieldDescriptor, Kind, MapKey, Value};
+use prost_validate_types::field_rules::Type;
+use prost_validate_types::{FieldRules, MapRules};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::sync::Arc;

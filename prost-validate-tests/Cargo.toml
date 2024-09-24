@@ -19,13 +19,17 @@ prost-types = { workspace = true }
 prost-reflect = { workspace = true }
 anyhow = { workspace = true }
 once_cell = { workspace = true }
-prost-reflect-validate = { path = "../prost-reflect-validate" }
+prost-reflect-validate = { workspace = true }
+prost-validate = { workspace = true, features = ["derive"] }
 time = { workspace = true }
+regex = { workspace = true }
 
 [dev-dependencies]
 criterion = { workspace = true }
 
 [build-dependencies]
+prost-build = { workspace = true }
 prost-reflect-build = { workspace = true }
+prost-validate-build = { workspace = true }
 walkdir = "2.5.0"
 anyhow = { workspace = true }

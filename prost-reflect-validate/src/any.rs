@@ -1,9 +1,9 @@
 use crate::registry::NestedValidationFn;
-use crate::validate_proto::field_rules::Type;
-use crate::validate_proto::{AnyRules, FieldRules};
 use anyhow::format_err;
 use prost_reflect::{DynamicMessage, FieldDescriptor};
 use prost_types::Any;
+use prost_validate_types::field_rules::Type;
+use prost_validate_types::{AnyRules, FieldRules};
 use std::sync::Arc;
 
 macro_rules! any_rules {

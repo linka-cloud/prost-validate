@@ -1,0 +1,29 @@
+[package]
+name = "prost-validate"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+description.workspace = true
+documentation.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[features]
+derive = ["prost-validate-derive"]
+
+[dependencies]
+anyhow = { workspace = true }
+prost = { workspace = true }
+prost-types = { workspace = true }
+prost-validate-derive = { workspace = true, optional = true }
+prost-validate-types = { workspace = true, optional = true }
+once_cell = { workspace = true }
+regex = { workspace = true }
+http = { workspace = true }
+itertools = { workspace = true }
+time = { workspace = true }
+email_address = { workspace = true }
+
+[dev-dependencies]
+prost-validate-derive = { workspace = true }
+prost-validate-types = { workspace = true }

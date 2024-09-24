@@ -28,23 +28,6 @@ mod registry;
 mod string;
 mod timestamp;
 mod utils;
-mod validate;
-
-#[allow(clippy::trivially_copy_pass_by_ref)]
-#[allow(clippy::enum_variant_names)]
-mod validate_proto {
-    use once_cell::sync::Lazy;
-    use prost_reflect::DescriptorPool;
-
-    #[allow(clippy::unwrap_used)]
-    pub(crate) static DESCRIPTOR_POOL: Lazy<DescriptorPool> = Lazy::new(|| {
-        DescriptorPool::decode(
-            include_bytes!(concat!(env!("OUT_DIR"), "/file_descriptor_set.bin")).as_ref(),
-        )
-        .unwrap()
-    });
-    include!(concat!(env!("OUT_DIR"), "/validate.rs"));
-}
 
 /// Extension trait for validating messages using [`prost-reflect`](https://docs.rs/prost-reflect/latest/prost_reflect/).
 ///
@@ -69,7 +52,11 @@ pub trait ValidatorExt: Send + Sync {
 
 impl<T: ReflectMessage> ValidatorExt for T {
     fn validate(&self) -> anyhow::Result<()> {
-        let msg = self.transcode_to_dynamic();
-        REGISTRY.validate(&msg)
+        validate(self)
     }
+}
+
+pub fn validate<T: ReflectMessage>(msg: &T) -> anyhow::Result<()> {
+    let msg = msg.transcode_to_dynamic();
+    REGISTRY.validate(&msg)
 }

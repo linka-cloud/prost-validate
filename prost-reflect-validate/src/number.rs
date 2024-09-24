@@ -1,8 +1,8 @@
 use crate::registry::FieldValidationFn;
-use crate::validate_proto::field_rules::Type;
-use crate::validate_proto::FieldRules;
 use anyhow::format_err;
 use prost_reflect::FieldDescriptor;
+use prost_validate_types::field_rules::Type;
+use prost_validate_types::FieldRules;
 use std::sync::Arc;
 
 macro_rules! number_rules {

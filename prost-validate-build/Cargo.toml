@@ -1,0 +1,16 @@
+[package]
+name = "prost-validate-build"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+description.workspace = true
+documentation.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+prost-build = { workspace = true }
+prost-reflect = { workspace = true }
+prost-validate-types = { workspace = true }
+prost-validate-derive-core = { workspace = true }
+heck = "0.5.0"

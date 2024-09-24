@@ -1,12 +1,12 @@
 use crate::registry::NestedValidationFn;
-use crate::utils::AsDuration;
-use crate::validate_proto::field_rules::Type;
-use crate::validate_proto::{DurationRules, FieldRules};
 use anyhow::format_err;
 use prost_reflect::{DynamicMessage, FieldDescriptor};
 use prost_types::Duration;
+use prost_validate_types::field_rules::Type;
+use prost_validate_types::{DurationRules, FieldRules};
 use std::sync::Arc;
 use time::Duration as TimeDelta;
+use prost_validate::utils::AsDuration;
 
 fn push<F>(fns: &mut Vec<NestedValidationFn<Box<DynamicMessage>>>, name: &Arc<String>, f: Arc<F>)
 where
