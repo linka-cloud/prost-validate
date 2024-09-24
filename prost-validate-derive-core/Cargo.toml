@@ -1,0 +1,28 @@
+[package]
+name = "prost-validate-derive-core"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+description.workspace = true
+documentation.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+anyhow = { workspace = true }
+syn = { workspace = true }
+quote = { workspace = true }
+proc-macro2 = { workspace = true }
+proc-macro-error = { workspace = true }
+darling = { workspace = true }
+once_cell = { workspace = true }
+prost-validate-types = { workspace = true }
+prost-reflect = { workspace = true }
+prost-types = { workspace = true }
+regex = { workspace = true }
+time = { workspace = true }
+heck = "0.5.0"
+
+[dev-dependencies]
+prettyplease = "0.2.22"

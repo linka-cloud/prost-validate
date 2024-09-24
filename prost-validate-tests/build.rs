@@ -19,7 +19,7 @@ fn main() -> Result<()> {
         "proto/cases/sort",
         "proto/cases/subdirectory",
         "proto/cases/yet_another_package",
-        "/adphi/proto",
+        "../prost-validate-types/proto",
     ];
 
     for dir in dirs.iter() {
@@ -50,6 +50,10 @@ fn gen(name: &str, files: &[String], includes: &[&str]) -> Result<()> {
     files.iter().for_each(|f| {
         println!("cargo:rerun-if-changed={}", f);
     });
+
+    // prost_types build
+    let mut config = prost_build::Config::new();
+    prost_validate_build::Builder::new().configure(&mut config, files, includes)?;
     prost_reflect_build::Builder::new()
         .file_descriptor_set_bytes(format!(
             "crate::_{}_FILE_DESCRIPTOR_SET_BYTES",
@@ -61,6 +65,6 @@ fn gen(name: &str, files: &[String], includes: &[&str]) -> Result<()> {
                 .unwrap_or_else(|| PathBuf::from("."))
                 .join(format!("{}_file_descriptor_set.bin", name)),
         )
-        .compile_protos(files, includes)?;
+        .compile_protos_with_config(config, files, includes)?;
     Ok(())
 }

@@ -1,10 +1,10 @@
 use crate::registry::FieldValidationFn;
-use crate::validate_proto::bytes_rules::WellKnown;
-use crate::validate_proto::field_rules::Type;
-use crate::validate_proto::{BytesRules, FieldRules};
 use anyhow::format_err;
 use prost::bytes::Bytes;
 use prost_reflect::FieldDescriptor;
+use prost_validate_types::bytes_rules::WellKnown;
+use prost_validate_types::field_rules::Type;
+use prost_validate_types::{BytesRules, FieldRules};
 use regex::bytes::Regex;
 use std::ops::Deref;
 use std::sync::Arc;

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = [ "example", "example-proto","prost-reflect-validate", "prost-validate-tests"]
+members = [ "example", "example-proto","prost-reflect-validate", "prost-validate", "prost-validate-build", "prost-validate-derive", "prost-validate-derive-core", "prost-validate-tests", "prost-validate-types"]
 
 [workspace.package]
 version = "0.1.0"
@@ -15,7 +15,7 @@ repository = "https://github.com/linka-cloud/prost-validate"
 prost = "0.13.2"
 prost-build = "0.13.2"
 prost-types = "0.13.2"
-prost-reflect = { version = "0.14.1", features = ["derive"] }
+prost-reflect = { version = "0.14.1", features = ["derive", "serde"] }
 prost-reflect-build = "0.14.0"
 anyhow = "1.0.86"
 thiserror = "1.0.63"
@@ -26,3 +26,18 @@ regex = "1.10.6"
 time = "0.3.36"
 email_address = "0.2.9"
 criterion = { version = "0.5", features = ["html_reports"] }
+syn = "2"
+quote = "1"
+proc-macro2 = "1"
+proc-macro-error = "1"
+darling = { version = "0.20", features = ["suggestions"] }
+
+prost-reflect-validate = { path = "prost-reflect-validate" }
+prost-validate = { path = "prost-validate" }
+prost-validate-build = { path = "prost-validate-build" }
+prost-validate-derive = { path = "prost-validate-derive" }
+prost-validate-types = { path = "prost-validate-types" }
+prost-validate-derive-core = { path = "prost-validate-derive-core" }
+
+#[patch.crates-io]
+#prost-build = { path = "/Users/philippe-adrien/adphi/rust/prost/prost-build" }

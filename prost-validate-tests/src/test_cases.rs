@@ -1,22 +1,30 @@
 use prost_reflect_validate::ValidatorExt;
-
-#[allow(unused)]
-pub struct TestCase {
-    pub message: Box<dyn ValidatorExt>,
-    pub failures: i32,
-}
+use prost_validate::Validator as ValidatorDerive;
 
 #[allow(unused)]
 macro_rules! test_cases {
     ($($name:ident,)*) => {
         $(
-            #[test]
-            fn $name() {
-                let (message, failures) = crate::CASES.get(stringify!($name)).unwrap()();
-                let case = TestCase{message, failures};
-                match case.message.validate() {
-                    Ok(_) => assert_eq!(case.failures, 0, "unexpected validation success"),
-                    Err(err) => assert!(case.failures > 0, "unexpected validation failure: {err}"),
+            #[cfg(test)]
+            mod $name {
+                use super::*;
+
+                #[test]
+                fn reflect() {
+                    let (message, failures) = crate::CASES.get(stringify!($name)).unwrap()();
+                    match ValidatorExt::validate(&*message) {
+                        Ok(_) => assert_eq!(failures, 0, "unexpected validation success"),
+                        Err(err) => assert!(failures > 0, "unexpected validation failure: {err}"),
+                    }
+                }
+
+                #[test]
+                fn derive() {
+                    let (message, failures) = crate::CASES.get(stringify!($name)).unwrap()();
+                    match ValidatorDerive::validate(&*message) {
+                        Ok(_) => assert_eq!(failures, 0, "unexpected validation success"),
+                        Err(err) => assert!(failures > 0, "unexpected validation failure: {err}"),
+                    }
                 }
             }
         )*

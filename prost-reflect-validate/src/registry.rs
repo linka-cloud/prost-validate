@@ -2,12 +2,12 @@ use crate::field::make_validate_field;
 use crate::list::make_validate_list;
 use crate::map::make_validate_map;
 use crate::utils::{get_field_rules, is_set};
-use crate::validate::{IsTrue, VALIDATION_DISABLED, VALIDATION_IGNORED, VALIDATION_ONE_OF_RULES};
-use crate::validate_proto::FieldRules;
 use anyhow::{format_err, Result};
 use no_deadlocks::RwLock;
 use once_cell::sync::Lazy;
 use prost_reflect::{DynamicMessage, MessageDescriptor, OneofDescriptor, ReflectMessage};
+use prost_validate_types::FieldRules;
+use prost_validate_types::{MessageRulesExt, OneofRulesExt};
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::Arc;
@@ -19,7 +19,7 @@ pub(crate) struct Args<'a> {
 
 pub(crate) type ValidationFn = Arc<dyn Fn(&Args) -> Result<()> + Send + Sync>;
 pub(crate) type FieldValidationFn<T> =
-    Arc<dyn Fn(Option<T>, &FieldRules) -> Result<bool> + Send + Sync>;
+Arc<dyn Fn(Option<T>, &FieldRules) -> Result<bool> + Send + Sync>;
 pub(crate) type NestedValidationFn<T> = Arc<
     dyn Fn(Option<T>, &FieldRules, &HashMap<String, ValidationFn>) -> Result<bool> + Send + Sync,
 >;
@@ -44,11 +44,7 @@ impl Registry {
         // insert a dummy validation to prevent recursion
         let _ = m.insert(desc.full_name().to_string(), Arc::new(|_| Ok(())));
 
-        let desc = desc.clone();
-        let opts = desc.options();
-        if opts.get_extension(&VALIDATION_DISABLED).is_true()
-            || opts.get_extension(&VALIDATION_IGNORED).is_true()
-        {
+        if desc.validation_disabled() || desc.validation_ignored() {
             let _ = m.insert(desc.full_name().to_string(), Arc::new(|_| Ok(())));
             return Ok(());
         }
@@ -82,11 +78,7 @@ impl Registry {
                     }));
                 }
                 let field = field.clone();
-                if desc
-                    .options()
-                    .get_extension(&VALIDATION_ONE_OF_RULES)
-                    .is_true()
-                {
+                if desc.required() {
                     fns.push(Arc::new(move |Args { msg, .. }| {
                         let mut has = false;
                         for field in field.containing_oneof().unwrap().fields() {

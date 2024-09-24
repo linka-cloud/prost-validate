@@ -1,8 +1,8 @@
 use crate::registry::FieldValidationFn;
-use crate::validate_proto::field_rules::Type;
-use crate::validate_proto::{EnumRules, FieldRules};
 use anyhow::{format_err, Result};
 use prost_reflect::{FieldDescriptor, Kind};
+use prost_validate_types::field_rules::Type;
+use prost_validate_types::{EnumRules, FieldRules};
 use std::sync::Arc;
 
 macro_rules! enum_rules {

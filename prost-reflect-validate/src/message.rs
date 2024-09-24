@@ -9,9 +9,9 @@ use crate::number::{
 use crate::registry::{Args, NestedValidationFn, ValidationFn, REGISTRY};
 use crate::string::make_validate_string;
 use crate::timestamp::make_validate_timestamp;
-use crate::validate_proto::FieldRules;
 use anyhow::format_err;
 use prost_reflect::{DynamicMessage, FieldDescriptor, Kind};
+use prost_validate_types::FieldRules;
 use std::collections::HashMap;
 use std::sync::Arc;
 

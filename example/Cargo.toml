@@ -9,12 +9,17 @@ license.workspace = true
 repository.workspace = true
 publish = false
 
+[[bin]]
+name = "reflect"
+path = "src/reflect.rs"
+[[bin]]
+name = "derive"
+path = "src/derive.rs"
+
 [dependencies]
 prost = { workspace = true }
 prost-reflect = { workspace = true }
-prost-reflect-validate = { path = "../prost-reflect-validate" }
+prost-validate = { workspace = true, features = ["derive"] }
+prost-reflect-validate = { workspace = true }
 once_cell = { workspace = true }
 example-proto = { path = "../example-proto" }
-
-[build-dependencies]
-prost-reflect-build = { workspace = true }
