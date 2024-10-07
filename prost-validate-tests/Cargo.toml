@@ -33,3 +33,6 @@ prost-reflect-build = { workspace = true }
 prost-validate-build = { workspace = true }
 walkdir = "2.5.0"
 anyhow = { workspace = true }
+
+[lints]
+workspace = true

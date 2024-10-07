@@ -28,3 +28,6 @@ prost-types = { workspace = true }
 
 [dev-dependencies]
 example-proto = { path = "../example-proto" }
+
+[lints]
+workspace = true

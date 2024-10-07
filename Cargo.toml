@@ -39,5 +39,14 @@ prost-validate-derive = { path = "prost-validate-derive" }
 prost-validate-types = { path = "prost-validate-types" }
 prost-validate-derive-core = { path = "prost-validate-derive-core" }
 
-#[patch.crates-io]
-#prost-build = { path = "/Users/philippe-adrien/adphi/rust/prost/prost-build" }
+[workspace.lints.clippy]
+todo = "deny"
+unimplemented = "deny"
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+unreachable = "deny"
+needless_pass_by_value = "deny"
+trivially_copy_pass_by_ref = "deny"
+[workspace.lints.rust]
+unused_extern_crates = "warn"

@@ -22,3 +22,6 @@ prost-build = { workspace = true }
 prost-reflect-build = { workspace = true }
 
 [dev-dependencies]
+
+[lints]
+workspace = true
