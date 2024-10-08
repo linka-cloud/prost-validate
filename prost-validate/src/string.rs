@@ -53,7 +53,7 @@ static HEADER_VALUE_RE: Lazy<Regex> =
 #[allow(clippy::unwrap_used)]
 static HEADER_STRING_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[^\x00\n\r]*$").unwrap());
 
-pub trait ValidateString {
+pub trait ValidateStringExt {
     /// Validates whether the given string is a hostname
     fn validate_hostname(&self) -> anyhow::Result<()>;
     // Validates whether the given string is an email address
@@ -80,7 +80,7 @@ pub trait ValidateString {
     fn validate_header_value(&self, strict: bool) -> anyhow::Result<()>;
 }
 
-impl<T> ValidateString for T
+impl<T> ValidateStringExt for T
 where
     T: ToString,
 {

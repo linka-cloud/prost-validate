@@ -106,7 +106,7 @@ impl ToValidationTokens for BytesRules {
             let field = &ctx.name;
             let err = format!("does not contain \"{:?}\"", v.value());
             quote! {
-                if !::prost_validate::ValidateBytes::contains(&#name, #v.as_slice()) {
+                if !::prost_validate::ValidateBytesExt::contains(&#name, #v.as_slice()) {
                     return Err(::prost_validate::Error::new(#field, #err));
                 }
             }

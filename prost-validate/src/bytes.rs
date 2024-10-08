@@ -1,8 +1,8 @@
-pub trait ValidateBytes {
+pub trait ValidateBytesExt {
     fn contains(&self, needle: &[u8]) -> bool;
 }
 
-impl ValidateBytes for Vec<u8> {
+impl ValidateBytesExt for Vec<u8> {
     fn contains(&self, needle: &[u8]) -> bool {
         let len = needle.len();
         if len == 0 {
@@ -12,7 +12,7 @@ impl ValidateBytes for Vec<u8> {
     }
 }
 
-impl ValidateBytes for &Vec<u8> {
+impl ValidateBytesExt for &Vec<u8> {
     fn contains(&self, needle: &[u8]) -> bool {
         let len = needle.len();
         if len == 0 {

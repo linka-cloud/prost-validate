@@ -1,7 +1,7 @@
 use crate::registry::FieldValidationFn;
 use prost_validate::format_err;
 use prost_reflect::FieldDescriptor;
-use prost_validate::ValidateString;
+use prost_validate::ValidateStringExt;
 use prost_validate_types::field_rules::Type;
 use prost_validate_types::string_rules::WellKnown;
 use prost_validate_types::{FieldRules, KnownRegex, StringRules};

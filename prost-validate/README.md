@@ -1,21 +1,24 @@
-# `prost-reflect-validate`
+# `prost-validate`
 
-A protobuf library extending [prost](https://github.com/tokio-rs/prost)
-and [prost-reflect](https://github.com/andrewhickman/prost-reflect) with validation support.
+A protobuf library extending [prost](https://github.com/tokio-rs/prost) with validation support.
 
 This is a rust implementation of [protoc-gen-validate](https://github.com/bufbuild/protoc-gen-validate).
 
-It uses the `prost-reflect` crate to implement validation through reflection.
+It uses the `prost` crate to generate the `derive` based validation code.
 
-For a *derive* based implementation see the [prost-validate](../prost-validate/README.md) crate.
+For a reflection based implementation see the [prost-reflect-validate](../prost-reflect-validate/README.md) crate.
 
 ## Usage
 
-It must be used with [prost](https://github.com/tokio-rs/prost) 
-and [prost-reflect](https://github.com/andrewhickman/prost-reflect) generated code.
+It must be used with [prost](https://github.com/tokio-rs/prost) generated code.
 
 All validation rules are documented in the [proto file](../prost-validate-types/proto/validate/validate.proto) 
 or in the [protoc-gen-validate](https://github.com/bufbuild/protoc-gen-validate/blob/v1.1.0/README.md#constraint-rules) documentation.
+
+```bash
+cargo add prost-validate --features derive
+cargo add prost-validate-build --build
+```
 
 **Proto definition**
 
@@ -39,22 +42,25 @@ message ExampleMessage {
 
 ```rust
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    prost_reflect_build::Builder::new()
-        .descriptor_pool("DESCRIPTOR_POOL")
+    prost_validate_build::Builder::new()
         .compile_protos(&["message.proto"], &["proto", "../prost-validate-types/proto"])
 }
 ```
 
 **Validation**
 
-It exposes a single extension trait `ValidatorExt` which can be used to validate protobuf reflect messages.
+### Include the generated code
 
-`src/main.rs`:
+```rust
+include!(concat!(env!("OUT_DIR"), "/validate.example.rs"));
+```
+
+### Using the generated code
 
 ```rust
 fn main() {
     use example_proto::ExampleMessage;
-    use prost_reflect_validate::ValidatorExt;
+    use prost_validate::Validator;
 
     match ExampleMessage::default().validate() {
         Ok(_) => println!("Validation passed"),
@@ -70,16 +76,9 @@ fn main() {
 }
 ```
 
-**Output**
-
-> Validation failed: validate.example.ExampleMessage.content: must be Hello, world!
+Output:
+> Validation failed: "content": is not equal to "Hello, world!"
 >
 > Validation passed
 
 
-## Minimum Supported Rust Version
-
-Rust **1.64** or higher.
-
-The minimum supported Rust version may be changed in the future, but it will be
-done with a minor version bump.
