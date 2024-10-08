@@ -176,7 +176,7 @@ impl ToValidationTokens for StringRules {
                     let field = &ctx.name;
                     let err = "is not a valid email";
                     quote! {
-                        if let Err(_) = ::prost_validate::ValidateString::validate_email(&#name) {
+                        if let Err(_) = ::prost_validate::ValidateStringExt::validate_email(&#name) {
                             return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
@@ -185,7 +185,7 @@ impl ToValidationTokens for StringRules {
                     let field = &ctx.name;
                     let err = "is not a valid hostname";
                     quote! {
-                        if let Err(_) = ::prost_validate::ValidateString::validate_hostname(&#name) {
+                        if let Err(_) = ::prost_validate::ValidateStringExt::validate_hostname(&#name) {
                             return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
@@ -194,7 +194,7 @@ impl ToValidationTokens for StringRules {
                     let field = &ctx.name;
                     let err = "is not a valid ip";
                     quote! {
-                        if let Err(_) = ::prost_validate::ValidateString::validate_ip(&#name) {
+                        if let Err(_) = ::prost_validate::ValidateStringExt::validate_ip(&#name) {
                             return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
@@ -203,7 +203,7 @@ impl ToValidationTokens for StringRules {
                     let field = &ctx.name;
                     let err = "is not a valid ipv4";
                     quote! {
-                        if let Err(_) = ::prost_validate::ValidateString::validate_ipv4(&#name) {
+                        if let Err(_) = ::prost_validate::ValidateStringExt::validate_ipv4(&#name) {
                             return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
@@ -212,7 +212,7 @@ impl ToValidationTokens for StringRules {
                     let field = &ctx.name;
                     let err = "is not a valid ipv6";
                     quote! {
-                        if let Err(_) = ::prost_validate::ValidateString::validate_ipv6(&#name) {
+                        if let Err(_) = ::prost_validate::ValidateStringExt::validate_ipv6(&#name) {
                             return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
@@ -221,7 +221,7 @@ impl ToValidationTokens for StringRules {
                     let field = &ctx.name;
                     let err = "is not a valid uri";
                     quote! {
-                        if let Err(_) = ::prost_validate::ValidateString::validate_uri(&#name) {
+                        if let Err(_) = ::prost_validate::ValidateStringExt::validate_uri(&#name) {
                             return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
@@ -230,7 +230,7 @@ impl ToValidationTokens for StringRules {
                     let field = &ctx.name;
                     let err = "is not a valid uri reference";
                     quote! {
-                        if let Err(_) = ::prost_validate::ValidateString::validate_uri_ref(&#name) {
+                        if let Err(_) = ::prost_validate::ValidateStringExt::validate_uri_ref(&#name) {
                             return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
@@ -239,7 +239,7 @@ impl ToValidationTokens for StringRules {
                     let field = &ctx.name;
                     let err = "is not a valid address";
                     quote! {
-                        if let Err(_) = ::prost_validate::ValidateString::validate_address(&#name) {
+                        if let Err(_) = ::prost_validate::ValidateStringExt::validate_address(&#name) {
                             return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
@@ -248,7 +248,7 @@ impl ToValidationTokens for StringRules {
                     let field = &ctx.name;
                     let err = "is not a valid uuid";
                     quote! {
-                        if let Err(_) = ::prost_validate::ValidateString::validate_uuid(&#name) {
+                        if let Err(_) = ::prost_validate::ValidateStringExt::validate_uuid(&#name) {
                             return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
@@ -260,7 +260,7 @@ impl ToValidationTokens for StringRules {
                             let field = &ctx.name;
                             let err = "is not a valid http header name";
                             quote! {
-                                if let Err(_) = ::prost_validate::ValidateString::validate_header_name(&#name, #strict) {
+                                if let Err(_) = ::prost_validate::ValidateStringExt::validate_header_name(&#name, #strict) {
                                     return Err(::prost_validate::Error::new(#field, #err));
                                 }
                             }
@@ -269,7 +269,7 @@ impl ToValidationTokens for StringRules {
                             let field = &ctx.name;
                             let err = "is not a valid http header value";
                             quote! {
-                                if let Err(_) = ::prost_validate::ValidateString::validate_header_value(&#name, #strict) {
+                                if let Err(_) = ::prost_validate::ValidateStringExt::validate_header_value(&#name, #strict) {
                                     return Err(::prost_validate::Error::new(#field, #err));
                                 }
                             }
