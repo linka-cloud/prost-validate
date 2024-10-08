@@ -24,76 +24,90 @@ pub struct BytesRules {
 }
 
 impl ToValidationTokens for BytesRules {
-    fn to_validation_tokens(&self, _: &Context, name: &Ident) -> TokenStream {
+    fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
         let rules = prost_validate_types::BytesRules::from(self.to_owned());
         let r#const = rules.r#const.map(|v| {
             let v = LitByteStr::new(v.as_slice(), Span::call_site());
-            let err = format!("{name} is not equal to \"{:?}\"", v.value());
+            let field = &ctx.name;
+            let err = format!("is not equal to \"{:?}\"", v.value());
             quote! {
                 if !#name.iter().eq(#v.iter()) {
-                    return Err(anyhow::anyhow!(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
         let len = rules.len.map(|v| {
             let v = v as usize;
-            let err = format!("{name} length is not equal to {v}");
+            let field = &ctx.name;
+            let err = format!("length is not equal to {v}");
             quote! {
                 if #name.len() != #v {
-                    return Err(anyhow::anyhow!(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
         let min_len = rules.min_len.map(|v| {
             let v = v as usize;
-            let err = format!("{name} length is less than {v}");
+            let field = &ctx.name;
+            let err = format!("length is less than {v}");
             quote! {
                 if #name.len() < #v {
-                    return Err(anyhow::anyhow!(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
         let max_len = rules.max_len.map(|v| {
             let v = v as usize;
-            let err = format!("{name} length is greater than {v}");
+            let field = &ctx.name;
+            let err = format!("length is greater than {v}");
             quote! {
                 if #name.len() > #v {
-                    return Err(anyhow::anyhow!(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
         let pattern = rules.pattern.map(|v| {
-            let err = format!("{name} does not match pattern \"{v}\"");
+            let field = &ctx.name;
+            let err = format!("does not match pattern \"{v}\"");
+            if let Err(err ) = regex::bytes::Regex::new(&v) {
+                panic!("{field}: Invalid regex pattern: {}", err);
+            }
             quote! {
-                if !::regex::bytes::Regex::new(#v)?.is_match(#name.iter().as_slice()) {
-                    return Err(anyhow::anyhow!(#err));
+                let regex = ::regex::bytes::Regex::new(#v).map_err(|err| {
+                    ::prost_validate::Error::new(#field, format!("Invalid regex pattern: {}", err))
+                })?;
+                if !regex.is_match(#name.iter().as_slice()) {
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
         let prefix = rules.prefix.map(|v| {
             let v = LitByteStr::new(v.as_slice(), Span::call_site());
-            let err = format!("{name} does not start with \"{:?}\"", v.value());
+            let field = &ctx.name;
+            let err = format!("does not start with \"{:?}\"", v.value());
             quote! {
                 if !#name.starts_with(#v) {
-                    return Err(anyhow::anyhow!(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
         let suffix = rules.suffix.map(|v| {
             let v = LitByteStr::new(v.as_slice(), Span::call_site());
-            let err = format!("{name} does not end with \"{:?}\"", v.value());
+            let field = &ctx.name;
+            let err = format!("does not end with \"{:?}\"", v.value());
             quote! {
                 if !#name.ends_with(#v) {
-                    return Err(anyhow::anyhow!(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
         let contains = rules.contains.map(|v| {
             let v = LitByteStr::new(v.as_slice(), Span::call_site());
-            let err = format!("{name} does not contain \"{:?}\"", v.value());
+            let field = &ctx.name;
+            let err = format!("does not contain \"{:?}\"", v.value());
             quote! {
                 if !::prost_validate::ValidateBytes::contains(&#name, #v.as_slice()) {
-                    return Err(anyhow::anyhow!(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
@@ -103,13 +117,14 @@ impl ToValidationTokens for BytesRules {
                 .iter()
                 .map(|v| LitByteStr::new(v.as_slice(), Span::call_site()))
                 .collect::<Vec<_>>();
+            let field = &ctx.name;
             let err = format!(
-                "{name} is not in {:?}",
+                "is not in {:?}",
                 v.iter().map(|v| v.value()).collect::<Vec<_>>()
             );
             quote! {
                 if ![#(#v.to_vec()),*].contains(&#name) {
-                    return Err(anyhow::anyhow!(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
@@ -119,38 +134,42 @@ impl ToValidationTokens for BytesRules {
                 .iter()
                 .map(|v| LitByteStr::new(v.as_slice(), Span::call_site()))
                 .collect::<Vec<_>>();
+            let field = &ctx.name;
             let err = format!(
-                "{name} is in {:?}",
+                "is in {:?}",
                 v.iter().map(|v| v.value()).collect::<Vec<_>>()
             );
             quote! {
                 if [#(#v.to_vec()),*].contains(&#name) {
-                    return Err(anyhow::anyhow!(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
         let well_known = rules.well_known.map(|v| match v {
             bytes_rules::WellKnown::Ip(true) => {
-                let err = format!("{name} is not a valid ip");
+                let field = &ctx.name;
+                let err = "is not a valid ip";
                 quote! {
                     if #name.len() != 4 && #name.len() != 16 {
-                        return Err(anyhow::anyhow!(#err));
+                        return Err(::prost_validate::Error::new(#field, #err));
                     }
                 }
             }
             bytes_rules::WellKnown::Ipv4(true) => {
-                let err = format!("{name} is not a valid ipv4");
+                let field = &ctx.name;
+                let err = "is not a valid ipv4";
                 quote! {
                     if #name.len() != 4 {
-                        return Err(anyhow::anyhow!(#err));
+                        return Err(::prost_validate::Error::new(#field, #err));
                     }
                 }
             }
             bytes_rules::WellKnown::Ipv6(true) => {
-                let err = format!("{name} is not a valid ipv6");
+                let field = &ctx.name;
+                let err = "is not a valid ipv6";
                 quote! {
                     if #name.len() != 16 {
-                        return Err(anyhow::anyhow!(#err));
+                        return Err(::prost_validate::Error::new(#field, #err));
                     }
                 }
             }

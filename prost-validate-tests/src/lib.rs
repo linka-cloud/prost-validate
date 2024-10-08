@@ -8,6 +8,7 @@ use prost_types::{Any, Duration, Timestamp};
 use prost_validate::Validator as ValidatorDerive;
 use std::collections::HashMap;
 
+#[allow(clippy::disallowed_names)]
 mod proto;
 #[cfg(test)]
 mod test_cases;

@@ -28,199 +28,228 @@ pub struct StringRules {
 }
 
 impl ToValidationTokens for StringRules {
-    fn to_validation_tokens(&self, _: &Context, name: &Ident) -> TokenStream {
+    fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
         let rules = prost_validate_types::StringRules::from(self.to_owned());
         let r#const = rules.r#const.map(|v| {
-            let err = format!("{name} is not equal to \"{v}\"");
+            let field = &ctx.name;
+            let err = format!("is not equal to \"{v}\"");
             quote! {
                 if #name != #v {
-                    return Err(anyhow::anyhow!(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
         let len = rules.len.map(|v| {
             let v = v as usize;
-            let err = format!("{name} length is not equal to {v}");
+            let field = &ctx.name;
+            let err = format!("length is not equal to {v}");
             quote! {
                 if #name.chars().count() != #v {
-                    return Err(anyhow::anyhow!(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
         let min_len = rules.min_len.map(|v| {
             let v = v as usize;
-            let err = format!("{name} length is less than {v}");
+            let field = &ctx.name;
+            let err = format!("length is less than {v}");
             quote! {
                 if #name.chars().count() < #v {
-                    return Err(anyhow::anyhow!(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
         let max_len = rules.max_len.map(|v| {
             let v = v as usize;
-            let err = format!("{name} length is greater than {v}");
+            let field = &ctx.name;
+            let err = format!("length is greater than {v}");
             quote! {
                 if #name.chars().count() > #v {
-                    return Err(anyhow::anyhow!(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
         let len_bytes = rules.len_bytes.map(|v| {
             let v = v as usize;
-            let err = format!("{name} byte length is not equal to {v}");
+            let field = &ctx.name;
+            let err = format!("byte length is not equal to {v}");
             quote! {
                 if #name.len() != #v {
-                    return Err(anyhow::anyhow!(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
         let min_bytes = rules.min_bytes.map(|v| {
             let v = v as usize;
-            let err = format!("{name} byte length is less than {v}");
+            let field = &ctx.name;
+            let err = format!("byte length is less than {v}");
             quote! {
                 if #name.len() < #v {
-                    return Err(anyhow::anyhow!(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
         let max_bytes = rules.max_bytes.map(|v| {
             let v = v as usize;
-            let err = format!("{name} byte length is greater than {v}");
+            let field = &ctx.name;
+            let err = format!("byte length is greater than {v}");
             quote! {
                 if #name.len() > #v {
-                    return Err(anyhow::anyhow!(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
         let pattern = rules.pattern.map(|v| {
-            let err = format!("{name} does not match pattern \"{v}\"");
+            let field = &ctx.name;
+            let err = format!("does not match pattern \"{v}\"");
+            if let Err(err) = regex::Regex::new(&v) {
+                panic!("{field}: Invalid regex pattern: {}", err);
+            }
             quote! {
-                if !::regex::Regex::new(#v)?.is_match(#name.as_str()) {
-                    return Err(anyhow::anyhow!(#err));
+                let regex = ::regex::Regex::new(#v).map_err(|e| {
+                    ::prost_validate::Error::new(#field, format!("invalid regex pattern: {}", e))
+                })?;
+                if !regex.is_match(#name.as_str()) {
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
         let prefix = rules.prefix.map(|v| {
-            let err = format!("{name} does not start with \"{v}\"");
+            let field = &ctx.name;
+            let err = format!("does not start with \"{v}\"");
             quote! {
                 if !#name.starts_with(#v) {
-                    return Err(anyhow::anyhow!(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
         let suffix = rules.suffix.map(|v| {
-            let err = format!("{name} does not end with \"{v}\"");
+            let field = &ctx.name;
+            let err = format!("does not end with \"{v}\"");
             quote! {
                 if !#name.ends_with(#v) {
-                    return Err(anyhow::anyhow!(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
         let contains = rules.contains.map(|v| {
-            let err = format!("{name} does not contain \"{v}\"");
+            let field = &ctx.name;
+            let err = format!("does not contain \"{v}\"");
             quote! {
                 if !#name.contains(#v) {
-                    return Err(anyhow::anyhow!(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
         let not_contains = rules.not_contains.map(|v| {
-            let err = format!("{name} contains \"{v}\"");
+            let field = &ctx.name;
+            let err = format!("contains \"{v}\"");
             quote! {
                 if #name.contains(#v) {
-                    return Err(anyhow::anyhow!(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
         let r#in = rules.r#in.is_empty().not().then(|| {
             let v = rules.r#in;
-            let err = format!("{name} is not in {:?}", v);
+            let field = &ctx.name;
+            let err = format!("is not in {:?}", v);
             quote! {
                 if ![#(#v),*].contains(&#name.as_str()) {
-                    return Err(anyhow::anyhow!(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
         let not_in = rules.not_in.is_empty().not().then(|| {
             let v = rules.not_in;
-            let err = format!("{name} is in {:?}", v);
+            let field = &ctx.name;
+            let err = format!("is in {:?}", v);
             quote! {
                 if [#(#v),*].contains(&#name.as_str()) {
-                    return Err(anyhow::anyhow!(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
         let well_known = rules.well_known.map(|v| {
             match v {
                 string_rules::WellKnown::Email(true) => {
-                    let err = format!("{name} is not a valid email");
+                    let field = &ctx.name;
+                    let err = "is not a valid email";
                     quote! {
                         if let Err(_) = ::prost_validate::ValidateString::validate_email(&#name) {
-                            return Err(anyhow::anyhow!(#err));
+                            return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
                 }
                 string_rules::WellKnown::Hostname(true) => {
-                    let err = format!("{name} is not a valid hostname");
+                    let field = &ctx.name;
+                    let err = "is not a valid hostname";
                     quote! {
                         if let Err(_) = ::prost_validate::ValidateString::validate_hostname(&#name) {
-                            return Err(anyhow::anyhow!(#err));
+                            return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
                 }
                 string_rules::WellKnown::Ip(true) => {
-                    let err = format!("{name} is not a valid ip");
+                    let field = &ctx.name;
+                    let err = "is not a valid ip";
                     quote! {
                         if let Err(_) = ::prost_validate::ValidateString::validate_ip(&#name) {
-                            return Err(anyhow::anyhow!(#err));
+                            return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
                 }
                 string_rules::WellKnown::Ipv4(true) => {
-                    let err = format!("{name} is not a valid ipv4");
+                    let field = &ctx.name;
+                    let err = "is not a valid ipv4";
                     quote! {
                         if let Err(_) = ::prost_validate::ValidateString::validate_ipv4(&#name) {
-                            return Err(anyhow::anyhow!(#err));
+                            return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
                 }
                 string_rules::WellKnown::Ipv6(true) => {
-                    let err = format!("{name} is not a valid ipv6");
+                    let field = &ctx.name;
+                    let err = "is not a valid ipv6";
                     quote! {
                         if let Err(_) = ::prost_validate::ValidateString::validate_ipv6(&#name) {
-                            return Err(anyhow::anyhow!(#err));
+                            return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
                 }
                 string_rules::WellKnown::Uri(true) => {
-                    let err = format!("{name} is not a valid uri");
+                    let field = &ctx.name;
+                    let err = "is not a valid uri";
                     quote! {
                         if let Err(_) = ::prost_validate::ValidateString::validate_uri(&#name) {
-                            return Err(anyhow::anyhow!(#err));
+                            return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
                 }
                 string_rules::WellKnown::UriRef(true) => {
-                    let err = format!("{name} is not a valid uri reference");
+                    let field = &ctx.name;
+                    let err = "is not a valid uri reference";
                     quote! {
                         if let Err(_) = ::prost_validate::ValidateString::validate_uri_ref(&#name) {
-                            return Err(anyhow::anyhow!(#err));
+                            return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
                 }
                 string_rules::WellKnown::Address(true) => {
-                    let err = format!("{name} is not a valid address");
+                    let field = &ctx.name;
+                    let err = "is not a valid address";
                     quote! {
                         if let Err(_) = ::prost_validate::ValidateString::validate_address(&#name) {
-                            return Err(anyhow::anyhow!(#err));
+                            return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
                 }
                 string_rules::WellKnown::Uuid(true) => {
-                    let err = format!("{name} is not a valid uuid");
+                    let field = &ctx.name;
+                    let err = "is not a valid uuid";
                     quote! {
                         if let Err(_) = ::prost_validate::ValidateString::validate_uuid(&#name) {
-                            return Err(anyhow::anyhow!(#err));
+                            return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
                 }
@@ -228,18 +257,20 @@ impl ToValidationTokens for StringRules {
                     let strict = rules.strict.unwrap_or(true);
                     match prost_validate_types::KnownRegex::try_from(wk) {
                         Ok(prost_validate_types::KnownRegex::HttpHeaderName) => {
-                            let err = format!("{name} is not a valid http header name");
+                            let field = &ctx.name;
+                            let err = "is not a valid http header name";
                             quote! {
                                 if let Err(_) = ::prost_validate::ValidateString::validate_header_name(&#name, #strict) {
-                                    return Err(anyhow::anyhow!(#err));
+                                    return Err(::prost_validate::Error::new(#field, #err));
                                 }
                             }
                         }
                         Ok(prost_validate_types::KnownRegex::HttpHeaderValue) => {
-                            let err = format!("{name} is not a valid http header value");
+                            let field = &ctx.name;
+                            let err = "is not a valid http header value";
                             quote! {
                                 if let Err(_) = ::prost_validate::ValidateString::validate_header_value(&#name, #strict) {
-                                    return Err(anyhow::anyhow!(#err));
+                                    return Err(::prost_validate::Error::new(#field, #err));
                                 }
                             }
                         }
@@ -318,6 +349,7 @@ pub enum WellKnown {
     UriRef(bool),
     Address(bool),
     Uuid(bool),
+    #[allow(clippy::enum_variant_names)]
     WellKnownRegex(i32),
 }
 

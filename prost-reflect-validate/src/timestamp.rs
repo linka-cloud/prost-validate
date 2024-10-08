@@ -1,5 +1,5 @@
 use crate::registry::NestedValidationFn;
-use anyhow::format_err;
+use prost_validate::format_err;
 use prost_reflect::{DynamicMessage, FieldDescriptor};
 use prost_types::Timestamp;
 use prost_validate_types::field_rules::Type;
@@ -10,7 +10,7 @@ use prost_validate::utils::{AsDateTime, AsDuration};
 
 fn push<F>(fns: &mut Vec<NestedValidationFn<Box<DynamicMessage>>>, name: &Arc<String>, f: Arc<F>)
 where
-    F: Fn(&OffsetDateTime, &TimestampRules, &String) -> anyhow::Result<bool>
+    F: Fn(&OffsetDateTime, &TimestampRules, &String) -> prost_validate::Result<bool>
         + Send
         + Sync
         + 'static,
@@ -45,7 +45,7 @@ pub(crate) fn make_validate_timestamp(
         let name = name.clone();
         fns.push(Arc::new(move |val, _, _| {
             if val.is_none() {
-                return Err(format_err!("{}: is required", name));
+                return Err(format_err!(name, "is required"));
             }
             Ok(true)
         }));
@@ -60,7 +60,7 @@ pub(crate) fn make_validate_timestamp(
                 move |val: &OffsetDateTime, rules: &TimestampRules, name: &String| {
                     let want = rules.r#const.unwrap().as_datetime();
                     if *val != want {
-                        return Err(format_err!("{}: must be {}", name, want));
+                        return Err(format_err!(name, "must be {}", want));
                     }
                     Ok(true)
                 },
@@ -80,8 +80,8 @@ pub(crate) fn make_validate_timestamp(
                             let gt = rules.gt.unwrap().as_datetime();
                             if *val <= gt || *val >= lt {
                                 return Err(format_err!(
-                                    "{}: must be inside range ({}, {})",
                                     name,
+                                    "must be inside range ({}, {})",
                                     gt,
                                     lt
                                 ));
@@ -100,8 +100,8 @@ pub(crate) fn make_validate_timestamp(
                             let gt = rules.gt.unwrap().as_datetime();
                             if *val >= lt && *val <= gt {
                                 return Err(format_err!(
-                                    "{}: must be outside range [{}, {}]",
                                     name,
+                                    "must be outside range [{}, {}]",
                                     gt,
                                     lt
                                 ));
@@ -122,8 +122,8 @@ pub(crate) fn make_validate_timestamp(
                             let lt = rules.lt.unwrap().as_datetime();
                             if *val < gte || *val >= lt {
                                 return Err(format_err!(
-                                    "{}: must be inside range [{}, {})",
                                     name,
+                                    "must be inside range [{}, {})",
                                     gte,
                                     lt
                                 ));
@@ -142,8 +142,8 @@ pub(crate) fn make_validate_timestamp(
                             let lt = rules.lt.unwrap().as_datetime();
                             if *val >= lt && *val < gte {
                                 return Err(format_err!(
-                                    "{}: must be outside range [{}, {})",
                                     name,
+                                    "must be outside range [{}, {})",
                                     lt,
                                     gte
                                 ));
@@ -161,7 +161,7 @@ pub(crate) fn make_validate_timestamp(
                     move |val: &OffsetDateTime, rules: &TimestampRules, name: &String| {
                         let lt = rules.lt.unwrap().as_datetime();
                         if *val >= lt {
-                            return Err(format_err!("{}: must be less than {}", name, lt));
+                            return Err(format_err!(name, "must be less than {}", lt));
                         }
                         Ok(true)
                     },
@@ -180,8 +180,8 @@ pub(crate) fn make_validate_timestamp(
                             let lte = rules.lte.unwrap().as_datetime();
                             if *val <= gt || *val > lte {
                                 return Err(format_err!(
-                                    "{}: must be inside range ({}, {}]",
                                     name,
+                                    "must be inside range ({}, {}]",
                                     gt,
                                     lte
                                 ));
@@ -200,8 +200,8 @@ pub(crate) fn make_validate_timestamp(
                             let lte = rules.lte.unwrap().as_datetime();
                             if *val > lte && *val <= gt {
                                 return Err(format_err!(
-                                    "{}: must be outside range ({}, {}]",
                                     name,
+                                    "must be outside range ({}, {}]",
                                     lte,
                                     gt
                                 ));
@@ -222,8 +222,8 @@ pub(crate) fn make_validate_timestamp(
                             let lte = rules.lte.unwrap().as_datetime();
                             if *val < gte || *val > lte {
                                 return Err(format_err!(
-                                    "{}: must be inside range [{}, {}]",
                                     name,
+                                    "must be inside range [{}, {}]",
                                     gte,
                                     lte
                                 ));
@@ -242,8 +242,8 @@ pub(crate) fn make_validate_timestamp(
                             let lte = rules.lte.unwrap().as_datetime();
                             if *val > lte && *val < gte {
                                 return Err(format_err!(
-                                    "{}: must be outside range ({}, {}]",
                                     name,
+                                    "must be outside range ({}, {}]",
                                     lte,
                                     gte
                                 ));
@@ -262,8 +262,8 @@ pub(crate) fn make_validate_timestamp(
                         let lte = rules.lte.unwrap().as_datetime();
                         if *val > lte {
                             return Err(format_err!(
-                                "{}: must be less than or equal to {}",
                                 name,
+                                "must be less than or equal to {}",
                                 lte
                             ));
                         }
@@ -280,7 +280,7 @@ pub(crate) fn make_validate_timestamp(
                 move |val: &OffsetDateTime, rules: &TimestampRules, name: &String| {
                     let gt = rules.gt.unwrap().as_datetime();
                     if *val <= gt {
-                        return Err(format_err!("{}: must be greater than {}", name, gt));
+                        return Err(format_err!(name, "must be greater than {}", gt));
                     }
                     Ok(true)
                 },
@@ -295,8 +295,8 @@ pub(crate) fn make_validate_timestamp(
                     let gte = rules.gte.unwrap().as_datetime();
                     if *val < gte {
                         return Err(format_err!(
-                            "{}: must be greater than or equal to {}",
                             name,
+                            "must be greater than or equal to {}",
                             gte
                         ));
                     }
@@ -316,8 +316,8 @@ pub(crate) fn make_validate_timestamp(
                         let d = rules.within.unwrap().as_duration();
                         if *val >= now || *val < now - d {
                             return Err(format_err!(
-                                "{}: must be within {} from {}",
                                 name,
+                                "must be within {} from {}",
                                 d.to_string(),
                                 now
                             ));
@@ -334,7 +334,7 @@ pub(crate) fn make_validate_timestamp(
                     move |val: &OffsetDateTime, _: &TimestampRules, name: &String| {
                         let now = OffsetDateTime::now_utc();
                         if *val >= now {
-                            return Err(format_err!("{}: must be lt {}", name, now));
+                            return Err(format_err!(name, "must be lt {}", now));
                         }
                         Ok(true)
                     },
@@ -352,8 +352,8 @@ pub(crate) fn make_validate_timestamp(
                         let d = rules.within.unwrap().as_duration();
                         if *val <= now || *val > now + d {
                             return Err(format_err!(
-                                "{}: value must be less than now within {}",
                                 name,
+                                "value must be less than now within {}",
                                 d.to_string()
                             ));
                         }
@@ -369,7 +369,7 @@ pub(crate) fn make_validate_timestamp(
                     move |val: &OffsetDateTime, _: &TimestampRules, name: &String| {
                         let now = OffsetDateTime::now_utc();
                         if *val <= now {
-                            return Err(format_err!("{}: must be gt {}", name, now));
+                            return Err(format_err!(name, "must be gt {}", now));
                         }
                         Ok(true)
                     },
@@ -386,8 +386,8 @@ pub(crate) fn make_validate_timestamp(
                     let d = rules.within.unwrap().as_duration();
                     if *val < now - d || *val > now + d {
                         return Err(format_err!(
-                            "{}: must be within {} from {}",
                             name,
+                            "must be within {} from {}",
                             d.to_string(),
                             now
                         ));

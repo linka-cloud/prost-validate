@@ -36,16 +36,16 @@ mod utils;
 ///  }
 /// ```
 pub trait ValidatorExt: Send + Sync {
-    fn validate(&self) -> anyhow::Result<()>;
+    fn validate(&self) -> prost_validate::Result<()>;
 }
 
 impl<T: ReflectMessage> ValidatorExt for T {
-    fn validate(&self) -> anyhow::Result<()> {
+    fn validate(&self) -> prost_validate::Result<()> {
         validate(self)
     }
 }
 
-pub fn validate<T: ReflectMessage>(msg: &T) -> anyhow::Result<()> {
+pub fn validate<T: ReflectMessage>(msg: &T) -> prost_validate::Result<()> {
     let msg = msg.transcode_to_dynamic();
     REGISTRY.validate(&msg)
 }

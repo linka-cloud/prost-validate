@@ -9,12 +9,13 @@ pub struct BoolRules {
 }
 
 impl ToValidationTokens for BoolRules {
-    fn to_validation_tokens(&self, _: &Context, name: &Ident) -> TokenStream {
+    fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
         let r#const = self.r#const.map(|v| {
-            let err = format!("{} must be equal to {}", name, v);
+            let field = &ctx.name;
+            let err = format!("must be equal to {}", v);
             quote! {
                 if *#name != #v {
-                    return Err(anyhow::anyhow!(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });

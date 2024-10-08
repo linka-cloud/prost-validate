@@ -24,6 +24,8 @@ macro_rules! make_number_rules {
         impl ToValidationTokens for $name {
             fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
                 let rules = prost_validate_types::$name::from(self.to_owned());
+                let field = &ctx.name;
+                let err = "is required";
                 let required = ctx
                     .rules
                     .to_owned()
@@ -32,15 +34,16 @@ macro_rules! make_number_rules {
                     .is_true_and(|| {
                         quote! {
                             if self.#name.is_none() {
-                                return Err(anyhow::anyhow!("{} is required", stringify!(#name)));
+                                return Err(::prost_validate::Error::new(#field, #err));
                             }
                         }
                     });
                 let r#const = rules.r#const.map(|v| {
-                    let err = format!("{name} is not equal to \"{v}\"");
+                    let field = &ctx.name;
+                    let err = format!("is not equal to \"{v}\"");
                     quote! {
                         if *#name != #v {
-                            return Err(anyhow::anyhow!(#err));
+                            return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
                 });
@@ -48,97 +51,109 @@ macro_rules! make_number_rules {
                 let lte_gte = if let Some(lt) = rules.lt {
                     if let Some(gt) = rules.gt {
                         if lt > gt {
-                            let err = format!("{name} must be inside range ({gt}, {lt})");
+                            let field = &ctx.name;
+                            let err = format!("must be inside range ({gt}, {lt})");
                             quote! {
                                 if *#name <= #gt || *#name >= #lt {
-                                    return Err(anyhow::anyhow!(#err));
+                                    return Err(::prost_validate::Error::new(#field, #err));
                                 }
                             }
                         } else {
-                            let err = format!("{name}: must be outside range [{lt}, {gt}]");
+                            let field = &ctx.name;
+                            let err = format!("must be outside range [{lt}, {gt}]");
                             quote! {
                                 if *#name >= #lt && *#name <= #gt {
-                                    return Err(anyhow::anyhow!(#err));
+                                    return Err(::prost_validate::Error::new(#field, #err));
                                 }
                             }
                         }
                     } else if let Some(gte) = rules.gte {
                         if lt > gte {
-                            let err = format!("{name}: must be inside range [{gte}, {lt})");
+                            let field = &ctx.name;
+                            let err = format!("must be inside range [{gte}, {lt})");
                             quote! {
                                 if *#name < #gte || *#name >= #lt {
-                                    return Err(anyhow::anyhow!(#err));
+                                    return Err(::prost_validate::Error::new(#field, #err));
                                 }
                             }
                         } else {
-                            let err = format!("{name}: must be outside range [{gte}, {lt})");
+                            let field = &ctx.name;
+                            let err = format!("must be outside range [{gte}, {lt})");
                             quote! {
                                 if *#name >= #lt && *#name < #gte {
-                                    return Err(anyhow::anyhow!(#err));
+                                    return Err(::prost_validate::Error::new(#field, #err));
                                 }
                             }
                         }
                     } else {
-                        let err = format!("{name}: must be less than {lt}");
+                        let field = &ctx.name;
+                        let err = format!("must be less than {lt}");
                         quote! {
                             if *#name >= #lt {
-                                return Err(anyhow::anyhow!(#err));
+                                return Err(::prost_validate::Error::new(#field, #err));
                             }
                         }
                     }
                 } else if let Some(lte) = rules.lte {
                     if let Some(gt) = rules.gt {
                         if lte > gt {
-                            let err = format!("{name}: must be inside range ({gt}, {lte}]");
+                            let field = &ctx.name;
+                            let err = format!("must be inside range ({gt}, {lte}]");
                             quote! {
                                 if *#name <= #gt || *#name > #lte {
-                                    return Err(anyhow::anyhow!(#err));
+                                    return Err(::prost_validate::Error::new(#field, #err));
                                 }
                             }
                         } else {
-                            let err = format!("{name}: must be outside range ({lte}, {gt}]");
+                            let field = &ctx.name;
+                            let err = format!("must be outside range ({lte}, {gt}]");
                             quote! {
                                 if *#name > #lte && *#name <= #gt {
-                                    return Err(anyhow::anyhow!(#err));
+                                    return Err(::prost_validate::Error::new(#field, #err));
                                 }
                             }
                         }
                     } else if let Some(gte) = rules.gte {
                         if lte > gte {
-                            let err = format!("{name}: must be inside range [{gte}, {lte}]");
+                            let field = &ctx.name;
+                            let err = format!("must be inside range [{gte}, {lte}]");
                             quote! {
                                 if *#name < #gte || *#name > #lte {
-                                    return Err(anyhow::anyhow!(#err));
+                                    return Err(::prost_validate::Error::new(#field, #err));
                                 }
                             }
                         } else {
-                            let err = format!("{name}: must be outside range ({lte}, {gte})");
+                            let field = &ctx.name;
+                            let err = format!("must be outside range ({lte}, {gte})");
                             quote! {
                                 if *#name > #lte && *#name < #gte {
-                                    return Err(anyhow::anyhow!(#err));
+                                    return Err(::prost_validate::Error::new(#field, #err));
                                 }
                             }
                         }
                     } else {
-                        let err = format!("{name}: must be less or equal to {lte}");
+                        let field = &ctx.name;
+                        let err = format!("must be less or equal to {lte}");
                         quote! {
                             if *#name > #lte {
-                                return Err(anyhow::anyhow!(#err));
+                                return Err(::prost_validate::Error::new(#field, #err));
                             }
                         }
                     }
                 } else if let Some(gt) = rules.gt {
-                    let err = format!("{name}: must be greater than {gt}");
+                    let field = &ctx.name;
+                    let err = format!("must be greater than {gt}");
                     quote! {
                         if *#name <= #gt {
-                            return Err(anyhow::anyhow!(#err));
+                            return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
                 } else if let Some(gte) = rules.gte {
-                    let err = format!("{name}: must be greater or equal to {gte}");
+                    let field = &ctx.name;
+                    let err = format!("must be greater or equal to {gte}");
                     quote! {
                         if *#name < #gte {
-                            return Err(anyhow::anyhow!(#err));
+                            return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
                 } else {
@@ -146,19 +161,21 @@ macro_rules! make_number_rules {
                 };
                 let r#in = rules.r#in.is_empty().not().then(|| {
                     let v = rules.r#in.to_owned();
-                    let err = format!("{name}: must be in {:?}", v);
+                    let field = &ctx.name;
+                    let err = format!("must be in {:?}", v);
                     quote! {
                         if ![#(#v),*].contains(#name) {
-                            return Err(anyhow::anyhow!(#err));
+                            return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
                 });
                 let not_in = rules.not_in.is_empty().not().then(|| {
                     let v = rules.not_in.to_owned();
-                    let err = format!("{name}: must not be in {:?}", v);
+                    let field = &ctx.name;
+                    let err = format!("must not be in {:?}", v);
                     quote! {
                         if [#(#v),*].contains(#name) {
-                            return Err(anyhow::anyhow!(#err));
+                            return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
                 });

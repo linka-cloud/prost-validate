@@ -1,5 +1,5 @@
 use crate::registry::NestedValidationFn;
-use anyhow::format_err;
+use prost_validate::format_err;
 use prost_reflect::{DynamicMessage, FieldDescriptor};
 use prost_types::Any;
 use prost_validate_types::field_rules::Type;
@@ -17,12 +17,12 @@ macro_rules! any_rules {
 
 fn push<F>(fns: &mut Vec<NestedValidationFn<Box<DynamicMessage>>>, name: &Arc<String>, f: Arc<F>)
 where
-    F: Fn(&Any, &AnyRules, &String) -> anyhow::Result<bool> + Send + Sync + 'static,
+    F: Fn(&Any, &AnyRules, &String) -> prost_validate::Result<bool> + Send + Sync + 'static,
 {
     let name = name.clone();
     fns.push(Arc::new(move |val, rules, _| {
         let val = match val {
-            Some(v) => v.transcode_to::<Any>()?,
+            Some(v) => v.transcode_to::<Any>().map_err(|_| format_err!(name, "failed to transcode Any"))?,
             None => Any::default(),
         };
         let rules = any_rules!(rules);
@@ -47,7 +47,7 @@ pub(crate) fn make_validate_any(
         let name = name.clone();
         fns.push(Arc::new(move |val, _, _| {
             if val.is_none() {
-                return Err(format_err!("{}: is required", name));
+                return Err(format_err!(name, "is required"));
             }
             Ok(true)
         }));
@@ -60,7 +60,7 @@ pub(crate) fn make_validate_any(
             &name,
             Arc::new(move |val: &Any, rules: &AnyRules, name: &String| {
                 if !rules.r#in.contains(&val.type_url) {
-                    return Err(format_err!("{}: must be in {:?}", name, rules.r#in));
+                    return Err(format_err!(name, "must be in {:?}", rules.r#in));
                 }
                 Ok(true)
             }),
@@ -72,7 +72,7 @@ pub(crate) fn make_validate_any(
             &name,
             Arc::new(move |val: &Any, rules: &AnyRules, name: &String| {
                 if rules.not_in.contains(&val.type_url) {
-                    return Err(format_err!("{}: must not be in {:?}", name, rules.not_in));
+                    return Err(format_err!(name, "must not be in {:?}", rules.not_in));
                 }
                 Ok(true)
             }),

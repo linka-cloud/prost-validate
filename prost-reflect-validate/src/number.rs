@@ -1,5 +1,5 @@
 use crate::registry::FieldValidationFn;
-use anyhow::format_err;
+use prost_validate::format_err;
 use prost_reflect::FieldDescriptor;
 use prost_validate_types::field_rules::Type;
 use prost_validate_types::FieldRules;
@@ -41,7 +41,7 @@ macro_rules! make_validate_number {
                     let val = val.unwrap_or($default);
                     let v = number_rules!(rules, $enum_value).r#const.unwrap();
                     if val != v {
-                        return Err(format_err!("{}: must be {}", name, v));
+                        return Err(format_err!(name, "must be {}", v));
                     }
                     Ok(true)
                 }));
@@ -55,8 +55,8 @@ macro_rules! make_validate_number {
                             let val = val.unwrap_or($default);
                             if val <= gt || val >= lt {
                                 return Err(format_err!(
-                                    "{}: must be inside range ({}, {})",
                                     name,
+                                    "must be inside range ({}, {})",
                                     gt,
                                     lt
                                 ));
@@ -68,8 +68,8 @@ macro_rules! make_validate_number {
                             let val = val.unwrap_or($default);
                             if val >= lt && val <= gt {
                                 return Err(format_err!(
-                                    "{}: must be outside range [{}, {}]",
                                     name,
+                                    "must be outside range [{}, {}]",
                                     lt,
                                     gt
                                 ));
@@ -83,8 +83,8 @@ macro_rules! make_validate_number {
                             let val = val.unwrap_or($default);
                             if val < gte || val >= lt {
                                 return Err(format_err!(
-                                    "{}: must be inside range [{}, {})",
                                     name,
+                                    "must be inside range [{}, {})",
                                     gte,
                                     lt
                                 ));
@@ -96,8 +96,8 @@ macro_rules! make_validate_number {
                             let val = val.unwrap_or($default);
                             if val >= lt && val < gte {
                                 return Err(format_err!(
-                                    "{}: must be outside range [{}, {})",
                                     name,
+                                    "must be outside range [{}, {})",
                                     gte,
                                     lt
                                 ));
@@ -109,7 +109,7 @@ macro_rules! make_validate_number {
                     fns.push(Arc::new(move |val, _| {
                         let val = val.unwrap_or($default);
                         if val >= lt {
-                            return Err(format_err!("{}: must be less than {}", name, lt));
+                            return Err(format_err!(name, "must be less than {}", lt));
                         }
                         Ok(true)
                     }));
@@ -122,8 +122,8 @@ macro_rules! make_validate_number {
                             let val = val.unwrap_or($default);
                             if val <= gt || val > lte {
                                 return Err(format_err!(
-                                    "{}: must be inside range ({}, {}]",
                                     name,
+                                    "must be inside range ({}, {}]",
                                     gt,
                                     lte
                                 ));
@@ -135,8 +135,8 @@ macro_rules! make_validate_number {
                             let val = val.unwrap_or($default);
                             if val > lte && val <= gt {
                                 return Err(format_err!(
-                                    "{}: must be outside range ({}, {}]",
                                     name,
+                                    "must be outside range ({}, {}]",
                                     lte,
                                     gt
                                 ));
@@ -150,8 +150,8 @@ macro_rules! make_validate_number {
                             let val = val.unwrap_or($default);
                             if val < gte || val > lte {
                                 return Err(format_err!(
-                                    "{}: must be inside range [{}, {}]",
                                     name,
+                                    "must be inside range [{}, {}]",
                                     gte,
                                     lte
                                 ));
@@ -163,8 +163,8 @@ macro_rules! make_validate_number {
                             let val = val.unwrap_or($default);
                             if val > lte && val < gte {
                                 return Err(format_err!(
-                                    "{}: must be outside range ({}, {})",
                                     name,
+                                    "must be outside range ({}, {})",
                                     lte,
                                     gte
                                 ));
@@ -176,7 +176,7 @@ macro_rules! make_validate_number {
                     fns.push(Arc::new(move |val, _| {
                         let val = val.unwrap_or($default);
                         if val > lte {
-                            return Err(format_err!("{}: must be less or equal to {}", name, lte));
+                            return Err(format_err!(name, "must be less or equal to {}", lte));
                         }
                         Ok(true)
                     }));
@@ -186,7 +186,7 @@ macro_rules! make_validate_number {
                 fns.push(Arc::new(move |val, _| {
                     let val = val.unwrap_or($default);
                     if val <= gt {
-                        return Err(format_err!("{}: must be greater than {}", name, gt));
+                        return Err(format_err!(name, "must be greater than {}", gt));
                     }
                     Ok(true)
                 }));
@@ -195,7 +195,7 @@ macro_rules! make_validate_number {
                 fns.push(Arc::new(move |val, _| {
                     let val = val.unwrap_or($default);
                     if val < gte {
-                        return Err(format_err!("{}: must be greater or equal to {}", name, gte));
+                        return Err(format_err!(name, "must be greater or equal to {}", gte));
                     }
                     Ok(true)
                 }));
@@ -207,7 +207,7 @@ macro_rules! make_validate_number {
                     let val = val.unwrap_or($default);
                     let rules = number_rules!(rules, $enum_value);
                     if !rules.r#in.contains(&val) {
-                        return Err(format_err!("{}: must be in {:?}", name, rules.r#in));
+                        return Err(format_err!(name, "must be in {:?}", rules.r#in));
                     }
                     Ok(true)
                 }));
@@ -218,7 +218,7 @@ macro_rules! make_validate_number {
                     let val = val.unwrap_or($default);
                     let rules = number_rules!(rules, $enum_value);
                     if rules.not_in.contains(&val) {
-                        return Err(format_err!("{}: must not be in {:?}", name, rules.r#in));
+                        return Err(format_err!(name, "must not be in {:?}", rules.r#in));
                     }
                     Ok(true)
                 }));

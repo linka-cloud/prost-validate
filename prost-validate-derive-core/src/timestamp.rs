@@ -48,14 +48,15 @@ impl From<TimestampRules> for prost_validate_types::TimestampRules {
 }
 
 impl ToValidationTokens for TimestampRules {
-    fn to_validation_tokens(&self, _: &Context, name: &Ident) -> TokenStream {
+    fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
         let rules = prost_validate_types::TimestampRules::from(self.clone());
         let r#const = rules.r#const.map(|v| v.as_datetime()).map(|v| {
-            let (got, want) = datetime_to_tokens(&name, &v);
-            let err = format!("{name} must be equal to {:?}", v);
+            let (got, want) = datetime_to_tokens(name, &v);
+            let field = &ctx.name;
+            let err = format!("must be equal to {:?}", v);
             quote! {
                 if #got != #want {
-                    return Err(::anyhow::Error::msg(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
@@ -63,211 +64,189 @@ impl ToValidationTokens for TimestampRules {
         let gte_lte = if let Some(lt) = rules.lt.map(|v| v.as_datetime()) {
             if let Some(gt) = rules.gt.map(|v| v.as_datetime()) {
                 if lt > gt {
-                    let err = format!(
-                        "{name}: must be inside range ({}, {})",
-                        gt.to_string(),
-                        lt.to_string()
-                    );
-                    let (val, lt) = datetime_to_tokens(&name, &lt);
-                    let (_, gt) = datetime_to_tokens(&name, &gt);
+                    let field = &ctx.name;
+                    let err = format!("must be inside range ({}, {})", gt, lt);
+                    let (val, lt) = datetime_to_tokens(name, &lt);
+                    let (_, gt) = datetime_to_tokens(name, &gt);
                     quote! {
                         if #val <= #gt || #val >= #lt {
-                            return Err(anyhow::Error::msg(#err));
+                            return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
                 } else {
-                    let err = format!(
-                        "{name}: must be outside range [{}, {}]",
-                        lt.to_string(),
-                        gt.to_string()
-                    );
-                    let (val, lt) = datetime_to_tokens(&name, &lt);
-                    let (_, gt) = datetime_to_tokens(&name, &gt);
+                    let field = &ctx.name;
+                    let err = format!("must be outside range [{}, {}]", lt, gt);
+                    let (val, lt) = datetime_to_tokens(name, &lt);
+                    let (_, gt) = datetime_to_tokens(name, &gt);
                     quote! {
                         if #val >= #lt && #val <= #gt {
-                            return Err(anyhow::Error::msg(#err));
+                            return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
                 }
             } else if let Some(gte) = rules.gte.map(|v| v.as_datetime()) {
                 if lt > gte {
-                    let err = format!(
-                        "{name}: must be inside range [{}, {})",
-                        gte.to_string(),
-                        lt.to_string()
-                    );
-                    let (val, lt) = datetime_to_tokens(&name, &lt);
-                    let (_, gte) = datetime_to_tokens(&name, &gte);
+                    let field = &ctx.name;
+                    let err = format!("must be inside range [{}, {})", gte, lt);
+                    let (val, lt) = datetime_to_tokens(name, &lt);
+                    let (_, gte) = datetime_to_tokens(name, &gte);
                     quote! {
                         if #val < #gte || #val >= #lt {
-                            return Err(anyhow::Error::msg(#err));
+                            return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
                 } else {
-                    let err = format!(
-                        "{name}: must be outside range [{}, {})",
-                        lt.to_string(),
-                        gte.to_string()
-                    );
-                    let (val, lt) = datetime_to_tokens(&name, &lt);
-                    let (_, gte) = datetime_to_tokens(&name, &gte);
+                    let field = &ctx.name;
+                    let err = format!("must be outside range [{}, {})", lt, gte);
+                    let (val, lt) = datetime_to_tokens(name, &lt);
+                    let (_, gte) = datetime_to_tokens(name, &gte);
                     quote! {
                         if #val >= #lt && #val < #gte {
-                            return Err(anyhow::Error::msg(#err));
+                            return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
                 }
             } else {
-                let err = format!("{name}: must be less than {}", lt.to_string());
-                let (val, lt) = datetime_to_tokens(&name, &lt);
+                let field = &ctx.name;
+                let err = format!("must be less than {}", lt);
+                let (val, lt) = datetime_to_tokens(name, &lt);
                 quote! {
                     if #val >= #lt {
-                        return Err(anyhow::Error::msg(#err));
+                        return Err(::prost_validate::Error::new(#field, #err));
                     }
                 }
             }
         } else if let Some(lte) = rules.lte.map(|v| v.as_datetime()) {
             if let Some(gt) = rules.gt.map(|v| v.as_datetime()) {
                 if lte > gt {
-                    let err = format!(
-                        "{name}: must be inside range ({}, {}]",
-                        gt.to_string(),
-                        lte.to_string()
-                    );
-                    let (val, lte) = datetime_to_tokens(&name, &lte);
-                    let (_, gt) = datetime_to_tokens(&name, &gt);
+                    let field = &ctx.name;
+                    let err = format!("must be inside range ({}, {}]", gt, lte);
+                    let (val, lte) = datetime_to_tokens(name, &lte);
+                    let (_, gt) = datetime_to_tokens(name, &gt);
                     quote! {
                         if #val <= #gt || #val > #lte {
-                            return Err(anyhow::Error::msg(#err));
+                            return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
                 } else {
-                    let err = format!(
-                        "{name}: must be outside range ({}, {}]",
-                        lte.to_string(),
-                        gt.to_string()
-                    );
-                    let (val, lte) = datetime_to_tokens(&name, &lte);
-                    let (_, gt) = datetime_to_tokens(&name, &gt);
+                    let field = &ctx.name;
+                    let err = format!("must be outside range ({}, {}]", lte, gt);
+                    let (val, lte) = datetime_to_tokens(name, &lte);
+                    let (_, gt) = datetime_to_tokens(name, &gt);
                     quote! {
                         if #val >= #lte && #val < #gt {
-                            return Err(anyhow::Error::msg(#err));
+                            return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
                 }
             } else if let Some(gte) = rules.gte.map(|v| v.as_datetime()) {
                 if lte > gte {
-                    let err = format!(
-                        "{name}: must be inside range [{}, {}]",
-                        gte.to_string(),
-                        lte.to_string()
-                    );
-                    let (val, lte) = datetime_to_tokens(&name, &lte);
-                    let (_, gte) = datetime_to_tokens(&name, &gte);
+                    let field = &ctx.name;
+                    let err = format!("must be inside range [{}, {}]", gte, lte);
+                    let (val, lte) = datetime_to_tokens(name, &lte);
+                    let (_, gte) = datetime_to_tokens(name, &gte);
                     quote! {
                         if #val < #gte || #val > #lte {
-                            return Err(anyhow::Error::msg(#err));
+                            return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
                 } else {
-                    let err = format!(
-                        "{name}: must be outside range ({}, {})",
-                        lte.to_string(),
-                        gte.to_string()
-                    );
-                    let (val, lte) = datetime_to_tokens(&name, &lte);
-                    let (_, gte) = datetime_to_tokens(&name, &gte);
+                    let field = &ctx.name;
+                    let err = format!("must be outside range ({}, {})", lte, gte);
+                    let (val, lte) = datetime_to_tokens(name, &lte);
+                    let (_, gte) = datetime_to_tokens(name, &gte);
                     quote! {
                         if #val > #lte && #val < #gte {
-                            return Err(anyhow::Error::msg(#err));
+                            return Err(::prost_validate::Error::new(#field, #err));
                         }
                     }
                 }
             } else {
-                let err = format!("{name}: must be less than or equal to {}", lte.to_string());
-                let (val, lte) = datetime_to_tokens(&name, &lte);
+                let field = &ctx.name;
+                let err = format!("must be less than or equal to {}", lte);
+                let (val, lte) = datetime_to_tokens(name, &lte);
                 quote! {
                     if #val > #lte {
-                        return Err(anyhow::Error::msg(#err));
+                        return Err(::prost_validate::Error::new(#field, #err));
                     }
                 }
             }
         } else if let Some(gt) = rules.gt.map(|v| v.as_datetime()) {
-            let err = format!("{name}: must be greater than {}", gt.to_string());
-            let (val, gt) = datetime_to_tokens(&name, &gt);
+            let field = &ctx.name;
+            let err = format!("must be greater than {}", gt);
+            let (val, gt) = datetime_to_tokens(name, &gt);
             quote! {
                 if #val <= #gt {
-                    return Err(anyhow::Error::msg(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         } else if let Some(gte) = rules.gte.map(|v| v.as_datetime()) {
-            let err = format!("{name}: must be greater or equal to {}", gte.to_string());
-            let (val, gte) = datetime_to_tokens(&name, &gte);
+            let field = &ctx.name;
+            let err = format!("must be greater or equal to {}", gte);
+            let (val, gte) = datetime_to_tokens(name, &gte);
             quote! {
                 if #val < #gte {
-                    return Err(anyhow::Error::msg(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         } else if let Some(true) = rules.lt_now {
             if let Some(ref within) = rules.within.map(|v| v.as_duration()) {
-                let (val, _) = datetime_to_tokens(&name, &OffsetDateTime::now_utc());
-                let (_, d) = duration_to_tokens(&name, within);
+                let (val, _) = datetime_to_tokens(name, &OffsetDateTime::now_utc());
+                let (_, d) = duration_to_tokens(name, within);
+                let field = &ctx.name;
+                let err = format!("must be within {} from now", d);
                 quote! {
                     let now = ::time::OffsetDateTime::now_utc();
                     let d = #d;
                     if #val >= now || #val < now - d {
-                        return Err(anyhow::anyhow!(
-                            "{}: must be within {} from now",
-                            #name,
-                            d.to_string()
-                        ));
+                        return Err(::prost_validate::Error::new(#field, #err));
                     }
                 }
             } else {
-                let (val, _) = datetime_to_tokens(&name, &OffsetDateTime::now_utc());
+                let (val, _) = datetime_to_tokens(name, &OffsetDateTime::now_utc());
+                let field = &ctx.name;
+                let err = format!("{}: must be less than now", name);
                 quote! {
                     let now = ::time::OffsetDateTime::now_utc();
                     if #val >= now {
-                        return Err(anyhow::anyhow!("{}: must be less than now", #name));
+                        return Err(::prost_validate::Error::new(#field, #err));
                     }
                 }
             }
         } else if let Some(true) = rules.gt_now {
             if let Some(ref within) = rules.within.map(|v| v.as_duration()) {
-                let (val, _) = datetime_to_tokens(&name, &OffsetDateTime::now_utc());
-                let (_, d) = duration_to_tokens(&name, within);
+                let (val, _) = datetime_to_tokens(name, &OffsetDateTime::now_utc());
+                let (_, d) = duration_to_tokens(name, within);
+                let field = &ctx.name;
+                let err = format!("must be within {} from now", d);
                 quote! {
                      let now = ::time::OffsetDateTime::now_utc();
                      let d = #d;
                      if #val <= now || #val > now + d {
-                         return Err(anyhow::anyhow!(
-                             "{}: must be within {} from now",
-                             #name,
-                             d.to_string()
-                         ));
+                         return Err(::prost_validate::Error::new(#field, #err));
                      }
                 }
             } else {
-                let (val, _) = datetime_to_tokens(&name, &OffsetDateTime::now_utc());
+                let (val, _) = datetime_to_tokens(name, &OffsetDateTime::now_utc());
+                let field = &ctx.name;
+                let err = "must be greater than now";
                 quote! {
                     let now = ::time::OffsetDateTime::now_utc();
                     if #val <= now {
-                        return Err(anyhow::anyhow!("{}: must be greater than now", #name));
+                        return Err(::prost_validate::Error::new(#field, #err));
                     }
                 }
             }
         } else if let Some(ref within) = rules.within.map(|v| v.as_duration()) {
-            let (val, _) = datetime_to_tokens(&name, &OffsetDateTime::now_utc());
-            let (_, d) = duration_to_tokens(&name, within);
+            let (val, _) = datetime_to_tokens(name, &OffsetDateTime::now_utc());
+            let (_, d) = duration_to_tokens(name, within);
+            let field = &ctx.name;
+            let err = format!("must be within {} from now", d);
             quote! {
                 let now = ::time::OffsetDateTime::now_utc();
                 let d = #d;
                 if #val < now - d || #val > now + d {
-                    return Err(anyhow::anyhow!(
-                        "{}: must be within {} from now",
-                        #name,
-                        d.to_string()
-                    ));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         } else {

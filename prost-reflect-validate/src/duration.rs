@@ -1,5 +1,5 @@
 use crate::registry::NestedValidationFn;
-use anyhow::format_err;
+use prost_validate::format_err;
 use prost_reflect::{DynamicMessage, FieldDescriptor};
 use prost_types::Duration;
 use prost_validate_types::field_rules::Type;
@@ -10,7 +10,7 @@ use prost_validate::utils::AsDuration;
 
 fn push<F>(fns: &mut Vec<NestedValidationFn<Box<DynamicMessage>>>, name: &Arc<String>, f: Arc<F>)
 where
-    F: Fn(TimeDelta, &DurationRules, &String) -> anyhow::Result<bool> + Send + Sync + 'static,
+    F: Fn(TimeDelta, &DurationRules, &String) -> prost_validate::Result<bool> + Send + Sync + 'static,
 {
     let name = name.clone();
     fns.push(Arc::new(move |val, rules, _| {
@@ -20,7 +20,7 @@ where
         };
         let rules = match &rules.r#type {
             Some(Type::Duration(rules)) => rules,
-            _ => return Err(format_err!("unexpected duration rules")),
+            _ => return Err(format_err!(name, "unexpected duration rules")),
         };
         f(val, rules, &name)
     }))
@@ -41,7 +41,7 @@ pub(crate) fn make_validate_duration(
         let name = name.clone();
         fns.push(Arc::new(move |val, _, _| {
             if val.is_none() {
-                return Err(format_err!("{}: is required", name));
+                return Err(format_err!(name, "is required"));
             }
             Ok(true)
         }));
@@ -56,7 +56,7 @@ pub(crate) fn make_validate_duration(
                 move |val: TimeDelta, rules: &DurationRules, name: &String| {
                     let want = rules.r#const.unwrap().as_duration();
                     if val != want {
-                        return Err(format_err!("{}: must be {}", name, want.to_string()));
+                        return Err(format_err!(name, "must be {}", want.to_string()));
                     }
                     Ok(true)
                 },
@@ -76,8 +76,8 @@ pub(crate) fn make_validate_duration(
                             let gt = rules.gt.unwrap().as_duration();
                             if val <= gt || val >= lt {
                                 return Err(format_err!(
-                                    "{}: must be inside range ({}, {})",
                                     name,
+                                    "must be inside range ({}, {})",
                                     gt.to_string(),
                                     lt.to_string()
                                 ));
@@ -96,8 +96,8 @@ pub(crate) fn make_validate_duration(
                             let gt = rules.gt.unwrap().as_duration();
                             if val >= lt && val <= gt {
                                 return Err(format_err!(
-                                    "{}: must be outside range [{}, {}]",
                                     name,
+                                    "must be outside range [{}, {}]",
                                     lt.to_string(),
                                     gt.to_string()
                                 ));
@@ -118,8 +118,8 @@ pub(crate) fn make_validate_duration(
                             let gte = rules.gte.unwrap().as_duration();
                             if val < gte || val >= lt {
                                 return Err(format_err!(
-                                    "{}: must be inside range [{}, {})",
                                     name,
+                                    "must be inside range [{}, {})",
                                     gte.to_string(),
                                     lt.to_string()
                                 ));
@@ -138,8 +138,8 @@ pub(crate) fn make_validate_duration(
                             let gte = rules.gte.unwrap().as_duration();
                             if val >= lt && val < gte {
                                 return Err(format_err!(
-                                    "{}: must be outside range [{}, {})",
                                     name,
+                                    "must be outside range [{}, {})",
                                     lt.to_string(),
                                     gte.to_string()
                                 ));
@@ -158,8 +158,8 @@ pub(crate) fn make_validate_duration(
                         let lt = rules.lt.unwrap().as_duration();
                         if val >= lt {
                             return Err(format_err!(
-                                "{}: must be less than {}",
                                 name,
+                                "must be less than {}",
                                 lt.to_string()
                             ));
                         }
@@ -180,8 +180,8 @@ pub(crate) fn make_validate_duration(
                             let gt = rules.gt.unwrap().as_duration();
                             if val <= gt || val > lte {
                                 return Err(format_err!(
-                                    "{}: must be inside range ({}, {}]",
                                     name,
+                                    "must be inside range ({}, {}]",
                                     gt.to_string(),
                                     lte.to_string()
                                 ));
@@ -200,8 +200,8 @@ pub(crate) fn make_validate_duration(
                             let gt = rules.gt.unwrap().as_duration();
                             if val >= lte && val < gt {
                                 return Err(format_err!(
-                                    "{}: must be outside range ({}, {}]",
                                     name,
+                                    "must be outside range ({}, {}]",
                                     lte.to_string(),
                                     gt.to_string()
                                 ));
@@ -222,8 +222,8 @@ pub(crate) fn make_validate_duration(
                             let gte = rules.gte.unwrap().as_duration();
                             if val < gte || val > lte {
                                 return Err(format_err!(
-                                    "{}: must be inside range [{}, {}]",
                                     name,
+                                    "must be inside range [{}, {}]",
                                     gte.to_string(),
                                     lte.to_string()
                                 ));
@@ -242,8 +242,8 @@ pub(crate) fn make_validate_duration(
                             let gte = rules.gte.unwrap().as_duration();
                             if val > lte && val < gte {
                                 return Err(format_err!(
-                                    "{}: must be outside range ({}, {})",
                                     name,
+                                    "must be outside range ({}, {})",
                                     lte.to_string(),
                                     gte.to_string()
                                 ));
@@ -262,8 +262,8 @@ pub(crate) fn make_validate_duration(
                         let lte = rules.lte.unwrap().as_duration();
                         if val > lte {
                             return Err(format_err!(
-                                "{}: must be less than or equal to {}",
-                                name.to_string(),
+                                name,
+                                "must be less than or equal to {}",
                                 lte.to_string()
                             ));
                         }
@@ -281,8 +281,8 @@ pub(crate) fn make_validate_duration(
                     let gt = rules.gt.unwrap().as_duration();
                     if val <= gt {
                         return Err(format_err!(
-                            "{}: must be greater than {}",
                             name,
+                            "must be greater than {}",
                             gt.to_string()
                         ));
                     }
@@ -299,8 +299,8 @@ pub(crate) fn make_validate_duration(
                     let gte = rules.gte.unwrap().as_duration();
                     if val < gte {
                         return Err(format_err!(
-                            "{}: must be greater or equal to {}",
                             name,
+                            "must be greater or equal to {}",
                             gte.to_string()
                         ));
                     }
@@ -322,7 +322,7 @@ pub(crate) fn make_validate_duration(
                         .map(|v| v.as_duration())
                         .collect::<Vec<TimeDelta>>();
                     if !vals.contains(&val) {
-                        return Err(format_err!("{}: must be in {:?}", name, vals));
+                        return Err(format_err!(name, "must be in {:?}", vals));
                     }
                     Ok(true)
                 },
@@ -341,7 +341,7 @@ pub(crate) fn make_validate_duration(
                         .map(|v| v.as_duration())
                         .collect::<Vec<TimeDelta>>();
                     if vals.contains(&val) {
-                        return Err(format_err!("{}: must not be in {:?}", name, vals));
+                        return Err(format_err!(name, "must not be in {:?}", vals));
                     }
                     Ok(true)
                 },

@@ -9,7 +9,7 @@ use crate::number::{
 use crate::r#enum::make_validate_enum;
 use crate::registry::ValidationFn;
 use crate::string::make_validate_string;
-use anyhow::Result;
+use prost_validate::Result;
 use prost_reflect::{FieldDescriptor, Kind, Value};
 use prost_validate_types::FieldRules;
 use std::borrow::Cow;
@@ -63,7 +63,7 @@ pub(crate) fn make_validate_field(
         Kind::Bytes => {
             let fns = make_validate_bytes(field, rules);
             Arc::new(
-                move |val: Cow<Value>, rules: &FieldRules, _| -> anyhow::Result<bool> {
+                move |val: Cow<Value>, rules: &FieldRules, _| -> prost_validate::Result<bool> {
                     let bytes = val.as_bytes().map(|v| Arc::new(v.clone()));
                     for f in &fns {
                         let bytes = bytes.clone();
@@ -78,7 +78,7 @@ pub(crate) fn make_validate_field(
         Kind::Message(_) => {
             let fns = make_validate_message(m, field, rules);
             Arc::new(
-                move |val: Cow<Value>, rules: &FieldRules, m| -> anyhow::Result<bool> {
+                move |val: Cow<Value>, rules: &FieldRules, m| -> prost_validate::Result<bool> {
                     // When the value is not set the Value is a Cow::Owned(desc.default_value())
                     let msg = match val {
                         Cow::Borrowed(_) => val.as_message().map(|v| Box::new(v.clone())),

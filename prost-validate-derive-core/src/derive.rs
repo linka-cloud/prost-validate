@@ -28,7 +28,7 @@ pub fn derive(input: TokenStream) -> proc_macro2::TokenStream {
     if !implementation.is_empty() {
         quote! {
             impl ::prost_validate::Validator for #ident {
-                fn validate(&self) -> anyhow::Result<()> {
+                fn validate(&self) -> prost_validate::Result<()> {
                     #implementation
                     Ok(())
                 }
@@ -69,5 +69,22 @@ pub mod test_utils {
             .write_all(tk.to_string().as_bytes())?;
         let output = rustfmt.wait_with_output()?;
         Ok(String::from_utf8(output.stdout)?)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tests() {
+        let input = quote! {
+            pub struct BytesPattern {
+                #[prost(bytes = "vec", tag = "1")]
+                #[validate(r#type(bytes(pattern = "^[\0-\u{7f}]+$")))]
+                pub val: ::prost::alloc::vec::Vec<u8>,
+            }
+        };
+        println!("{}", derive_2(input));
     }
 }

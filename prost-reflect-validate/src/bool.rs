@@ -1,5 +1,5 @@
 use crate::registry::FieldValidationFn;
-use anyhow::format_err;
+use prost_validate::format_err;
 use prost_reflect::FieldDescriptor;
 use prost_validate_types::field_rules::Type;
 use prost_validate_types::FieldRules;
@@ -22,7 +22,7 @@ pub(crate) fn make_validate_bool(
         fns.push(Arc::new(move |val, _| {
             let val = val.unwrap_or(false);
             if val != v {
-                return Err(format_err!("{}: must be {}", name, v));
+                return Err(format_err!(name, "must be {}", v));
             }
             Ok(true)
         }))

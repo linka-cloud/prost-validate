@@ -17,6 +17,8 @@ prost-build = "0.13.2"
 prost-types = "0.13.2"
 prost-reflect = { version = "0.14.1", features = ["derive", "serde"] }
 prost-reflect-build = "0.14.0"
+tonic = "0.12.3"
+tonic-types = "0.12.3"
 anyhow = "1.0.86"
 thiserror = "1.0.63"
 http = "1.1.0"

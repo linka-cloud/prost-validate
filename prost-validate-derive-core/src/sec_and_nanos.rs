@@ -50,12 +50,12 @@ impl FromMeta for SecsAndNanos {
             Expr::Group(ref group) => Self::from_expr(&group.expr),
             Expr::Paren(ref paren) => {
                 let meta = NestedMeta::parse_meta_list(paren.expr.to_token_stream())
-                    .map_err(|e| darling::Error::custom(e))?;
+                    .map_err(darling::Error::custom)?;
                 Self::from_list(meta.as_slice())
             }
             Expr::Tuple(ref tuple) => {
                 let meta = NestedMeta::parse_meta_list(tuple.elems.to_token_stream())
-                    .map_err(|e| darling::Error::custom(e))?;
+                    .map_err(darling::Error::custom)?;
                 Self::from_list(meta.as_slice())
             }
             _ => Err(Error::unexpected_expr_type(expr)),

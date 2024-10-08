@@ -20,18 +20,20 @@ impl ToValidationTokens for MapRules {
     fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
         let rules = prost_validate_types::MapRules::from(self.to_owned());
         let min_pairs = rules.min_pairs.map(|v| {
-            let err = format!("{name}: must have at least {v} pairs");
+            let field = &ctx.name;
+            let err = format!("must have at least {v} pairs");
             quote! {
                 if #name.len() < #v as usize {
-                    return Err(::anyhow::Error::msg(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
         let max_pairs = rules.max_pairs.map(|v| {
-            let err = format!("{name}: must have at most {v} pairs");
+            let field = &ctx.name;
+            let err = format!("must have at most {v} pairs");
             quote! {
                 if #name.len() > #v as usize {
-                    return Err(::anyhow::Error::msg(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
@@ -54,7 +56,7 @@ impl ToValidationTokens for MapRules {
             .as_ref()
             .map(|v| v.message.map(|v| v.skip).unwrap_or_default())
             .unwrap_or_default()).then(|| {
-            let validation = MessageRules::default().to_validation_tokens(&ctx, &value);
+            let validation = MessageRules::default().to_validation_tokens(ctx, &value);
             quote! {
                 for #value in #name.values() {
                     #validation

@@ -47,7 +47,7 @@ fn message_to_annotation(msg: DynamicMessage) -> String {
                 oneofs.insert(field.full_name().to_string(), oneof.name().to_string());
             }
         }
-        let s = field_to_string(&desc, &val);
+        let s = field_to_string(&desc, val);
         if let Some(oneof) = oneofs.get(desc.full_name()) {
             let oneof = sanitize_identifier(oneof);
             if let Kind::Message(_) = kind {
@@ -81,10 +81,7 @@ fn field_to_string(desc: &FieldDescriptor, val: &Value) -> String {
         Kind::Bool => format!("{:?}", val.as_bool().unwrap()),
         Kind::String => format!("{:?}", val.as_str().unwrap()),
         Kind::Bytes => format!("{:?}", val.as_bytes().unwrap()),
-        Kind::Message(_) => format!(
-            "{}",
-            message_to_annotation(val.as_message().unwrap().clone())
-        ),
+        Kind::Message(_) => message_to_annotation(val.as_message().unwrap().clone()).to_string(),
         Kind::Enum(_) => format!("{:?}", val.as_enum_number().unwrap()),
     }
 }

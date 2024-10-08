@@ -21,27 +21,30 @@ impl ToValidationTokens for RepeatedRules {
     fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
         let min_items = self.min_items.map(|v| {
             let v = v as usize;
-            let err = format!("{name} length is less than {v}");
+            let field = &ctx.name;
+            let err = format!("must have at least {} items", v);
             quote! {
                 if #name.len() < #v {
-                    return Err(anyhow::anyhow!(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
         let max_items = self.max_items.map(|v| {
             let v = v as usize;
-            let err = format!("{name} length is greater than {v}");
+            let field = &ctx.name;
+            let err = format!("must have at most {} items", v);
             quote! {
                 if #name.len() > #v {
-                    return Err(anyhow::anyhow!(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
         let unique = self.unique.is_true_and(|| {
-            let err = format!("{name} has duplicate items");
+            let field = &ctx.name;
+            let err = "has duplicate items";
             quote! {
                 if ::prost_validate::VecExt::unique(#name).len() != #name.len() {
-                    return Err(anyhow::anyhow!(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
