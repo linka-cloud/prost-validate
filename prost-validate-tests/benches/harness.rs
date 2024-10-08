@@ -1,6 +1,7 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use prost_validate_tests::CASES;
 
+#[cfg(feature = "reflect")]
 fn reflect_validate() {
     for (name, f) in CASES.iter() {
         let (message, failures) = f();
@@ -11,6 +12,7 @@ fn reflect_validate() {
     }
 }
 
+#[cfg(feature = "derive")]
 fn derive_validate() {
     for (name, f) in CASES.iter() {
         let (message, failures) = f();
@@ -22,7 +24,9 @@ fn derive_validate() {
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
+    #[cfg(feature = "reflect")]
     c.bench_function("harness reflect", |b| b.iter(|| reflect_validate()));
+    #[cfg(feature = "derive")]
     c.bench_function("harness derive", |b| b.iter(|| derive_validate()));
 }
 

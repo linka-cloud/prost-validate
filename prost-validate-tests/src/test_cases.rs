@@ -1,4 +1,6 @@
+#[cfg(feature = "reflect")]
 use prost_reflect_validate::ValidatorExt;
+#[cfg(feature = "derive")]
 use prost_validate::Validator as ValidatorDerive;
 
 #[allow(unused)]
@@ -9,6 +11,7 @@ macro_rules! test_cases {
             mod $name {
                 use super::*;
 
+                #[cfg(feature = "reflect")]
                 #[test]
                 fn reflect() {
                     let (message, failures) = crate::CASES.get(stringify!($name)).unwrap()();
@@ -18,6 +21,7 @@ macro_rules! test_cases {
                     }
                 }
 
+                #[cfg(feature = "derive")]
                 #[test]
                 fn derive() {
                     let (message, failures) = crate::CASES.get(stringify!($name)).unwrap()();
