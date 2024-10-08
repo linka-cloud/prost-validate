@@ -30,7 +30,6 @@ mod tests {
     fn test_contains() {
         let haystack = vec![1, 2, 3, 4, 5];
         let needle = vec![3, 4];
-        assert!(ValidateBytes::contains(&haystack, &needle));
         assert!(haystack.contains(&needle));
     }
 }

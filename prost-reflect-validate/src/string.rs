@@ -1,5 +1,5 @@
 use crate::registry::FieldValidationFn;
-use anyhow::format_err;
+use prost_validate::format_err;
 use prost_reflect::FieldDescriptor;
 use prost_validate::ValidateString;
 use prost_validate_types::field_rules::Type;
@@ -20,7 +20,7 @@ macro_rules! string_rules {
 
 fn push<F>(fns: &mut Vec<FieldValidationFn<String>>, name: &Arc<String>, f: Arc<F>)
 where
-    F: Fn(String, &StringRules, &String) -> anyhow::Result<bool> + Send + Sync + 'static,
+    F: Fn(String, &StringRules, &String) -> prost_validate::Result<bool> + Send + Sync + 'static,
 {
     let name = name.clone();
     fns.push(Arc::new(move |val, rules| {
@@ -55,7 +55,7 @@ pub(crate) fn make_validate_string(
             Arc::new(move |val: String, rules: &StringRules, name: &String| {
                 let v = rules.r#const();
                 if val != v {
-                    return Err(format_err!("{name}: must be {v}"));
+                    return Err(format_err!(name, "must be {v}"));
                 }
                 Ok(true)
             }),
@@ -68,7 +68,7 @@ pub(crate) fn make_validate_string(
             Arc::new(move |val: String, rules: &StringRules, name: &String| {
                 let v = rules.len();
                 if val.chars().count() != v as usize {
-                    return Err(format_err!("{name}: must be {v} characters long",));
+                    return Err(format_err!(name, "must be {v} characters long"));
                 }
                 Ok(true)
             }),
@@ -81,7 +81,7 @@ pub(crate) fn make_validate_string(
             Arc::new(move |val: String, rules: &StringRules, name: &String| {
                 let v = rules.min_len();
                 if val.chars().count() < v as usize {
-                    return Err(format_err!("{name}: must be minimum {v} characters long"));
+                    return Err(format_err!(name, "must be minimum {v} characters long"));
                 }
                 Ok(true)
             }),
@@ -94,7 +94,7 @@ pub(crate) fn make_validate_string(
             Arc::new(move |val: String, rules: &StringRules, name: &String| {
                 let v = rules.max_len();
                 if val.chars().count() > v as usize {
-                    return Err(format_err!("{name}: must be maximum {v} characters long"));
+                    return Err(format_err!(name, "must be maximum {v} characters long"));
                 }
                 Ok(true)
             }),
@@ -107,7 +107,7 @@ pub(crate) fn make_validate_string(
             Arc::new(move |val: String, rules: &StringRules, name: &String| {
                 let v = rules.len_bytes();
                 if val.len() != v as usize {
-                    return Err(format_err!("{name}: must be {v} characters long"));
+                    return Err(format_err!(name, "must be {v} characters long"));
                 }
                 Ok(true)
             }),
@@ -120,7 +120,7 @@ pub(crate) fn make_validate_string(
             Arc::new(move |val: String, rules: &StringRules, name: &String| {
                 let v = rules.min_bytes();
                 if val.len() < v as usize {
-                    return Err(format_err!("{name}: must be minimum {v} bytes long"));
+                    return Err(format_err!(name, "must be minimum {v} bytes long"));
                 }
                 Ok(true)
             }),
@@ -133,7 +133,7 @@ pub(crate) fn make_validate_string(
             Arc::new(move |val: String, rules: &StringRules, name: &String| {
                 let v = rules.max_bytes();
                 if val.len() > v as usize {
-                    return Err(format_err!("{name}: must be maximum {v} bytes long"));
+                    return Err(format_err!(name, "must be maximum {v} bytes long"));
                 }
                 Ok(true)
             }),
@@ -148,10 +148,10 @@ pub(crate) fn make_validate_string(
                 let v = rules.pattern();
                 let regex = match &regex {
                     Ok(r) => r,
-                    Err(err) => return Err(format_err!("{name}: invalid regex pattern: {err}")),
+                    Err(err) => return Err(format_err!(name, "invalid regex pattern: {err}")),
                 };
                 if !regex.is_match(val.as_str()) {
-                    return Err(format_err!("{name}: must matches {v}"));
+                    return Err(format_err!(name, "must matches {v}"));
                 }
                 Ok(true)
             }),
@@ -164,7 +164,7 @@ pub(crate) fn make_validate_string(
             Arc::new(move |val: String, rules: &StringRules, name: &String| {
                 let v = rules.prefix();
                 if !val.as_str().starts_with(v) {
-                    return Err(format_err!("{name}: must have prefix {v}"));
+                    return Err(format_err!(name, "must have prefix {v}"));
                 }
                 Ok(true)
             }),
@@ -177,7 +177,7 @@ pub(crate) fn make_validate_string(
             Arc::new(move |val: String, rules: &StringRules, name: &String| {
                 let v = rules.suffix();
                 if !val.as_str().ends_with(v) {
-                    return Err(format_err!("{name}: must have suffix {v}"));
+                    return Err(format_err!(name, "must have suffix {v}"));
                 }
                 Ok(true)
             }),
@@ -190,7 +190,7 @@ pub(crate) fn make_validate_string(
             Arc::new(move |val: String, rules: &StringRules, name: &String| {
                 let v = rules.contains();
                 if !val.contains(v) {
-                    return Err(format_err!("{name}: must contains {v}"));
+                    return Err(format_err!(name, "must contains {v}"));
                 }
                 Ok(true)
             }),
@@ -203,7 +203,7 @@ pub(crate) fn make_validate_string(
             Arc::new(move |val: String, rules: &StringRules, name: &String| {
                 let v = rules.not_contains();
                 if val.contains(v) {
-                    return Err(format_err!("{name}: must not contains {v}"));
+                    return Err(format_err!(name, "must not contains {v}"));
                 }
                 Ok(true)
             }),
@@ -216,7 +216,7 @@ pub(crate) fn make_validate_string(
             Arc::new(move |val: String, rules: &StringRules, name: &String| {
                 let v = rules.r#in.deref();
                 if !v.contains(&val.to_string()) {
-                    return Err(format_err!("{name}: must be in {:?}", v));
+                    return Err(format_err!(name, "must be in {:?}", v));
                 }
                 Ok(true)
             }),
@@ -229,7 +229,7 @@ pub(crate) fn make_validate_string(
             Arc::new(move |val: String, rules: &StringRules, name: &String| {
                 let v = rules.not_in.deref();
                 if v.contains(&val.to_string()) {
-                    return Err(format_err!("{name}: must not be in {:?}", v));
+                    return Err(format_err!(name, "must not be in {:?}", v));
                 }
                 Ok(true)
             }),
@@ -246,7 +246,7 @@ pub(crate) fn make_validate_string(
                 fns.push(Arc::new(move |val, _| {
                     let val = val.unwrap_or("".to_string());
                     if let Err(err) = val.validate_email() {
-                        return Err(format_err!("{name}: {err}"));
+                        return Err(format_err!(name, "{err}"));
                     }
                     Ok(true)
                 }));
@@ -257,7 +257,7 @@ pub(crate) fn make_validate_string(
                 fns.push(Arc::new(move |val, _| {
                     let val = val.unwrap_or("".to_string());
                     if let Err(err) = val.validate_hostname() {
-                        return Err(format_err!("{name}: {err}"));
+                        return Err(format_err!(name, "{err}"));
                     }
                     Ok(true)
                 }));
@@ -268,7 +268,7 @@ pub(crate) fn make_validate_string(
                 fns.push(Arc::new(move |val, _| {
                     match val.unwrap_or("".to_string()).validate_ip() {
                         Ok(_) => Ok(true),
-                        Err(_) => Err(format_err!("{name}: must be a valid ip")),
+                        Err(_) => Err(format_err!(name, "must be a valid ip")),
                     }
                 }));
             }
@@ -278,7 +278,7 @@ pub(crate) fn make_validate_string(
                 fns.push(Arc::new(move |val, _| {
                     match val.unwrap_or("".to_string()).validate_ipv4() {
                         Ok(_) => Ok(true),
-                        Err(_) => Err(format_err!("{name}: must be a valid ipv4")),
+                        Err(_) => Err(format_err!(name, "must be a valid ipv4")),
                     }
                 }));
             }
@@ -288,7 +288,7 @@ pub(crate) fn make_validate_string(
                 fns.push(Arc::new(move |val, _| {
                     match val.unwrap_or("".to_string()).validate_ipv6() {
                         Ok(_) => Ok(true),
-                        Err(_) => Err(format_err!("{name}: must be a valid ipv6")),
+                        Err(_) => Err(format_err!(name, "must be a valid ipv6")),
                     }
                 }));
             }
@@ -298,7 +298,7 @@ pub(crate) fn make_validate_string(
                 fns.push(Arc::new(move |val, _| {
                     match val.unwrap_or("".to_string()).validate_uri() {
                         Ok(_) => Ok(true),
-                        Err(_) => Err(format_err!("{name}: must be a valid URI")),
+                        Err(_) => Err(format_err!(name, "must be a valid URI")),
                     }
                 }));
             }
@@ -308,7 +308,7 @@ pub(crate) fn make_validate_string(
                 fns.push(Arc::new(move |val, _| {
                     match val.unwrap_or("".to_string()).validate_uri_ref() {
                         Ok(_) => Ok(true),
-                        Err(_) => Err(format_err!("{name}: must be a valid URI")),
+                        Err(_) => Err(format_err!(name, "must be a valid URI")),
                     }
                 }));
             }
@@ -323,7 +323,7 @@ pub(crate) fn make_validate_string(
                     match val.validate_hostname() {
                         Ok(()) => Ok(true),
                         Err(_) => Err(format_err!(
-                            "{name}: must be a valid hostname or ip address"
+                            name, "must be a valid hostname or ip address"
                         )),
                     }
                 }));
@@ -334,7 +334,7 @@ pub(crate) fn make_validate_string(
                 fns.push(Arc::new(move |val, _| {
                     match val.unwrap_or("".to_string()).validate_uuid() {
                         Ok(_) => Ok(true),
-                        Err(_) => Err(format_err!("{name}: must be a valid uuid")),
+                        Err(_) => Err(format_err!(name, "must be a valid uuid")),
                     }
                 }));
             }
@@ -344,7 +344,7 @@ pub(crate) fn make_validate_string(
                 fns.push(Arc::new(move |val, _| {
                     match val.unwrap_or("".to_string()).validate_header_name(strict) {
                         Ok(_) => Ok(true),
-                        Err(err) => Err(format_err!("{name}: {err}")),
+                        Err(err) => Err(format_err!(name, "{err}")),
                     }
                 }));
             }
@@ -352,7 +352,7 @@ pub(crate) fn make_validate_string(
                 fns.push(Arc::new(move |val, _| {
                     match val.unwrap_or("".to_string()).validate_header_value(strict) {
                         Ok(_) => Ok(true),
-                        Err(err) => Err(format_err!("{name}: {err}")),
+                        Err(err) => Err(format_err!(name, "{err}")),
                     }
                 }));
             }

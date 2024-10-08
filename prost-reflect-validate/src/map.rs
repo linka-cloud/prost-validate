@@ -1,6 +1,6 @@
 use crate::field::make_validate_field;
 use crate::registry::{NestedValidationFn, ValidationFn, REGISTRY};
-use anyhow::format_err;
+use prost_validate::format_err;
 use prost_reflect::{FieldDescriptor, Kind, MapKey, Value};
 use prost_validate_types::field_rules::Type;
 use prost_validate_types::{FieldRules, MapRules};
@@ -24,7 +24,7 @@ where
             &MapRules,
             &String,
             &HashMap<String, ValidationFn>,
-        ) -> anyhow::Result<bool>
+        ) -> prost_validate::Result<bool>
         + Send
         + Sync
         + 'static,
@@ -76,7 +76,7 @@ pub(crate) fn make_validate_map(
                           _: &HashMap<String, ValidationFn>| {
                         let v = rules.min_pairs();
                         if vals.len() < v as usize {
-                            return Err(format_err!("{}: must have at least {} pairs", name, v));
+                            return Err(format_err!(name, "must have at least {} pairs", v));
                         }
                         Ok(true)
                     },
@@ -94,7 +94,7 @@ pub(crate) fn make_validate_map(
                           _: &HashMap<String, ValidationFn>| {
                         let v = rules.max_pairs();
                         if vals.len() > v as usize {
-                            return Err(format_err!("{}: must have at most {} pairs", name, v));
+                            return Err(format_err!(name, "must have at most {} pairs", v));
                         }
                         Ok(true)
                     },
@@ -161,7 +161,7 @@ pub(crate) fn make_validate_map(
                         let kind = kind.clone();
                         for val in vals.values() {
                             if val.is_default(&kind) {
-                                return Err(format_err!("{}: must not have sparse values", name));
+                                return Err(format_err!(name, "must not have sparse values"));
                             }
                         }
                         Ok(true)

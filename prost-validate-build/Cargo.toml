@@ -15,5 +15,7 @@ prost-validate-types = { workspace = true }
 prost-validate-derive-core = { workspace = true }
 heck = "0.5.0"
 
-[lints]
-workspace = true
+[lints.clippy]
+panic = "allow"
+unwrap_used = "allow"
+expect_used = "allow"

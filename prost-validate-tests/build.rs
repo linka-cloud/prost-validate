@@ -23,6 +23,7 @@ fn main() -> Result<()> {
     ];
 
     for dir in dirs.iter() {
+        #[allow(clippy::unwrap_used)]
         let files = WalkDir::new(dir)
             .into_iter()
             .filter_map(Result::ok)
@@ -30,6 +31,7 @@ fn main() -> Result<()> {
             .map(|e| e.path().to_str().unwrap().to_string())
             .filter(|e| e.ends_with(".proto"))
             .collect::<Vec<String>>();
+        #[allow(clippy::unwrap_used)]
         gen(
             dir.strip_prefix("proto/")
                 .unwrap()

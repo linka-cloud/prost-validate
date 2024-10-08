@@ -100,6 +100,7 @@ impl VecExt<Vec<u8>> for Vec<Vec<u8>> {
                 if seen.contains(x) {
                     false
                 } else {
+                    #[allow(suspicious_double_ref_op)]
                     seen.push(x.clone());
                     true
                 }

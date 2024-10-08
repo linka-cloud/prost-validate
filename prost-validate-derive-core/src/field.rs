@@ -1,4 +1,3 @@
-use crate::list::RepeatedRules;
 use crate::map::MapRules;
 use crate::message::MessageRules;
 use crate::oneof::OneOfRules;
@@ -14,6 +13,7 @@ use syn::{Type, Variant};
 
 #[derive(Debug, Clone)]
 pub struct Context<'a> {
+    pub name: String,
     #[allow(unused)]
     pub ty: &'a Option<syn::Type>,
     pub optional: bool,
@@ -52,7 +52,7 @@ impl Field {
             } else if prost.message.is_some() && !prost.repeated && !WKT.contains(&typ.as_str()) {
                 validation.r#type = Some(FieldRules::Message(MessageRules::default()));
             } else if prost.message.is_some() && !WKT.contains(&typ.as_str()) {
-                validation.r#type = Some(FieldRules::Repeated(Box::new(RepeatedRules::default())));
+                validation.r#type = Some(FieldRules::Repeated(Box::default()));
             } else if prost.oneof.is_some() {
                 validation.r#type = Some(FieldRules::OneOf(OneOfRules::default()));
             }
@@ -90,7 +90,7 @@ impl Field {
                             ..self.prost.clone()
                         },
                         validation: FieldValidation {
-                            message: rules.message.clone(),
+                            message: rules.message,
                             r#type: rules.r#type.clone(),
                             ..FieldValidation::default()
                         },
@@ -104,7 +104,7 @@ impl Field {
         if self.map {
             return Ok(());
         }
-        if !self.prost.message.is_some() && self.validation.message.is_some() {
+        if self.prost.message.is_none() && self.validation.message.is_some() {
             return Err(darling::Error::custom(format_err!("{}: unexpected message rules", name)));
         }
         if self.prost.message.is_some() {
@@ -114,63 +114,63 @@ impl Field {
                     if self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Timestamp(_)) {
                         return Err(darling::Error::custom(format_err!("{}: unexpected rules for timestamp field", name)));
                     }
-                },
+                }
                 "::core::option::Option<::prost_types::Duration>" => {
                     if self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Duration(_)) {
                         return Err(darling::Error::custom(format_err!("{}: unexpected rules for duration field", name)));
                     }
-                },
+                }
                 "::core::option::Option<::prost_types::Any>" => {
                     if self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Any(_)) {
                         return Err(darling::Error::custom(format_err!("{}: unexpected rules for any field", name)));
                     }
-                },
+                }
                 "::core::option::Option<::prost::alloc::string::String>" => {
                     if self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::String(_)) {
                         return Err(darling::Error::custom(format_err!("{}: unexpected rules for string field", name)));
                     }
-                },
+                }
                 "::core::option::Option<::prost::alloc::vec::Vec<u8>>" => {
                     if self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Bytes(_)) {
                         return Err(darling::Error::custom(format_err!("{}: unexpected rules for bytes field", name)));
                     }
-                },
+                }
                 "::core::option::Option<bool>" => {
                     if self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Bool(_)) {
                         return Err(darling::Error::custom(format_err!("{}: unexpected rules for bool field", name)));
                     }
-                },
+                }
                 "::core::option::Option<u64>" => {
                     if self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Uint64(_)) {
                         return Err(darling::Error::custom(format_err!("{}: unexpected rules for uint64 field", name)));
                     }
-                },
+                }
                 "::core::option::Option<u32>" => {
                     if self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Uint32(_)) {
                         return Err(darling::Error::custom(format_err!("{}: unexpected rules for uint32 field", name)));
                     }
-                },
+                }
                 "::core::option::Option<i64>" => {
                     if self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Int64(_)) {
                         return Err(darling::Error::custom(format_err!("{}: unexpected rules for int64 field", name)));
                     }
-                },
+                }
                 "::core::option::Option<i32>" => {
                     if self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Int32(_)) {
                         return Err(darling::Error::custom(format_err!("{}: unexpected rules for int32 field", name)));
                     }
-                },
+                }
                 "::core::option::Option<f64>" => {
                     if self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Double(_)) {
                         return Err(darling::Error::custom(format_err!("{}: unexpected rules for double field", name)));
                     }
-                },
+                }
                 "::core::option::Option<f32>" => {
                     if self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Float(_)) {
                         return Err(darling::Error::custom(format_err!("{}: unexpected rules for float field", name)));
                     }
-                },
-                _ => {},
+                }
+                _ => {}
             }
         }
         if self.prost.enumeration.is_some() && self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Enum(_)) {
@@ -227,7 +227,7 @@ impl Field {
 
 impl FromField for Field {
     fn from_field(field: &syn::Field) -> darling::Result<Self> {
-        let mut prost = ProstField::from_field(&field)?;
+        let mut prost = ProstField::from_field(field)?;
         if prost.oneof.is_some() {
             prost.optional = true;
         }
@@ -236,7 +236,7 @@ impl FromField for Field {
             field.clone().ident,
             Some(field.clone().ty),
             prost,
-            FieldValidation::from_field(&field)?,
+            FieldValidation::from_field(field)?,
             map,
             false,
         ))
@@ -245,13 +245,13 @@ impl FromField for Field {
 
 impl FromVariant for Field {
     fn from_variant(variant: &Variant) -> darling::Result<Self> {
-        let mut prost = ProstField::from_variant(&variant)?;
+        let mut prost = ProstField::from_variant(variant)?;
         let map = prost.parse_map();
         Ok(Self::new(
             Some(variant.clone().ident),
             None,
             prost,
-            FieldValidation::from_variant(&variant)?,
+            FieldValidation::from_variant(variant)?,
             map,
             true,
         ))
@@ -265,6 +265,7 @@ impl ToTokens for Field {
         }
         if let Some(ident) = &self.ident {
             let ctx = Context {
+                name: ident.to_string(),
                 ty: &self.ty,
                 optional: self.prost.optional,
                 required: self.validation.required(),
@@ -278,17 +279,18 @@ impl ToTokens for Field {
                 oneof: self.oneof,
             };
             let name = if self.oneof {
-                let name = to_snake(&ident.to_string());
+                let name = to_snake(ident.to_string());
                 &Ident::new(&name, ident.span())
             } else {
                 ident
             };
             let body = self.validation.to_validation_tokens(&ctx, name);
             let required = ctx.required.then(|| {
-                let err = format!("{} is required", name);
+                let field = &ctx.name;
+                let err = "is required";
                 quote! {
                     if self.#name.is_none() {
-                        return Err(anyhow::anyhow!(#err));
+                        return Err(::prost_validate::Error::new(#field, #err));
                     }
                 }
             });
@@ -366,14 +368,14 @@ pub struct FieldValidationInner {
 impl ToValidationTokens for FieldValidationInner {
     fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
         let stream = match self.to_owned().r#type {
-            Some(r) => Some(r.to_validation_tokens(&ctx, name)),
+            Some(r) => Some(r.to_validation_tokens(ctx, name)),
             None => self
                 .to_owned()
                 .message
-                .map(|m| m.to_validation_tokens(&ctx, name)),
+                .map(|m| m.to_validation_tokens(ctx, name)),
         };
         if stream.is_none() && ctx.message && !ctx.wkt && !ctx.repeated && !ctx.map {
-            MessageRules::default().to_validation_tokens(&ctx, &name)
+            MessageRules::default().to_validation_tokens(ctx, name)
         } else {
             stream.unwrap_or_default()
         }

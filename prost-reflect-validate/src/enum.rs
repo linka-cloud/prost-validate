@@ -1,5 +1,5 @@
 use crate::registry::FieldValidationFn;
-use anyhow::{format_err, Result};
+use prost_validate::{format_err, Result};
 use prost_reflect::{FieldDescriptor, Kind};
 use prost_validate_types::field_rules::Type;
 use prost_validate_types::{EnumRules, FieldRules};
@@ -49,7 +49,7 @@ pub(crate) fn make_validate_enum(
             &name,
             Arc::new(move |val: i32, _: &EnumRules, name: &String| {
                 if val != v {
-                    return Err(format_err!("{}: must be {}", name, v));
+                    return Err(format_err!(name, "must be {}", v));
                 }
                 Ok(true)
             }),
@@ -61,7 +61,7 @@ pub(crate) fn make_validate_enum(
             &name,
             Arc::new(move |val: i32, rules: &EnumRules, name: &String| {
                 if !rules.r#in.contains(&val) {
-                    return Err(format_err!("{}: must be in {:?}", name, rules.r#in));
+                    return Err(format_err!(name, "must be in {:?}", rules.r#in));
                 }
                 Ok(true)
             }),
@@ -73,7 +73,7 @@ pub(crate) fn make_validate_enum(
             &name,
             Arc::new(move |val: i32, rules: &EnumRules, name: &String| {
                 if rules.not_in.contains(&val) {
-                    return Err(format_err!("{}: must not be in {:?}", name, rules.not_in));
+                    return Err(format_err!(name, "must not be in {:?}", rules.not_in));
                 }
                 Ok(true)
             }),
@@ -85,7 +85,7 @@ pub(crate) fn make_validate_enum(
             &name,
             Arc::new(move |val: i32, _: &EnumRules, name: &String| {
                 if desc.get_value(val).is_none() {
-                    return Err(format_err!("{}: must be a defined enumeration value", name));
+                    return Err(format_err!(name, "must be a defined enumeration value"));
                 }
                 Ok(true)
             }),

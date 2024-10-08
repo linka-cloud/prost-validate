@@ -2,12 +2,12 @@ use crate::field::make_validate_field;
 use crate::list::make_validate_list;
 use crate::map::make_validate_map;
 use crate::utils::{get_field_rules, is_set};
-use anyhow::{format_err, Result};
 use no_deadlocks::RwLock;
 use once_cell::sync::Lazy;
 use prost_reflect::{DynamicMessage, MessageDescriptor, OneofDescriptor, ReflectMessage};
 use prost_validate_types::FieldRules;
 use prost_validate_types::{MessageRulesExt, OneofRulesExt};
+use prost_validate::{Result, format_err};
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::Arc;
@@ -51,7 +51,7 @@ impl Registry {
         let mut fns: Vec<ValidationFn> = Vec::new();
         let mut oneofs: HashMap<String, Rc<OneofDescriptor>> = HashMap::new();
         for field in desc.fields() {
-            let rules = match get_field_rules(&field)? {
+            let rules = match get_field_rules(&field).map_err(|e| format_err!(field.full_name(), "{}", e))? {
                 Some(r) => r,
                 None => continue,
             };
@@ -63,7 +63,7 @@ impl Registry {
                 for field in desc.fields() {
                     let field = field.clone();
                     oneofs.insert(field.full_name().to_string(), desc.clone());
-                    let rules = match get_field_rules(&field)? {
+                    let rules = match get_field_rules(&field).map_err(|e| format_err!(field.full_name(), "{}", e))? {
                         Some(r) => r,
                         None => continue,
                     };
@@ -86,8 +86,8 @@ impl Registry {
                             if ok {
                                 if has {
                                     return Err(format_err!(
-                                        "oneof {} contains multiple values",
-                                        field.containing_oneof().unwrap().name()
+                                        field.containing_oneof().unwrap().name(),
+                                        "oneof contains multiple values",
                                     ));
                                 }
                                 has = true;
@@ -95,8 +95,8 @@ impl Registry {
                         }
                         if !has {
                             return Err(format_err!(
-                                "oneof {} does not contains any value",
-                                field.containing_oneof().unwrap().name()
+                                field.containing_oneof().unwrap().name(),
+                                "oneof does not contains any value",
                             ));
                         }
                         Ok(())
@@ -180,8 +180,8 @@ impl Registry {
             Ok(())
         } else {
             Err(format_err!(
-                "no validator for {}",
-                msg.descriptor().full_name()
+                msg.descriptor().full_name(),
+                "no validator",
             ))
         }
     }

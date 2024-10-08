@@ -14,23 +14,25 @@ pub struct AnyRules {
 }
 
 impl ToValidationTokens for AnyRules {
-    fn to_validation_tokens(&self, _: &Context, name: &Ident) -> TokenStream {
+    fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
         let rules = prost_validate_types::AnyRules::from(self.to_owned());
         let r#in = rules.r#in.is_empty().not().then(|| {
             let v = rules.r#in;
-            let err = format!("{name}: must be in {:?}", v);
+            let field = &ctx.name;
+            let err = format!("must be in {:?}", v);
             quote! {
                 if ![#(#v),*].contains(&#name.type_url.as_str()) {
-                    return Err(anyhow::anyhow!(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });
         let not_in = rules.not_in.is_empty().not().then(|| {
             let v = rules.not_in;
-            let err = format!("{name}: must not be in {:?}", v);
+            let field = &ctx.name;
+            let err = format!("must not be in {:?}", v);
             quote! {
                 if [#(#v),*].contains(&#name.type_url.as_str()) {
-                    return Err(anyhow::anyhow!(#err));
+                    return Err(::prost_validate::Error::new(#field, #err));
                 }
             }
         });

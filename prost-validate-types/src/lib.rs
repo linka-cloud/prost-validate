@@ -1,22 +1,13 @@
-#[allow(clippy::trivially_copy_pass_by_ref)]
-#[allow(clippy::enum_variant_names)]
+#[allow(clippy::len_without_is_empty)]
+mod proto;
+
 use anyhow::anyhow;
 use once_cell::sync::Lazy;
-use prost_reflect::DescriptorPool;
 use prost_reflect::{
     ExtensionDescriptor, FieldDescriptor, MessageDescriptor, OneofDescriptor, Value,
 };
 use std::borrow::Cow;
-
-#[allow(clippy::unwrap_used)]
-pub static DESCRIPTOR_POOL: Lazy<DescriptorPool> = Lazy::new(|| {
-    DescriptorPool::decode(
-        include_bytes!(concat!(env!("OUT_DIR"), "/file_descriptor_set.bin")).as_ref(),
-    )
-    .unwrap()
-});
-
-include!(concat!(env!("OUT_DIR"), "/validate.rs"));
+pub use proto::*;
 
 #[allow(clippy::unwrap_used)]
 static VALIDATION_DISABLED: Lazy<ExtensionDescriptor> = Lazy::new(|| {
@@ -91,21 +82,11 @@ impl MessageRulesExt for MessageDescriptor {
     }
 }
 
-pub fn get_field_rules(field: &FieldDescriptor) -> anyhow::Result<Option<FieldRules>> {
-    let opts = field.options();
-    let rules = opts.get_extension(&VALIDATION_FIELD_RULES);
-    let rules = match rules.as_message() {
-        Some(r) => r,
-        None => return Ok(None),
-    };
-    Ok(Some(rules.transcode_to::<FieldRules>()?))
-}
-
-trait IsTrue {
+trait IsTrueExt {
     fn is_true(&self) -> bool;
 }
 
-impl<'a> IsTrue for Cow<'a, Value> {
+impl<'a> IsTrueExt for Cow<'a, Value> {
     fn is_true(&self) -> bool {
         self.as_bool().unwrap_or(false)
     }

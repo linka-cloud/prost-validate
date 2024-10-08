@@ -10,6 +10,7 @@ repository.workspace = true
 
 [features]
 derive = ["prost-validate-derive"]
+tonic = ["dep:tonic", "dep:tonic-types"]
 
 [dependencies]
 anyhow = { workspace = true }
@@ -23,10 +24,13 @@ http = { workspace = true }
 itertools = { workspace = true }
 time = { workspace = true }
 email_address = { workspace = true }
+tonic = { workspace = true, optional = true }
+tonic-types = { workspace = true, optional = true }
 
 [dev-dependencies]
 prost-validate-derive = { workspace = true }
 prost-validate-types = { workspace = true }
+prost-validate = { path = "." }
 
 [lints]
 workspace = true
