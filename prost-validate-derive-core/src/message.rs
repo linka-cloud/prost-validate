@@ -18,13 +18,14 @@ impl ToValidationTokens for MessageRules {
             return quote! {};
         }
         let validate = self.skip.not().then(|| {
+            let field = &ctx.name;
             if ctx.boxed {
                 quote! {
-                    ::prost_validate::Validator::validate(#name.as_ref())?;
+                    ::prost_validate::Validator::validate(#name.as_ref()).map_err(|e| ::prost_validate::Error::new(#field, ::prost_validate::errors::message::Error::Message(Box::new(e))))?;
                 }
             } else {
                 quote! {
-                    ::prost_validate::Validator::validate(#name)?;
+                    ::prost_validate::Validator::validate(#name).map_err(|e| ::prost_validate::Error::new(#field, ::prost_validate::errors::message::Error::Message(Box::new(e))))?;
                 }
             }
         });

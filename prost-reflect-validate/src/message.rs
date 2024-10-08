@@ -9,8 +9,9 @@ use crate::number::{
 use crate::registry::{Args, NestedValidationFn, ValidationFn, REGISTRY};
 use crate::string::make_validate_string;
 use crate::timestamp::make_validate_timestamp;
-use prost_validate::format_err;
 use prost_reflect::{DynamicMessage, FieldDescriptor, Kind};
+use prost_validate::errors::message;
+use prost_validate::{format_err, Error};
 use prost_validate_types::FieldRules;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -43,7 +44,7 @@ pub(crate) fn make_validate_message(
         let name = field.full_name().to_string();
         fns.push(Arc::new(move |val, _, _| {
             if val.is_none() {
-                return Err(format_err!(name, "is required"));
+                return Err(Error::new(name.to_string(), message::Error::Required));
             }
             Ok(true)
         }))
@@ -141,12 +142,16 @@ pub(crate) fn make_validate_message(
     if REGISTRY.register(m, &desc).is_err() {
         return fns;
     }
+    let name = Arc::new(field.full_name().to_string());
     fns.push(Arc::new(move |val, _, m| {
         let validate = m
             .get(&desc.full_name().to_string())
             .ok_or(format_err!(desc.full_name(), "no validator"))?;
         match val.map(|v| validate(&Args { msg: &v, m })) {
-            Some(Err(err)) => Err(err),
+            Some(Err(err)) => Err(Error::new(
+                name.clone(),
+                message::Error::Message(Box::new(err)),
+            )),
             Some(Ok(())) => Ok(true),
             None => Ok(true),
         }

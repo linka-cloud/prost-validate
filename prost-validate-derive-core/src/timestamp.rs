@@ -53,66 +53,60 @@ impl ToValidationTokens for TimestampRules {
         let r#const = rules.r#const.map(|v| v.as_datetime()).map(|v| {
             let (got, want) = datetime_to_tokens(name, &v);
             let field = &ctx.name;
-            let err = format!("must be equal to {:?}", v);
             quote! {
                 if #got != #want {
-                    return Err(::prost_validate::Error::new(#field, #err));
+                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::timestamp::Error::Const(#want)));
                 }
             }
         });
-        // reference implementation: https://github.com/bufbuild/protoc-gen-validate/blob/v1.1.0/templates/goshared/duration.go
+        // reference implementation: https://github.com/bufbuild/protoc-gen-validate/blob/v1.1.0/templates/goshared/timestamp.go
         let gte_lte = if let Some(lt) = rules.lt.map(|v| v.as_datetime()) {
             if let Some(gt) = rules.gt.map(|v| v.as_datetime()) {
                 if lt > gt {
                     let field = &ctx.name;
-                    let err = format!("must be inside range ({}, {})", gt, lt);
                     let (val, lt) = datetime_to_tokens(name, &lt);
                     let (_, gt) = datetime_to_tokens(name, &gt);
                     quote! {
                         if #val <= #gt || #val >= #lt {
-                            return Err(::prost_validate::Error::new(#field, #err));
+                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::timestamp::Error::in_range(false, #gt, #lt, false)));
                         }
                     }
                 } else {
                     let field = &ctx.name;
-                    let err = format!("must be outside range [{}, {}]", lt, gt);
                     let (val, lt) = datetime_to_tokens(name, &lt);
                     let (_, gt) = datetime_to_tokens(name, &gt);
                     quote! {
                         if #val >= #lt && #val <= #gt {
-                            return Err(::prost_validate::Error::new(#field, #err));
+                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::timestamp::Error::not_in_range(true, #lt, #gt, true)));
                         }
                     }
                 }
             } else if let Some(gte) = rules.gte.map(|v| v.as_datetime()) {
                 if lt > gte {
                     let field = &ctx.name;
-                    let err = format!("must be inside range [{}, {})", gte, lt);
                     let (val, lt) = datetime_to_tokens(name, &lt);
                     let (_, gte) = datetime_to_tokens(name, &gte);
                     quote! {
                         if #val < #gte || #val >= #lt {
-                            return Err(::prost_validate::Error::new(#field, #err));
+                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::timestamp::Error::in_range(true, #gte, #lt, false)));
                         }
                     }
                 } else {
                     let field = &ctx.name;
-                    let err = format!("must be outside range [{}, {})", lt, gte);
                     let (val, lt) = datetime_to_tokens(name, &lt);
                     let (_, gte) = datetime_to_tokens(name, &gte);
                     quote! {
                         if #val >= #lt && #val < #gte {
-                            return Err(::prost_validate::Error::new(#field, #err));
+                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::timestamp::Error::not_in_range(true, #lt, #gte, false)));
                         }
                     }
                 }
             } else {
                 let field = &ctx.name;
-                let err = format!("must be less than {}", lt);
                 let (val, lt) = datetime_to_tokens(name, &lt);
                 quote! {
                     if #val >= #lt {
-                        return Err(::prost_validate::Error::new(#field, #err));
+                        return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::timestamp::Error::Lt(#lt)));
                     }
                 }
             }
@@ -120,73 +114,66 @@ impl ToValidationTokens for TimestampRules {
             if let Some(gt) = rules.gt.map(|v| v.as_datetime()) {
                 if lte > gt {
                     let field = &ctx.name;
-                    let err = format!("must be inside range ({}, {}]", gt, lte);
                     let (val, lte) = datetime_to_tokens(name, &lte);
                     let (_, gt) = datetime_to_tokens(name, &gt);
                     quote! {
                         if #val <= #gt || #val > #lte {
-                            return Err(::prost_validate::Error::new(#field, #err));
+                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::timestamp::Error::in_range(false, #gt, #lte, true)));
                         }
                     }
                 } else {
                     let field = &ctx.name;
-                    let err = format!("must be outside range ({}, {}]", lte, gt);
                     let (val, lte) = datetime_to_tokens(name, &lte);
                     let (_, gt) = datetime_to_tokens(name, &gt);
                     quote! {
                         if #val >= #lte && #val < #gt {
-                            return Err(::prost_validate::Error::new(#field, #err));
+                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::timestamp::Error::not_in_range(false, #lte, #gt, true)));
                         }
                     }
                 }
             } else if let Some(gte) = rules.gte.map(|v| v.as_datetime()) {
                 if lte > gte {
                     let field = &ctx.name;
-                    let err = format!("must be inside range [{}, {}]", gte, lte);
                     let (val, lte) = datetime_to_tokens(name, &lte);
                     let (_, gte) = datetime_to_tokens(name, &gte);
                     quote! {
                         if #val < #gte || #val > #lte {
-                            return Err(::prost_validate::Error::new(#field, #err));
+                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::timestamp::Error::in_range(true, #gte, #lte, true)));
                         }
                     }
                 } else {
                     let field = &ctx.name;
-                    let err = format!("must be outside range ({}, {})", lte, gte);
                     let (val, lte) = datetime_to_tokens(name, &lte);
                     let (_, gte) = datetime_to_tokens(name, &gte);
                     quote! {
                         if #val > #lte && #val < #gte {
-                            return Err(::prost_validate::Error::new(#field, #err));
+                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::timestamp::Error::not_in_range(false, #lte, #gte, false)));
                         }
                     }
                 }
             } else {
                 let field = &ctx.name;
-                let err = format!("must be less than or equal to {}", lte);
                 let (val, lte) = datetime_to_tokens(name, &lte);
                 quote! {
                     if #val > #lte {
-                        return Err(::prost_validate::Error::new(#field, #err));
+                        return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::timestamp::Error::Lte(#lte)));
                     }
                 }
             }
         } else if let Some(gt) = rules.gt.map(|v| v.as_datetime()) {
             let field = &ctx.name;
-            let err = format!("must be greater than {}", gt);
             let (val, gt) = datetime_to_tokens(name, &gt);
             quote! {
                 if #val <= #gt {
-                    return Err(::prost_validate::Error::new(#field, #err));
+                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::timestamp::Error::Gt(#gt)));
                 }
             }
         } else if let Some(gte) = rules.gte.map(|v| v.as_datetime()) {
             let field = &ctx.name;
-            let err = format!("must be greater or equal to {}", gte);
             let (val, gte) = datetime_to_tokens(name, &gte);
             quote! {
                 if #val < #gte {
-                    return Err(::prost_validate::Error::new(#field, #err));
+                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::timestamp::Error::Gte(#gte)));
                 }
             }
         } else if let Some(true) = rules.lt_now {
@@ -194,22 +181,20 @@ impl ToValidationTokens for TimestampRules {
                 let (val, _) = datetime_to_tokens(name, &OffsetDateTime::now_utc());
                 let (_, d) = duration_to_tokens(name, within);
                 let field = &ctx.name;
-                let err = format!("must be within {} from now", d);
                 quote! {
                     let now = ::time::OffsetDateTime::now_utc();
                     let d = #d;
                     if #val >= now || #val < now - d {
-                        return Err(::prost_validate::Error::new(#field, #err));
+                        return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::timestamp::Error::LtNowWithin(d)));
                     }
                 }
             } else {
                 let (val, _) = datetime_to_tokens(name, &OffsetDateTime::now_utc());
                 let field = &ctx.name;
-                let err = format!("{}: must be less than now", name);
                 quote! {
                     let now = ::time::OffsetDateTime::now_utc();
                     if #val >= now {
-                        return Err(::prost_validate::Error::new(#field, #err));
+                        return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::timestamp::Error::LtNow));
                     }
                 }
             }
@@ -218,22 +203,20 @@ impl ToValidationTokens for TimestampRules {
                 let (val, _) = datetime_to_tokens(name, &OffsetDateTime::now_utc());
                 let (_, d) = duration_to_tokens(name, within);
                 let field = &ctx.name;
-                let err = format!("must be within {} from now", d);
                 quote! {
                      let now = ::time::OffsetDateTime::now_utc();
                      let d = #d;
                      if #val <= now || #val > now + d {
-                         return Err(::prost_validate::Error::new(#field, #err));
+                         return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::timestamp::Error::GtNowWithin(d)));
                      }
                 }
             } else {
                 let (val, _) = datetime_to_tokens(name, &OffsetDateTime::now_utc());
                 let field = &ctx.name;
-                let err = "must be greater than now";
                 quote! {
                     let now = ::time::OffsetDateTime::now_utc();
                     if #val <= now {
-                        return Err(::prost_validate::Error::new(#field, #err));
+                        return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::timestamp::Error::GtNow));
                     }
                 }
             }
@@ -241,12 +224,11 @@ impl ToValidationTokens for TimestampRules {
             let (val, _) = datetime_to_tokens(name, &OffsetDateTime::now_utc());
             let (_, d) = duration_to_tokens(name, within);
             let field = &ctx.name;
-            let err = format!("must be within {} from now", d);
             quote! {
                 let now = ::time::OffsetDateTime::now_utc();
                 let d = #d;
                 if #val < now - d || #val > now + d {
-                    return Err(::prost_validate::Error::new(#field, #err));
+                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::timestamp::Error::Within(d)));
                 }
             }
         } else {

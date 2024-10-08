@@ -92,6 +92,10 @@ impl Builder {
             }
             let mut oneofs: HashMap<String, Rc<OneofDescriptor>> = HashMap::new();
             for field in message.fields() {
+                config.field_attribute(
+                    field.full_name(),
+                    format!("#[validate(name = \"{}\")]", field.full_name()),
+                );
                 let field_rules = match field.validation_rules().unwrap() {
                     Some(r) => r,
                     None => continue,
@@ -100,6 +104,10 @@ impl Builder {
                     continue;
                 }
                 if let Some(ref desc) = field.containing_oneof() {
+                    config.field_attribute(
+                        desc.full_name(),
+                        format!("#[validate(name = \"{}\")]", desc.full_name()),
+                    );
                     let desc = Rc::new(desc.clone());
                     config
                         .type_attribute(desc.full_name(), "#[derive(::prost_validate::Validator)]");
@@ -108,6 +116,10 @@ impl Builder {
                     }
                     for field in desc.fields() {
                         let field = field.clone();
+                        config.field_attribute(
+                            format!("{}.{}", desc.full_name(), field.name()),
+                            format!("#[validate(name = \"{}\")]", field.full_name()),
+                        );
                         oneofs.insert(field.full_name().to_string(), desc.clone());
                         let field_rules = match field.validation_rules().unwrap() {
                             Some(r) => r,

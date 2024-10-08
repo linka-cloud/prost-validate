@@ -1,7 +1,4 @@
-use crate::field::{
-    with_ignore_empty, Context, FieldValidationInner,
-    ToValidationTokens,
-};
+use crate::field::{with_ignore_empty, Context, FieldValidationInner, ToValidationTokens};
 use crate::utils::IsTrueAnd;
 use darling::FromMeta;
 use proc_macro2::{Ident, TokenStream};
@@ -22,29 +19,26 @@ impl ToValidationTokens for RepeatedRules {
         let min_items = self.min_items.map(|v| {
             let v = v as usize;
             let field = &ctx.name;
-            let err = format!("must have at least {} items", v);
             quote! {
                 if #name.len() < #v {
-                    return Err(::prost_validate::Error::new(#field, #err));
+                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::list::Error::MinItems(#v)));
                 }
             }
         });
         let max_items = self.max_items.map(|v| {
             let v = v as usize;
             let field = &ctx.name;
-            let err = format!("must have at most {} items", v);
             quote! {
                 if #name.len() > #v {
-                    return Err(::prost_validate::Error::new(#field, #err));
+                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::list::Error::MaxItems(#v)));
                 }
             }
         });
         let unique = self.unique.is_true_and(|| {
             let field = &ctx.name;
-            let err = "has duplicate items";
             quote! {
                 if ::prost_validate::VecExt::unique(#name).len() != #name.len() {
-                    return Err(::prost_validate::Error::new(#field, #err));
+                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::list::Error::Unique));
                 }
             }
         });
@@ -52,11 +46,15 @@ impl ToValidationTokens for RepeatedRules {
             .items
             .as_ref()
             .map(|v| {
+                let field = &ctx.name;
                 let item = format_ident!("item");
                 let validation = v.to_validation_tokens(ctx, &item);
                 quote! {
-                    for item in #name.iter() {
-                        #validation
+                    for (i, item) in #name.iter().enumerate() {
+                        {
+                            #validation
+                            Ok(())
+                        }.map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, i), ::prost_validate::errors::list::Error::Item(Box::new(e))))?;
                     }
                 }
             });
@@ -68,18 +66,19 @@ impl ToValidationTokens for RepeatedRules {
             .map(|v| v.message.map(|v| v.skip).unwrap_or_default())
             .unwrap_or_default())
             .then(|| {
+                let field = &ctx.name;
                 if ctx.boxed {
                     quote! {
-                    for item in #name.iter() {
-                        ::prost_validate::Validator::validate(item.as_ref())?;
+                        for (i, item) in #name.iter.enumerate() {
+                            ::prost_validate::Validator::validate(item.as_ref()).map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, i), ::prost_validate::errors::list::Error::Item(Box::new(e))))?;
+                        }
                     }
-                }
                 } else {
                     quote! {
-                    for item in #name.iter() {
-                        ::prost_validate::Validator::validate(item)?;
+                        for (i, item) in #name.iter().enumerate() {
+                            ::prost_validate::Validator::validate(item).map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, i), ::prost_validate::errors::list::Error::Item(Box::new(e))))?;
+                        }
                     }
-                }
                 }
             });
         with_ignore_empty(

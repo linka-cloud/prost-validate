@@ -20,20 +20,20 @@ impl ToValidationTokens for MapRules {
     fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
         let rules = prost_validate_types::MapRules::from(self.to_owned());
         let min_pairs = rules.min_pairs.map(|v| {
+            let v = v as usize;
             let field = &ctx.name;
-            let err = format!("must have at least {v} pairs");
             quote! {
-                if #name.len() < #v as usize {
-                    return Err(::prost_validate::Error::new(#field, #err));
+                if #name.len() < #v {
+                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::map::Error::MinPairs(#v)));
                 }
             }
         });
         let max_pairs = rules.max_pairs.map(|v| {
+            let v = v as usize;
             let field = &ctx.name;
-            let err = format!("must have at most {v} pairs");
             quote! {
-                if #name.len() > #v as usize {
-                    return Err(::prost_validate::Error::new(#field, #err));
+                if #name.len() > #v {
+                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::map::Error::MaxPairs(#v)));
                 }
             }
         });
@@ -41,9 +41,13 @@ impl ToValidationTokens for MapRules {
         let keys = self.keys.as_ref().map(|rules| {
             let validate = rules.to_validation_tokens(ctx, &key);
             validate.is_empty().not().then(|| {
+                let field = &ctx.name;
                 quote! {
                     for #key in #name.keys() {
-                        #validate
+                        {
+                            #validate
+                            Ok(())
+                        }.map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, #key), ::prost_validate::errors::map::Error::Keys(Box::new(e))))?;
                     }
                 }
             })
@@ -57,29 +61,41 @@ impl ToValidationTokens for MapRules {
             .map(|v| v.message.map(|v| v.skip).unwrap_or_default())
             .unwrap_or_default()).then(|| {
             let validation = MessageRules::default().to_validation_tokens(ctx, &value);
+            let field = &ctx.name;
             quote! {
-                for #value in #name.values() {
-                    #validation
+                for (k, #value) in #name.iter() {
+                    {
+                        #validation
+                        Ok(())
+                    }.map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, k), ::prost_validate::errors::map::Error::Values(Box::new(e))))?;
                 }
             }
         });
         let values = self.values.as_ref().map(|rules| {
             let validate = rules.to_validation_tokens(ctx, &value);
             validate.is_empty().not().then(|| {
+                let field = &ctx.name;
                 quote! {
-                    for #value in #name.values() {
-                        #validate
+                    for (k, #value) in #name.iter() {
+                        {
+                            #validate
+                            Ok(())
+                        }.map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, k), ::prost_validate::errors::map::Error::Values(Box::new(e))))?;
                     }
                 }
             })
         });
-        with_ignore_empty(name, self.ignore_empty, quote! {
-            #min_pairs
-            #max_pairs
-            #keys
-            #values
-            #msg
-        })
+        with_ignore_empty(
+            name,
+            self.ignore_empty,
+            quote! {
+                #min_pairs
+                #max_pairs
+                #keys
+                #values
+                #msg
+            },
+        )
     }
 }
 

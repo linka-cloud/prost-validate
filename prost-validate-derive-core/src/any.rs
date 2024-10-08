@@ -19,20 +19,20 @@ impl ToValidationTokens for AnyRules {
         let r#in = rules.r#in.is_empty().not().then(|| {
             let v = rules.r#in;
             let field = &ctx.name;
-            let err = format!("must be in {:?}", v);
             quote! {
-                if ![#(#v),*].contains(&#name.type_url.as_str()) {
-                    return Err(::prost_validate::Error::new(#field, #err));
+                let values = vec![#(#v),*];
+                if !values.contains(&#name.type_url.as_str()) {
+                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::any::Error::In(values.iter().map(|v|v.to_string()).collect())));
                 }
             }
         });
         let not_in = rules.not_in.is_empty().not().then(|| {
             let v = rules.not_in;
             let field = &ctx.name;
-            let err = format!("must not be in {:?}", v);
             quote! {
-                if [#(#v),*].contains(&#name.type_url.as_str()) {
-                    return Err(::prost_validate::Error::new(#field, #err));
+                let values = vec![#(#v),*];
+                if values.contains(&#name.type_url.as_str()) {
+                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::any::Error::NotIn(values.iter().map(|v|v.to_string()).collect())));
                 }
             }
         });

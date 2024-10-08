@@ -1,6 +1,7 @@
 use crate::registry::FieldValidationFn;
-use prost_validate::format_err;
 use prost_reflect::FieldDescriptor;
+use prost_validate::format_err;
+use prost_validate::Error;
 use prost_validate_types::field_rules::Type;
 use prost_validate_types::FieldRules;
 use std::sync::Arc;
@@ -15,11 +16,13 @@ macro_rules! number_rules {
 }
 
 macro_rules! make_validate_number {
-    ($name:ident,$enum_value:ident,$typ:ident,$default:expr) => {
+    ($name:ident,$enum_value:ident,$typ:ident,$default:expr,$module:ident) => {
         pub(crate) fn $name(
             field: &FieldDescriptor,
             rules: &FieldRules,
         ) -> Vec<FieldValidationFn<$typ>> {
+            use prost_validate::errors::$module;
+
             let mut fns: Vec<FieldValidationFn<$typ>> = Vec::new();
             if !matches!(rules.r#type, Some(Type::$enum_value(_))) {
                 return fns;
@@ -41,7 +44,7 @@ macro_rules! make_validate_number {
                     let val = val.unwrap_or($default);
                     let v = number_rules!(rules, $enum_value).r#const.unwrap();
                     if val != v {
-                        return Err(format_err!(name, "must be {}", v));
+                        return Err(Error::new(name.to_string(), $module::Error::Const(v)));
                     }
                     Ok(true)
                 }));
@@ -54,11 +57,9 @@ macro_rules! make_validate_number {
                         fns.push(Arc::new(move |val, _| {
                             let val = val.unwrap_or($default);
                             if val <= gt || val >= lt {
-                                return Err(format_err!(
-                                    name,
-                                    "must be inside range ({}, {})",
-                                    gt,
-                                    lt
+                                return Err(Error::new(
+                                    name.to_string(),
+                                    $module::Error::in_range(false, gt, lt, false),
                                 ));
                             }
                             Ok(true)
@@ -67,11 +68,9 @@ macro_rules! make_validate_number {
                         fns.push(Arc::new(move |val, _| {
                             let val = val.unwrap_or($default);
                             if val >= lt && val <= gt {
-                                return Err(format_err!(
-                                    name,
-                                    "must be outside range [{}, {}]",
-                                    lt,
-                                    gt
+                                return Err(Error::new(
+                                    name.to_string(),
+                                    $module::Error::not_in_range(true, lt, gt, true),
                                 ));
                             }
                             Ok(true)
@@ -82,11 +81,9 @@ macro_rules! make_validate_number {
                         fns.push(Arc::new(move |val, _| {
                             let val = val.unwrap_or($default);
                             if val < gte || val >= lt {
-                                return Err(format_err!(
-                                    name,
-                                    "must be inside range [{}, {})",
-                                    gte,
-                                    lt
+                                return Err(Error::new(
+                                    name.to_string(),
+                                    $module::Error::in_range(true, gte, lt, false),
                                 ));
                             }
                             Ok(true)
@@ -95,11 +92,9 @@ macro_rules! make_validate_number {
                         fns.push(Arc::new(move |val, _| {
                             let val = val.unwrap_or($default);
                             if val >= lt && val < gte {
-                                return Err(format_err!(
-                                    name,
-                                    "must be outside range [{}, {})",
-                                    gte,
-                                    lt
+                                return Err(Error::new(
+                                    name.to_string(),
+                                    $module::Error::not_in_range(true, lt, gte, false),
                                 ));
                             }
                             Ok(true)
@@ -109,7 +104,7 @@ macro_rules! make_validate_number {
                     fns.push(Arc::new(move |val, _| {
                         let val = val.unwrap_or($default);
                         if val >= lt {
-                            return Err(format_err!(name, "must be less than {}", lt));
+                            return Err(Error::new(name.to_string(), $module::Error::Lt(lt)));
                         }
                         Ok(true)
                     }));
@@ -121,11 +116,9 @@ macro_rules! make_validate_number {
                         fns.push(Arc::new(move |val, _| {
                             let val = val.unwrap_or($default);
                             if val <= gt || val > lte {
-                                return Err(format_err!(
-                                    name,
-                                    "must be inside range ({}, {}]",
-                                    gt,
-                                    lte
+                                return Err(Error::new(
+                                    name.to_string(),
+                                    $module::Error::in_range(false, gt, lte, true),
                                 ));
                             }
                             Ok(true)
@@ -134,11 +127,9 @@ macro_rules! make_validate_number {
                         fns.push(Arc::new(move |val, _| {
                             let val = val.unwrap_or($default);
                             if val > lte && val <= gt {
-                                return Err(format_err!(
-                                    name,
-                                    "must be outside range ({}, {}]",
-                                    lte,
-                                    gt
+                                return Err(Error::new(
+                                    name.to_string(),
+                                    $module::Error::not_in_range(false, lte, gt, true),
                                 ));
                             }
                             Ok(true)
@@ -149,11 +140,9 @@ macro_rules! make_validate_number {
                         fns.push(Arc::new(move |val, _| {
                             let val = val.unwrap_or($default);
                             if val < gte || val > lte {
-                                return Err(format_err!(
-                                    name,
-                                    "must be inside range [{}, {}]",
-                                    gte,
-                                    lte
+                                return Err(Error::new(
+                                    name.to_string(),
+                                    $module::Error::in_range(true, gte, lte, true),
                                 ));
                             }
                             Ok(true)
@@ -162,11 +151,9 @@ macro_rules! make_validate_number {
                         fns.push(Arc::new(move |val, _| {
                             let val = val.unwrap_or($default);
                             if val > lte && val < gte {
-                                return Err(format_err!(
-                                    name,
-                                    "must be outside range ({}, {})",
-                                    lte,
-                                    gte
+                                return Err(Error::new(
+                                    name.to_string(),
+                                    $module::Error::not_in_range(false, lte, gte, false),
                                 ));
                             }
                             Ok(true)
@@ -176,7 +163,7 @@ macro_rules! make_validate_number {
                     fns.push(Arc::new(move |val, _| {
                         let val = val.unwrap_or($default);
                         if val > lte {
-                            return Err(format_err!(name, "must be less or equal to {}", lte));
+                            return Err(Error::new(name.to_string(), $module::Error::Lte(lte)));
                         }
                         Ok(true)
                     }));
@@ -186,7 +173,7 @@ macro_rules! make_validate_number {
                 fns.push(Arc::new(move |val, _| {
                     let val = val.unwrap_or($default);
                     if val <= gt {
-                        return Err(format_err!(name, "must be greater than {}", gt));
+                        return Err(Error::new(name.to_string(), $module::Error::Gt(gt)));
                     }
                     Ok(true)
                 }));
@@ -195,7 +182,7 @@ macro_rules! make_validate_number {
                 fns.push(Arc::new(move |val, _| {
                     let val = val.unwrap_or($default);
                     if val < gte {
-                        return Err(format_err!(name, "must be greater or equal to {}", gte));
+                        return Err(Error::new(name.to_string(), $module::Error::Gte(gte)));
                     }
                     Ok(true)
                 }));
@@ -207,7 +194,10 @@ macro_rules! make_validate_number {
                     let val = val.unwrap_or($default);
                     let rules = number_rules!(rules, $enum_value);
                     if !rules.r#in.contains(&val) {
-                        return Err(format_err!(name, "must be in {:?}", rules.r#in));
+                        return Err(Error::new(
+                            name.to_string(),
+                            $module::Error::In(rules.r#in.clone()),
+                        ));
                     }
                     Ok(true)
                 }));
@@ -218,7 +208,10 @@ macro_rules! make_validate_number {
                     let val = val.unwrap_or($default);
                     let rules = number_rules!(rules, $enum_value);
                     if rules.not_in.contains(&val) {
-                        return Err(format_err!(name, "must not be in {:?}", rules.r#in));
+                        return Err(Error::new(
+                            name.to_string(),
+                            $module::Error::NotIn(rules.not_in.clone()),
+                        ));
                     }
                     Ok(true)
                 }));
@@ -228,15 +221,15 @@ macro_rules! make_validate_number {
     };
 }
 
-make_validate_number!(make_validate_u64, Uint64, u64, 0);
-make_validate_number!(make_validate_u32, Uint32, u32, 0);
-make_validate_number!(make_validate_i64, Int64, i64, 0);
-make_validate_number!(make_validate_i32, Int32, i32, 0);
-make_validate_number!(make_validate_double, Double, f64, 0.0);
-make_validate_number!(make_validate_float, Float, f32, 0.0);
-make_validate_number!(make_validate_sint32, Sint32, i32, 0);
-make_validate_number!(make_validate_sint64, Sint64, i64, 0);
-make_validate_number!(make_validate_fixed32, Fixed32, u32, 0);
-make_validate_number!(make_validate_fixed64, Fixed64, u64, 0);
-make_validate_number!(make_validate_sfixed32, Sfixed32, i32, 0);
-make_validate_number!(make_validate_sfixed64, Sfixed64, i64, 0);
+make_validate_number!(make_validate_u64, Uint64, u64, 0, uint64);
+make_validate_number!(make_validate_u32, Uint32, u32, 0, uint32);
+make_validate_number!(make_validate_i64, Int64, i64, 0, int64);
+make_validate_number!(make_validate_i32, Int32, i32, 0, int32);
+make_validate_number!(make_validate_double, Double, f64, 0.0, double);
+make_validate_number!(make_validate_float, Float, f32, 0.0, float);
+make_validate_number!(make_validate_sint32, Sint32, i32, 0, sint32);
+make_validate_number!(make_validate_sint64, Sint64, i64, 0, sint64);
+make_validate_number!(make_validate_fixed32, Fixed32, u32, 0, fixed32);
+make_validate_number!(make_validate_fixed64, Fixed64, u64, 0, fixed64);
+make_validate_number!(make_validate_sfixed32, Sfixed32, i32, 0, sfixed32);
+make_validate_number!(make_validate_sfixed64, Sfixed64, i64, 0, sfixed64);

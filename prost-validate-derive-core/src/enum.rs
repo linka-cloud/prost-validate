@@ -20,10 +20,9 @@ impl ToValidationTokens for EnumRules {
         let rules = prost_validate_types::EnumRules::from(self.to_owned());
         let r#const = rules.r#const.map(|v| {
             let field = &ctx.name;
-            let err = format!("must be equal to {}", v);
             quote! {
                 if (*#name as i32) != #v {
-                    return Err(::prost_validate::Error::new(#field, #err));
+                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::r#enum::Error::Const(#v)));
                 }
             }
         });
@@ -31,30 +30,29 @@ impl ToValidationTokens for EnumRules {
             let enum_type: syn::Path = syn::parse_str(ctx.to_owned().enumeration.expect("missing enum type").as_str())
                 .expect("Invalid enum path");
             let field = &ctx.name;
-            let err = format!("{} must be a defined enum value", name);
             quote! {
                 if !#enum_type::is_valid(*#name) {
-                    return Err(::prost_validate::Error::new(#field, #err));
+                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::r#enum::Error::DefinedOnly));
                 }
             }
         });
         let r#in = rules.r#in.is_empty().not().then(|| {
             let v = rules.r#in.to_owned();
             let field = &ctx.name;
-            let err = format!("must be one of {:?}", rules.r#in);
             quote! {
-                if ![#(#v),*].contains(&#name) {
-                    return Err(::prost_validate::Error::new(#field, #err));
+                let values = [#(#v),*];
+                if !values.contains(&#name) {
+                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::r#enum::Error::In(values.to_vec())));
                 }
             }
         });
         let not_in = rules.not_in.is_empty().not().then(|| {
             let v = rules.not_in.to_owned();
             let field = &ctx.name;
-            let err = format!("is in {:?}", v);
             quote! {
-                if [#(#v),*].contains(#name) {
-                    return Err(::prost_validate::Error::new(#field, #err));
+                let values = [#(#v),*];
+                if values.contains(#name) {
+                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::r#enum::Error::NotIn(values.to_vec())));
                 }
             }
         });

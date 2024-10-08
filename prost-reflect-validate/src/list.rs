@@ -1,9 +1,11 @@
 use crate::field::make_validate_field;
 use crate::registry::{NestedValidationFn, ValidationFn, REGISTRY};
-use prost_validate::format_err;
 use itertools::Itertools;
 use prost_reflect::bytes::Bytes;
 use prost_reflect::{FieldDescriptor, Kind, Value};
+use prost_validate::errors::list;
+use prost_validate::format_err;
+use prost_validate::Error;
 use prost_validate_types::field_rules::Type;
 use prost_validate_types::{FieldRules, RepeatedRules};
 use std::borrow::Cow;
@@ -73,7 +75,10 @@ pub(crate) fn make_validate_list(
                           _: &HashMap<String, ValidationFn>| {
                         let v = rules.min_items.unwrap();
                         if vals.len() < v as usize {
-                            return Err(format_err!(name, "must have at least {} items", v));
+                            return Err(Error::new(
+                                name.to_string(),
+                                list::Error::MinItems(v as usize),
+                            ));
                         }
                         Ok(true)
                     },
@@ -91,7 +96,10 @@ pub(crate) fn make_validate_list(
                           _: &HashMap<String, ValidationFn>| {
                         let v = rules.max_items.unwrap();
                         if vals.len() > v as usize {
-                            return Err(format_err!(name, "must have at most {} items", v));
+                            return Err(Error::new(
+                                name.to_string(),
+                                list::Error::MaxItems(v as usize),
+                            ));
                         }
                         Ok(true)
                     },
@@ -110,7 +118,7 @@ pub(crate) fn make_validate_list(
                           _: &HashMap<String, ValidationFn>| {
                         if let Some(v) = unique_count(vals, &field) {
                             if vals.len() != v {
-                                return Err(format_err!(name, "must have unique values"));
+                                return Err(Error::new(name.to_string(), list::Error::Unique));
                             }
                         }
                         Ok(true)
@@ -129,11 +137,16 @@ pub(crate) fn make_validate_list(
                 Arc::new(
                     move |vals: &[Value],
                           rules: &RepeatedRules,
-                          _: &String,
+                          name: &String,
                           m: &HashMap<String, ValidationFn>| {
                         let rules = rules.items.as_ref().unwrap();
-                        for val in vals {
-                            if !validate(Cow::Borrowed(val), rules, m)? {
+                        for (i, val) in vals.iter().enumerate() {
+                            if !validate(Cow::Borrowed(val), rules, m).map_err(|e| {
+                                Error::new(
+                                    format!("{}[{}]", name, i),
+                                    list::Error::Item(Box::new(e)),
+                                )
+                            })? {
                                 return Ok(false);
                             }
                         }
@@ -148,11 +161,15 @@ pub(crate) fn make_validate_list(
         if REGISTRY.register(m, desc).is_err() {
             return fns;
         }
+        let name = Arc::new(field.full_name().to_string());
         fns.push(Arc::new(move |vals, _, m| {
             if let Some(vals) = vals {
-                for val in vals.iter() {
+                for (i, val) in vals.iter().enumerate() {
                     if let Some(Err(err)) = val.as_message().map(|v| REGISTRY.do_validate(v, m)) {
-                        return Err(err);
+                        return Err(Error::new(
+                            format!("{}[{}]", name.clone(), i),
+                            list::Error::Item(Box::new(err)),
+                        ));
                     }
                 }
             }

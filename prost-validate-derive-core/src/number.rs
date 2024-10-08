@@ -7,7 +7,7 @@ use std::ops::Not;
 use syn::{LitFloat, LitInt};
 
 macro_rules! make_number_rules {
-    ($name:ident,$typ:ident,$lit:ident) => {
+    ($name:ident,$typ:ident,$lit:ident,$module:ident) => {
         #[derive(Debug, FromMeta, Clone)]
         pub struct $name {
             pub r#const: Option<$typ>,
@@ -25,7 +25,6 @@ macro_rules! make_number_rules {
             fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
                 let rules = prost_validate_types::$name::from(self.to_owned());
                 let field = &ctx.name;
-                let err = "is required";
                 let required = ctx
                     .rules
                     .to_owned()
@@ -34,16 +33,15 @@ macro_rules! make_number_rules {
                     .is_true_and(|| {
                         quote! {
                             if self.#name.is_none() {
-                                return Err(::prost_validate::Error::new(#field, #err));
+                                return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::message::Error::Required));
                             }
                         }
                     });
                 let r#const = rules.r#const.map(|v| {
                     let field = &ctx.name;
-                    let err = format!("is not equal to \"{v}\"");
                     quote! {
                         if *#name != #v {
-                            return Err(::prost_validate::Error::new(#field, #err));
+                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::Const(#v)));
                         }
                     }
                 });
@@ -52,45 +50,40 @@ macro_rules! make_number_rules {
                     if let Some(gt) = rules.gt {
                         if lt > gt {
                             let field = &ctx.name;
-                            let err = format!("must be inside range ({gt}, {lt})");
                             quote! {
                                 if *#name <= #gt || *#name >= #lt {
-                                    return Err(::prost_validate::Error::new(#field, #err));
+                                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::in_range(false, #gt, #lt, false)));
                                 }
                             }
                         } else {
                             let field = &ctx.name;
-                            let err = format!("must be outside range [{lt}, {gt}]");
                             quote! {
                                 if *#name >= #lt && *#name <= #gt {
-                                    return Err(::prost_validate::Error::new(#field, #err));
+                                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::not_in_range(true, #lt, #gt, true)));
                                 }
                             }
                         }
                     } else if let Some(gte) = rules.gte {
                         if lt > gte {
                             let field = &ctx.name;
-                            let err = format!("must be inside range [{gte}, {lt})");
                             quote! {
                                 if *#name < #gte || *#name >= #lt {
-                                    return Err(::prost_validate::Error::new(#field, #err));
+                                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::in_range(true, #gte, #lt, false)));
                                 }
                             }
                         } else {
                             let field = &ctx.name;
-                            let err = format!("must be outside range [{gte}, {lt})");
                             quote! {
                                 if *#name >= #lt && *#name < #gte {
-                                    return Err(::prost_validate::Error::new(#field, #err));
+                                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::not_in_range(true, #lt, #gte, false)));
                                 }
                             }
                         }
                     } else {
                         let field = &ctx.name;
-                        let err = format!("must be less than {lt}");
                         quote! {
                             if *#name >= #lt {
-                                return Err(::prost_validate::Error::new(#field, #err));
+                                return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::Lt(#lt)));
                             }
                         }
                     }
@@ -98,62 +91,55 @@ macro_rules! make_number_rules {
                     if let Some(gt) = rules.gt {
                         if lte > gt {
                             let field = &ctx.name;
-                            let err = format!("must be inside range ({gt}, {lte}]");
                             quote! {
                                 if *#name <= #gt || *#name > #lte {
-                                    return Err(::prost_validate::Error::new(#field, #err));
+                                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::in_range(false, #gt, #lte, true)));
                                 }
                             }
                         } else {
                             let field = &ctx.name;
-                            let err = format!("must be outside range ({lte}, {gt}]");
                             quote! {
                                 if *#name > #lte && *#name <= #gt {
-                                    return Err(::prost_validate::Error::new(#field, #err));
+                                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::not_in_range(false, #lte, #gt, true)));
                                 }
                             }
                         }
                     } else if let Some(gte) = rules.gte {
                         if lte > gte {
                             let field = &ctx.name;
-                            let err = format!("must be inside range [{gte}, {lte}]");
                             quote! {
                                 if *#name < #gte || *#name > #lte {
-                                    return Err(::prost_validate::Error::new(#field, #err));
+                                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::in_range(true, #gte, #lte, true)));
                                 }
                             }
                         } else {
                             let field = &ctx.name;
-                            let err = format!("must be outside range ({lte}, {gte})");
                             quote! {
                                 if *#name > #lte && *#name < #gte {
-                                    return Err(::prost_validate::Error::new(#field, #err));
+                                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::not_in_range(false, #lte, #gte, false)));
                                 }
                             }
                         }
                     } else {
                         let field = &ctx.name;
-                        let err = format!("must be less or equal to {lte}");
                         quote! {
                             if *#name > #lte {
-                                return Err(::prost_validate::Error::new(#field, #err));
+                                return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::Lte(#lte)));
                             }
                         }
                     }
                 } else if let Some(gt) = rules.gt {
                     let field = &ctx.name;
-                    let err = format!("must be greater than {gt}");
                     quote! {
                         if *#name <= #gt {
-                            return Err(::prost_validate::Error::new(#field, #err));
+                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::Gt(#gt)));
                         }
                     }
                 } else if let Some(gte) = rules.gte {
                     let field = &ctx.name;
-                    let err = format!("must be greater or equal to {gte}");
                     quote! {
                         if *#name < #gte {
-                            return Err(::prost_validate::Error::new(#field, #err));
+                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::Gte(#gte)));
                         }
                     }
                 } else {
@@ -162,20 +148,20 @@ macro_rules! make_number_rules {
                 let r#in = rules.r#in.is_empty().not().then(|| {
                     let v = rules.r#in.to_owned();
                     let field = &ctx.name;
-                    let err = format!("must be in {:?}", v);
                     quote! {
-                        if ![#(#v),*].contains(#name) {
-                            return Err(::prost_validate::Error::new(#field, #err));
+                        let values = vec![#(#v),*];
+                        if !values.contains(#name) {
+                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::In(values.to_vec())));
                         }
                     }
                 });
                 let not_in = rules.not_in.is_empty().not().then(|| {
                     let v = rules.not_in.to_owned();
                     let field = &ctx.name;
-                    let err = format!("must not be in {:?}", v);
                     quote! {
-                        if [#(#v),*].contains(#name) {
-                            return Err(::prost_validate::Error::new(#field, #err));
+                        let values = vec![#(#v),*];
+                        if values.contains(#name) {
+                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::NotIn(values.to_vec())));
                         }
                     }
                 });
@@ -231,15 +217,15 @@ macro_rules! make_number_rules {
     };
 }
 
-make_number_rules!(Int32Rules, i32, LitInt);
-make_number_rules!(Int64Rules, i64, LitInt);
-make_number_rules!(UInt32Rules, u32, LitInt);
-make_number_rules!(UInt64Rules, u64, LitInt);
-make_number_rules!(SInt32Rules, i32, LitInt);
-make_number_rules!(SInt64Rules, i64, LitInt);
-make_number_rules!(Fixed32Rules, u32, LitInt);
-make_number_rules!(Fixed64Rules, u64, LitInt);
-make_number_rules!(SFixed32Rules, i32, LitInt);
-make_number_rules!(SFixed64Rules, i64, LitInt);
-make_number_rules!(FloatRules, f32, LitFloat);
-make_number_rules!(DoubleRules, f64, LitFloat);
+make_number_rules!(UInt64Rules, u64, LitInt, uint64);
+make_number_rules!(UInt32Rules, u32, LitInt, uint32);
+make_number_rules!(Int64Rules, i64, LitInt, int64);
+make_number_rules!(Int32Rules, i32, LitInt, int32);
+make_number_rules!(DoubleRules, f64, LitFloat, double);
+make_number_rules!(FloatRules, f32, LitFloat, float);
+make_number_rules!(SInt32Rules, i32, LitInt, sint32);
+make_number_rules!(SInt64Rules, i64, LitInt, sint64);
+make_number_rules!(Fixed32Rules, u32, LitInt, fixed32);
+make_number_rules!(Fixed64Rules, u64, LitInt, fixed64);
+make_number_rules!(SFixed32Rules, i32, LitInt, sfixed32);
+make_number_rules!(SFixed64Rules, i64, LitInt, sfixed64);

@@ -5,9 +5,9 @@ use crate::utils::{get_field_rules, is_set};
 use no_deadlocks::RwLock;
 use once_cell::sync::Lazy;
 use prost_reflect::{DynamicMessage, MessageDescriptor, OneofDescriptor, ReflectMessage};
+use prost_validate::{format_err, Result};
 use prost_validate_types::FieldRules;
 use prost_validate_types::{MessageRulesExt, OneofRulesExt};
-use prost_validate::{Result, format_err};
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::Arc;
@@ -19,7 +19,7 @@ pub(crate) struct Args<'a> {
 
 pub(crate) type ValidationFn = Arc<dyn Fn(&Args) -> Result<()> + Send + Sync>;
 pub(crate) type FieldValidationFn<T> =
-Arc<dyn Fn(Option<T>, &FieldRules) -> Result<bool> + Send + Sync>;
+    Arc<dyn Fn(Option<T>, &FieldRules) -> Result<bool> + Send + Sync>;
 pub(crate) type NestedValidationFn<T> = Arc<
     dyn Fn(Option<T>, &FieldRules, &HashMap<String, ValidationFn>) -> Result<bool> + Send + Sync,
 >;
@@ -51,7 +51,9 @@ impl Registry {
         let mut fns: Vec<ValidationFn> = Vec::new();
         let mut oneofs: HashMap<String, Rc<OneofDescriptor>> = HashMap::new();
         for field in desc.fields() {
-            let rules = match get_field_rules(&field).map_err(|e| format_err!(field.full_name(), "{}", e))? {
+            let rules = match get_field_rules(&field)
+                .map_err(|e| format_err!(field.full_name(), "{}", e))?
+            {
                 Some(r) => r,
                 None => continue,
             };
@@ -63,7 +65,9 @@ impl Registry {
                 for field in desc.fields() {
                     let field = field.clone();
                     oneofs.insert(field.full_name().to_string(), desc.clone());
-                    let rules = match get_field_rules(&field).map_err(|e| format_err!(field.full_name(), "{}", e))? {
+                    let rules = match get_field_rules(&field)
+                        .map_err(|e| format_err!(field.full_name(), "{}", e))?
+                    {
                         Some(r) => r,
                         None => continue,
                     };
@@ -179,10 +183,7 @@ impl Registry {
             f(&Args { msg, m })?;
             Ok(())
         } else {
-            Err(format_err!(
-                msg.descriptor().full_name(),
-                "no validator",
-            ))
+            Err(format_err!(msg.descriptor().full_name(), "no validator",))
         }
     }
 }

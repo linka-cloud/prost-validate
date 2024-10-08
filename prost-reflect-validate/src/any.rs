@@ -1,7 +1,8 @@
 use crate::registry::NestedValidationFn;
-use prost_validate::format_err;
 use prost_reflect::{DynamicMessage, FieldDescriptor};
 use prost_types::Any;
+use prost_validate::errors::any;
+use prost_validate::{format_err, Error};
 use prost_validate_types::field_rules::Type;
 use prost_validate_types::{AnyRules, FieldRules};
 use std::sync::Arc;
@@ -22,7 +23,9 @@ where
     let name = name.clone();
     fns.push(Arc::new(move |val, rules, _| {
         let val = match val {
-            Some(v) => v.transcode_to::<Any>().map_err(|_| format_err!(name, "failed to transcode Any"))?,
+            Some(v) => v
+                .transcode_to::<Any>()
+                .map_err(|_| format_err!(name, "failed to transcode to Any rules"))?,
             None => Any::default(),
         };
         let rules = any_rules!(rules);
@@ -47,7 +50,7 @@ pub(crate) fn make_validate_any(
         let name = name.clone();
         fns.push(Arc::new(move |val, _, _| {
             if val.is_none() {
-                return Err(format_err!(name, "is required"));
+                return Err(Error::new(name.to_string(), any::Error::Required));
             }
             Ok(true)
         }));
@@ -60,7 +63,10 @@ pub(crate) fn make_validate_any(
             &name,
             Arc::new(move |val: &Any, rules: &AnyRules, name: &String| {
                 if !rules.r#in.contains(&val.type_url) {
-                    return Err(format_err!(name, "must be in {:?}", rules.r#in));
+                    return Err(Error::new(
+                        name.to_string(),
+                        any::Error::In(rules.r#in.clone()),
+                    ));
                 }
                 Ok(true)
             }),
@@ -72,7 +78,10 @@ pub(crate) fn make_validate_any(
             &name,
             Arc::new(move |val: &Any, rules: &AnyRules, name: &String| {
                 if rules.not_in.contains(&val.type_url) {
-                    return Err(format_err!(name, "must not be in {:?}", rules.not_in));
+                    return Err(Error::new(
+                        name.to_string(),
+                        any::Error::NotIn(rules.not_in.clone()),
+                    ));
                 }
                 Ok(true)
             }),

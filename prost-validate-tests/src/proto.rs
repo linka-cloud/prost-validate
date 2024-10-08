@@ -11,7 +11,6 @@ pub(crate) mod cases {
             env!("OUT_DIR"),
             "/tests.harness.cases.yet_another_package.rs"
         ));
-
     }
     pub(crate) mod other_package {
         include!(concat!(
