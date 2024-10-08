@@ -77,7 +77,7 @@ fn main() {
 ```
 
 Output:
-> Validation failed: "content": is not equal to "Hello, world!"
+> Validation failed: "validate.example.ExampleMessage.content": must be equal to "Hello, world!"
 >
 > Validation passed
 

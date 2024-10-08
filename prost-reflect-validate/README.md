@@ -72,7 +72,7 @@ fn main() {
 
 **Output**
 
-> Validation failed: validate.example.ExampleMessage.content: must be Hello, world!
+> Validation failed: "validate.example.ExampleMessage.content": must be equal to "Hello, world!"
 >
 > Validation passed
 

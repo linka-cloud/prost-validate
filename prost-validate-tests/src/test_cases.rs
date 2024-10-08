@@ -16,8 +16,11 @@ macro_rules! test_cases {
                 fn reflect() {
                     let (message, failures) = crate::CASES.get(stringify!($name)).unwrap()();
                     match ValidatorExt::validate(&*message) {
+                        Err(err) => {
+                            println!("{}", err);
+                            assert!(failures > 0, "unexpected validation failure: {err}");
+                        },
                         Ok(_) => assert_eq!(failures, 0, "unexpected validation success"),
-                        Err(err) => assert!(failures > 0, "unexpected validation failure: {err}"),
                     }
                 }
 
@@ -26,8 +29,11 @@ macro_rules! test_cases {
                 fn derive() {
                     let (message, failures) = crate::CASES.get(stringify!($name)).unwrap()();
                     match ValidatorDerive::validate(&*message) {
+                        Err(err) => {
+                            println!("{}", err);
+                            assert!(failures > 0, "unexpected validation failure: {err}");
+                        },
                         Ok(_) => assert_eq!(failures, 0, "unexpected validation success"),
-                        Err(err) => assert!(failures > 0, "unexpected validation failure: {err}"),
                     }
                 }
             }

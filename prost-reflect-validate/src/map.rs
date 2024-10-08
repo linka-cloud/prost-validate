@@ -1,7 +1,8 @@
 use crate::field::make_validate_field;
 use crate::registry::{NestedValidationFn, ValidationFn, REGISTRY};
-use prost_validate::format_err;
 use prost_reflect::{FieldDescriptor, Kind, MapKey, Value};
+use prost_validate::errors::map;
+use prost_validate::{format_err, Error};
 use prost_validate_types::field_rules::Type;
 use prost_validate_types::{FieldRules, MapRules};
 use std::borrow::Cow;
@@ -76,7 +77,10 @@ pub(crate) fn make_validate_map(
                           _: &HashMap<String, ValidationFn>| {
                         let v = rules.min_pairs();
                         if vals.len() < v as usize {
-                            return Err(format_err!(name, "must have at least {} pairs", v));
+                            return Err(Error::new(
+                                name.to_string(),
+                                map::Error::MinPairs(v as usize),
+                            ));
                         }
                         Ok(true)
                     },
@@ -94,7 +98,10 @@ pub(crate) fn make_validate_map(
                           _: &HashMap<String, ValidationFn>| {
                         let v = rules.max_pairs();
                         if vals.len() > v as usize {
-                            return Err(format_err!(name, "must have at most {} pairs", v));
+                            return Err(Error::new(
+                                name.to_string(),
+                                map::Error::MaxPairs(v as usize),
+                            ));
                         }
                         Ok(true)
                     },
@@ -109,12 +116,17 @@ pub(crate) fn make_validate_map(
                 Arc::new(
                     move |vals: &HashMap<MapKey, Value>,
                           rules: &MapRules,
-                          _: &String,
+                          name: &String,
                           m: &HashMap<String, ValidationFn>| {
                         let rules = rules.keys.as_ref().unwrap();
                         for k in vals.keys() {
                             let val = Value::from(k.clone());
-                            if !validate(Cow::Borrowed(&val), rules, m)? {
+                            if !validate(Cow::Borrowed(&val), rules, m).map_err(|e| {
+                                Error::new(
+                                    format!("{}[{:?}]", name, map_key_string(k)),
+                                    map::Error::Keys(Box::new(e)),
+                                )
+                            })? {
                                 return Ok(false);
                             }
                         }
@@ -134,12 +146,17 @@ pub(crate) fn make_validate_map(
                 Arc::new(
                     move |vals: &HashMap<MapKey, Value>,
                           rules: &MapRules,
-                          _: &String,
+                          name: &String,
                           m: &HashMap<String, ValidationFn>| {
                         let rules = rules.values.as_ref().unwrap();
-                        for val in vals.values() {
+                        for (k, val) in vals.iter() {
                             let val = val.clone();
-                            if !validate(Cow::Borrowed(&val), rules, m)? {
+                            if !validate(Cow::Borrowed(&val), rules, m).map_err(|e| {
+                                Error::new(
+                                    format!("{}[{:?}]", name, map_key_string(k)),
+                                    map::Error::Values(Box::new(e)),
+                                )
+                            })? {
                                 return Ok(false);
                             }
                         }
@@ -159,9 +176,12 @@ pub(crate) fn make_validate_map(
                           name: &String,
                           _: &HashMap<String, ValidationFn>| {
                         let kind = kind.clone();
-                        for val in vals.values() {
+                        for (k, val) in vals.iter() {
                             if val.is_default(&kind) {
-                                return Err(format_err!(name, "must not have sparse values"));
+                                return Err(Error::new(
+                                    format!("{}[{:?}]", name, map_key_string(k)),
+                                    map::Error::NoSparse,
+                                ));
                             }
                         }
                         Ok(true)
@@ -176,9 +196,12 @@ pub(crate) fn make_validate_map(
         }
         fns.push(Arc::new(move |vals, _, m| {
             if let Some(vals) = vals {
-                for (_, val) in vals.iter() {
+                for (k, val) in vals.iter() {
                     if let Some(Err(err)) = val.as_message().map(|v| REGISTRY.do_validate(v, m)) {
-                        return Err(err);
+                        return Err(Error::new(
+                            format!("{}[{:?}]", name, map_key_string(k)),
+                            map::Error::Values(Box::new(err)),
+                        ));
                     }
                 }
             }
@@ -186,4 +209,15 @@ pub(crate) fn make_validate_map(
         }));
     }
     fns
+}
+
+fn map_key_string(k: &MapKey) -> String {
+    match k {
+        MapKey::Bool(k) => k.to_string(),
+        MapKey::I32(k) => k.to_string(),
+        MapKey::I64(k) => k.to_string(),
+        MapKey::U32(k) => k.to_string(),
+        MapKey::U64(k) => k.to_string(),
+        MapKey::String(k) => k.to_string(),
+    }
 }

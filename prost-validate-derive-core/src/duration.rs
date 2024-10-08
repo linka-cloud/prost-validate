@@ -36,10 +36,9 @@ impl ToValidationTokens for DurationRules {
         let r#const = rules.r#const.map(|v| v.as_duration()).map(|v| {
             let (got, want) = duration_to_tokens(name, &v);
             let field = &ctx.name;
-            let err = format!("must be equal to {:?}", v);
             quote! {
                 if #got != #want {
-                    return Err(::prost_validate::Error::new(#field, #err));
+                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::Const(#want)));
                 }
             }
         });
@@ -48,54 +47,49 @@ impl ToValidationTokens for DurationRules {
             if let Some(gt) = rules.gt.map(|v| v.as_duration()) {
                 if lt > gt {
                     let field = &ctx.name;
-                    let err = format!("must be inside range ({}, {})", gt, lt);
                     let (val, lt) = duration_to_tokens(name, &lt);
                     let (_, gt) = duration_to_tokens(name, &gt);
                     quote! {
                         if #val <= #gt || #val >= #lt {
-                            return Err(::prost_validate::Error::new(#field, #err));
+                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::in_range(false, #gt, #lt, false)));
                         }
                     }
                 } else {
                     let field = &ctx.name;
-                    let err = format!("must be outside range [{}, {}]", lt, gt);
                     let (val, lt) = duration_to_tokens(name, &lt);
                     let (_, gt) = duration_to_tokens(name, &gt);
                     quote! {
                         if #val >= #lt && #val <= #gt {
-                            return Err(::prost_validate::Error::new(#field, #err));
+                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::not_in_range(true, #lt, #gt, true)));
                         }
                     }
                 }
             } else if let Some(gte) = rules.gte.map(|v| v.as_duration()) {
                 if lt > gte {
                     let field = &ctx.name;
-                    let err = format!("must be inside range [{}, {})", gte, lt);
                     let (val, lt) = duration_to_tokens(name, &lt);
                     let (_, gte) = duration_to_tokens(name, &gte);
                     quote! {
                         if #val < #gte || #val >= #lt {
-                            return Err(::prost_validate::Error::new(#field, #err));
+                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::in_range(true, #gte, #lt, false)));
                         }
                     }
                 } else {
                     let field = &ctx.name;
-                    let err = format!("must be outside range [{}, {})", lt, gte);
                     let (val, lt) = duration_to_tokens(name, &lt);
                     let (_, gte) = duration_to_tokens(name, &gte);
                     quote! {
                         if #val >= #lt && #val < #gte {
-                            return Err(::prost_validate::Error::new(#field, #err));
+                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::not_in_range(true, #lt, #gte, false)));
                         }
                     }
                 }
             } else {
                 let field = &ctx.name;
-                let err = format!("must be less than {}", lt);
                 let (val, lt) = duration_to_tokens(name, &lt);
                 quote! {
                     if #val >= #lt {
-                        return Err(::prost_validate::Error::new(#field, #err));
+                        return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::Lt(#lt)));
                     }
                 }
             }
@@ -103,73 +97,66 @@ impl ToValidationTokens for DurationRules {
             if let Some(gt) = rules.gt.map(|v| v.as_duration()) {
                 if lte > gt {
                     let field = &ctx.name;
-                    let err = format!("must be inside range ({}, {}]", gt, lte);
                     let (val, lte) = duration_to_tokens(name, &lte);
                     let (_, gt) = duration_to_tokens(name, &gt);
                     quote! {
                         if #val <= #gt || #val > #lte {
-                            return Err(::prost_validate::Error::new(#field, #err));
+                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::in_range(false, #gt, #lte, true)));
                         }
                     }
                 } else {
                     let field = &ctx.name;
-                    let err = format!("must be outside range ({}, {}]", lte, gt);
                     let (val, lte) = duration_to_tokens(name, &lte);
                     let (_, gt) = duration_to_tokens(name, &gt);
                     quote! {
                         if #val >= #lte && #val < #gt {
-                            return Err(::prost_validate::Error::new(#field, #err));
+                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::not_in_range(false, #lte, #gt, true)));
                         }
                     }
                 }
             } else if let Some(gte) = rules.gte.map(|v| v.as_duration()) {
                 if lte > gte {
                     let field = &ctx.name;
-                    let err = format!("must be inside range [{}, {}]", gte, lte);
                     let (val, lte) = duration_to_tokens(name, &lte);
                     let (_, gte) = duration_to_tokens(name, &gte);
                     quote! {
                         if #val < #gte || #val > #lte {
-                            return Err(::prost_validate::Error::new(#field, #err));
+                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::in_range(true, #gte, #lte, true)));
                         }
                     }
                 } else {
                     let field = &ctx.name;
-                    let err = format!("must be outside range ({}, {})", lte, gte);
                     let (val, lte) = duration_to_tokens(name, &lte);
                     let (_, gte) = duration_to_tokens(name, &gte);
                     quote! {
                         if #val > #lte && #val < #gte {
-                            return Err(::prost_validate::Error::new(#field, #err));
+                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::not_in_range(false, #lte, #gte, false)));
                         }
                     }
                 }
             } else {
                 let field = &ctx.name;
-                let err = format!("must be less than or equal to {}", lte);
                 let (val, lte) = duration_to_tokens(name, &lte);
                 quote! {
                     if #val > #lte {
-                        return Err(::prost_validate::Error::new(#field, #err));
+                        return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::Lte(#lte)));
                     }
                 }
             }
         } else if let Some(gt) = rules.gt.map(|v| v.as_duration()) {
             let field = &ctx.name;
-            let err = format!("must be greater than {}", gt);
             let (val, gt) = duration_to_tokens(name, &gt);
             quote! {
                 if #val <= #gt {
-                    return Err(::prost_validate::Error::new(#field, #err));
+                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::Gt(#gt)));
                 }
             }
         } else if let Some(gte) = rules.gte.map(|v| v.as_duration()) {
             let field = &ctx.name;
-            let err = format!("must be greater or equal to {}", gte);
             let (val, gte) = duration_to_tokens(name, &gte);
             quote! {
                 if #val < #gte {
-                    return Err(::prost_validate::Error::new(#field, #err));
+                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::Gte(#gte)));
                 }
             }
         } else {
@@ -182,7 +169,6 @@ impl ToValidationTokens for DurationRules {
                 .map(|v| v.as_duration())
                 .collect::<Vec<Duration>>();
             let field = &ctx.name;
-            let err = format!("must be in {:?}", vals);
             let (val, _) = duration_to_tokens(name, &vals[0]);
             let vals = rules
                 .r#in
@@ -190,8 +176,9 @@ impl ToValidationTokens for DurationRules {
                 .map(|PbDuration { seconds, nanos }| quote! { ::time::Duration::new(#seconds, #nanos)})
                 .collect::<Vec<_>>();
             quote! {
-                if ![#(#vals),*].contains(&#val) {
-                    return Err(::prost_validate::Error::new(#field, #err));
+                let values = [#(#vals),*];
+                if !values.contains(&#val) {
+                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::In(values.to_vec())));
                 }
             }
         });
@@ -202,7 +189,6 @@ impl ToValidationTokens for DurationRules {
                 .map(|v| v.as_duration())
                 .collect::<Vec<Duration>>();
             let field = &ctx.name;
-            let err = format!("must be in {:?}", vals);
             let (val, _) = duration_to_tokens(name, &vals[0]);
             let vals = rules
                 .not_in
@@ -210,8 +196,9 @@ impl ToValidationTokens for DurationRules {
                 .map(|PbDuration { seconds, nanos }| quote! { ::time::Duration::new(#seconds, #nanos)})
                 .collect::<Vec<_>>();
             quote! {
-                if [#(#vals),*].contains(&#val) {
-                    return Err(::prost_validate::Error::new(#field, #err));
+                let values = [#(#vals),*];
+                if values.contains(&#val) {
+                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::NotIn(values.to_vec())));
                 }
             }
         });

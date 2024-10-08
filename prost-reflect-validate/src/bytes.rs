@@ -1,7 +1,8 @@
 use crate::registry::FieldValidationFn;
-use prost_validate::format_err;
 use prost::bytes::Bytes;
 use prost_reflect::FieldDescriptor;
+use prost_validate::errors::bytes;
+use prost_validate::{format_err, Error};
 use prost_validate_types::bytes_rules::WellKnown;
 use prost_validate_types::field_rules::Type;
 use prost_validate_types::{BytesRules, FieldRules};
@@ -51,7 +52,10 @@ pub(crate) fn make_validate_bytes(
             &name,
             Arc::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
                 if val != rules.r#const() {
-                    return Err(format_err!(name, "must be {:?}", rules.r#const()));
+                    return Err(Error::new(
+                        name.to_string(),
+                        bytes::Error::Const(rules.r#const().to_vec()),
+                    ));
                 }
                 Ok(true)
             }),
@@ -63,10 +67,9 @@ pub(crate) fn make_validate_bytes(
             &name,
             Arc::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
                 if val.len() != rules.len() as usize {
-                    return Err(format_err!(
-                        name,
-                        "must be {} characters long",
-                        rules.len()
+                    return Err(Error::new(
+                        name.to_string(),
+                        bytes::Error::Len(rules.len() as usize),
                     ));
                 }
                 Ok(true)
@@ -79,10 +82,9 @@ pub(crate) fn make_validate_bytes(
             &name,
             Arc::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
                 if val.len() < rules.min_len() as usize {
-                    return Err(format_err!(
-                        name,
-                        "must be minimum {} characters long",
-                        rules.min_len()
+                    return Err(Error::new(
+                        name.to_string(),
+                        bytes::Error::MinLen(rules.min_len() as usize),
                     ));
                 }
                 Ok(true)
@@ -95,10 +97,9 @@ pub(crate) fn make_validate_bytes(
             &name,
             Arc::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
                 if val.len() > rules.max_len() as usize {
-                    return Err(format_err!(
-                        name,
-                        "must be maximum {} characters long",
-                        rules.max_len()
+                    return Err(Error::new(
+                        name.to_string(),
+                        bytes::Error::MaxLen(rules.max_len() as usize),
                     ));
                 }
                 Ok(true)
@@ -110,11 +111,13 @@ pub(crate) fn make_validate_bytes(
             &mut fns,
             &name,
             Arc::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
-                let regex = Regex::new(rules.pattern()).map_err(|_| {
-                    format_err!(name, "must be a valid regex pattern")
-                })?;
+                let regex = Regex::new(rules.pattern())
+                    .map_err(|_| format_err!(name, "must be a valid regex pattern"))?;
                 if !regex.is_match(val.iter().as_slice()) {
-                    return Err(format_err!(name, "must matches {}", rules.pattern()));
+                    return Err(Error::new(
+                        name.to_string(),
+                        bytes::Error::Pattern(rules.pattern().to_string()),
+                    ));
                 }
                 Ok(true)
             }),
@@ -126,10 +129,9 @@ pub(crate) fn make_validate_bytes(
             &name,
             Arc::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
                 if !val.starts_with(rules.prefix()) {
-                    return Err(format_err!(
-                        name,
-                        "must have prefix {:?}",
-                        rules.prefix()
+                    return Err(Error::new(
+                        name.to_string(),
+                        bytes::Error::Prefix(rules.prefix().to_vec()),
                     ));
                 }
                 Ok(true)
@@ -142,10 +144,9 @@ pub(crate) fn make_validate_bytes(
             &name,
             Arc::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
                 if !val.ends_with(rules.suffix()) {
-                    return Err(format_err!(
-                        name,
-                        "must have suffix {:?}",
-                        rules.suffix()
+                    return Err(Error::new(
+                        name.to_string(),
+                        bytes::Error::Suffix(rules.suffix().to_vec()),
                     ));
                 }
                 Ok(true)
@@ -159,7 +160,10 @@ pub(crate) fn make_validate_bytes(
             Arc::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
                 let v = Bytes::from(rules.contains().to_vec());
                 if !contains_slice(val, &v) {
-                    return Err(format_err!(name, "must contains {:?}", v));
+                    return Err(Error::new(
+                        name.to_string(),
+                        bytes::Error::Contains(rules.contains().to_vec()),
+                    ));
                 }
                 Ok(true)
             }),
@@ -171,7 +175,10 @@ pub(crate) fn make_validate_bytes(
             &name,
             Arc::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
                 if !rules.r#in.contains(&val.deref().into()) {
-                    return Err(format_err!(name, "must be in {:?}", rules.r#in));
+                    return Err(Error::new(
+                        name.to_string(),
+                        bytes::Error::In(rules.r#in.clone()),
+                    ));
                 }
                 Ok(true)
             }),
@@ -183,7 +190,10 @@ pub(crate) fn make_validate_bytes(
             &name,
             Arc::new(move |val: &Bytes, rules: &BytesRules, name: &String| {
                 if rules.not_in.contains(&val.deref().into()) {
-                    return Err(format_err!(name, "must not be in {:?}", rules.not_in));
+                    return Err(Error::new(
+                        name.to_string(),
+                        bytes::Error::NotIn(rules.not_in.clone()),
+                    ));
                 }
                 Ok(true)
             }),
@@ -201,7 +211,7 @@ pub(crate) fn make_validate_bytes(
                     &name,
                     Arc::new(move |val: &Bytes, _: &BytesRules, name: &String| {
                         if val.len() != 16 && val.len() != 4 {
-                            return Err(format_err!(name, "must be a valid ip"));
+                            return Err(Error::new(name.to_string(), bytes::Error::Ip));
                         }
                         Ok(true)
                     }),
@@ -215,7 +225,7 @@ pub(crate) fn make_validate_bytes(
                     &name,
                     Arc::new(move |val: &Bytes, _: &BytesRules, name: &String| {
                         if val.len() != 4 {
-                            return Err(format_err!(name, "must be a valid ipv4"));
+                            return Err(Error::new(name.to_string(), bytes::Error::Ipv4));
                         }
                         Ok(true)
                     }),
@@ -229,7 +239,7 @@ pub(crate) fn make_validate_bytes(
                     &name,
                     Arc::new(move |val: &Bytes, _: &BytesRules, name: &String| {
                         if val.len() != 16 {
-                            return Err(format_err!(name, "must be a valid ipv6"));
+                            return Err(Error::new(name.to_string(), bytes::Error::Ipv6));
                         }
                         Ok(true)
                     }),

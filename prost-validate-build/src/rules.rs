@@ -89,8 +89,8 @@ fn field_to_string(desc: &FieldDescriptor, val: &Value) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use prost_validate_types::AnyRules;
     use prost_validate_types::field_rules::Type;
+    use prost_validate_types::AnyRules;
 
     #[test]
     fn test() {

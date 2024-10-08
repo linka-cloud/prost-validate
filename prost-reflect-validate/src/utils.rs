@@ -1,8 +1,8 @@
 use prost_reflect::{FieldDescriptor, Value};
+use prost_validate::format_err;
 use prost_validate_types::{FieldRules, FieldRulesExt};
 use std::borrow::Cow;
 use std::sync::Arc;
-use prost_validate::format_err;
 
 #[allow(clippy::ptr_arg)]
 pub(crate) fn is_set(val: &Cow<Value>) -> bool {
@@ -12,8 +12,13 @@ pub(crate) fn is_set(val: &Cow<Value>) -> bool {
     }
 }
 
-pub(crate) fn get_field_rules(field: &FieldDescriptor) -> prost_validate::Result<Option<Arc<FieldRules>>> {
-    let rules = match field.validation_rules().map_err(|e| format_err!(field.full_name(), "{}", e))? {
+pub(crate) fn get_field_rules(
+    field: &FieldDescriptor,
+) -> prost_validate::Result<Option<Arc<FieldRules>>> {
+    let rules = match field
+        .validation_rules()
+        .map_err(|e| format_err!(field.full_name(), "{}", e))?
+    {
         Some(r) => r,
         None => return Ok(None),
     };

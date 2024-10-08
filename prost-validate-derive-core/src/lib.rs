@@ -5,6 +5,7 @@ pub mod derive;
 mod duration;
 mod r#enum;
 mod field;
+mod ident;
 mod list;
 mod map;
 mod message;
@@ -16,7 +17,6 @@ mod string;
 mod timestamp;
 mod utils;
 mod wkt;
-mod ident;
 
 pub use derive::derive;
 pub use ident::*;

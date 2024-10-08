@@ -6,8 +6,8 @@ use once_cell::sync::Lazy;
 use prost_reflect::{
     ExtensionDescriptor, FieldDescriptor, MessageDescriptor, OneofDescriptor, Value,
 };
-use std::borrow::Cow;
 pub use proto::*;
+use std::borrow::Cow;
 
 #[allow(clippy::unwrap_used)]
 static VALIDATION_DISABLED: Lazy<ExtensionDescriptor> = Lazy::new(|| {

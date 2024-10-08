@@ -13,7 +13,7 @@ use syn::{Type, Variant};
 
 #[derive(Debug, Clone)]
 pub struct Context<'a> {
-    pub name: String,
+    pub name: &'a String,
     #[allow(unused)]
     pub ty: &'a Option<syn::Type>,
     pub optional: bool,
@@ -43,7 +43,14 @@ pub struct Field {
 }
 
 impl Field {
-    fn new(ident: Option<Ident>, ty: Option<Type>, prost: ProstField, validation: FieldValidation, map: Option<(String, String)>, oneof: bool) -> Self {
+    fn new(
+        ident: Option<Ident>,
+        ty: Option<Type>,
+        prost: ProstField,
+        validation: FieldValidation,
+        map: Option<(String, String)>,
+        oneof: bool,
+    ) -> Self {
         let typ = ty.to_token_stream().to_string().replace(" ", "");
         let mut validation = validation;
         if validation.r#type.is_none() && validation.message.is_none() {
@@ -78,8 +85,17 @@ impl Field {
 
     pub fn validate(&self) -> darling::Result<()> {
         let name = self.ident.to_token_stream().to_string();
-        if self.prost.repeated && self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Repeated(_)) {
-            return Err(darling::Error::custom(format_err!("{}: unexpected rules for repeated field", name)));
+        if self.prost.repeated
+            && self.validation.r#type.is_some()
+            && !matches!(
+                self.validation.r#type.as_ref().unwrap(),
+                FieldRules::Repeated(_)
+            )
+        {
+            return Err(darling::Error::custom(format_err!(
+                "{}: unexpected rules for repeated field",
+                name
+            )));
         }
         if self.prost.repeated && self.validation.r#type.is_some() {
             if let FieldRules::Repeated(rules) = self.validation.r#type.as_ref().unwrap() {
@@ -95,7 +111,8 @@ impl Field {
                             ..FieldValidation::default()
                         },
                         ..self.clone()
-                    }.validate();
+                    }
+                    .validate();
                 }
                 return Ok(());
             }
@@ -105,121 +122,361 @@ impl Field {
             return Ok(());
         }
         if self.prost.message.is_none() && self.validation.message.is_some() {
-            return Err(darling::Error::custom(format_err!("{}: unexpected message rules", name)));
+            return Err(darling::Error::custom(format_err!(
+                "{}: unexpected message rules",
+                name
+            )));
         }
         if self.prost.message.is_some() {
             let typ = self.ty.to_token_stream().to_string().replace(" ", "");
             match typ.as_str() {
                 "::core::option::Option<::prost_types::Timestamp>" => {
-                    if self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Timestamp(_)) {
-                        return Err(darling::Error::custom(format_err!("{}: unexpected rules for timestamp field", name)));
+                    if self.validation.r#type.is_some()
+                        && !matches!(
+                            self.validation.r#type.as_ref().unwrap(),
+                            FieldRules::Timestamp(_)
+                        )
+                    {
+                        return Err(darling::Error::custom(format_err!(
+                            "{}: unexpected rules for timestamp field",
+                            name
+                        )));
                     }
                 }
                 "::core::option::Option<::prost_types::Duration>" => {
-                    if self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Duration(_)) {
-                        return Err(darling::Error::custom(format_err!("{}: unexpected rules for duration field", name)));
+                    if self.validation.r#type.is_some()
+                        && !matches!(
+                            self.validation.r#type.as_ref().unwrap(),
+                            FieldRules::Duration(_)
+                        )
+                    {
+                        return Err(darling::Error::custom(format_err!(
+                            "{}: unexpected rules for duration field",
+                            name
+                        )));
                     }
                 }
                 "::core::option::Option<::prost_types::Any>" => {
-                    if self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Any(_)) {
-                        return Err(darling::Error::custom(format_err!("{}: unexpected rules for any field", name)));
+                    if self.validation.r#type.is_some()
+                        && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Any(_))
+                    {
+                        return Err(darling::Error::custom(format_err!(
+                            "{}: unexpected rules for any field",
+                            name
+                        )));
                     }
                 }
                 "::core::option::Option<::prost::alloc::string::String>" => {
-                    if self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::String(_)) {
-                        return Err(darling::Error::custom(format_err!("{}: unexpected rules for string field", name)));
+                    if self.validation.r#type.is_some()
+                        && !matches!(
+                            self.validation.r#type.as_ref().unwrap(),
+                            FieldRules::String(_)
+                        )
+                    {
+                        return Err(darling::Error::custom(format_err!(
+                            "{}: unexpected rules for string field",
+                            name
+                        )));
                     }
                 }
                 "::core::option::Option<::prost::alloc::vec::Vec<u8>>" => {
-                    if self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Bytes(_)) {
-                        return Err(darling::Error::custom(format_err!("{}: unexpected rules for bytes field", name)));
+                    if self.validation.r#type.is_some()
+                        && !matches!(
+                            self.validation.r#type.as_ref().unwrap(),
+                            FieldRules::Bytes(_)
+                        )
+                    {
+                        return Err(darling::Error::custom(format_err!(
+                            "{}: unexpected rules for bytes field",
+                            name
+                        )));
                     }
                 }
                 "::core::option::Option<bool>" => {
-                    if self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Bool(_)) {
-                        return Err(darling::Error::custom(format_err!("{}: unexpected rules for bool field", name)));
+                    if self.validation.r#type.is_some()
+                        && !matches!(
+                            self.validation.r#type.as_ref().unwrap(),
+                            FieldRules::Bool(_)
+                        )
+                    {
+                        return Err(darling::Error::custom(format_err!(
+                            "{}: unexpected rules for bool field",
+                            name
+                        )));
                     }
                 }
                 "::core::option::Option<u64>" => {
-                    if self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Uint64(_)) {
-                        return Err(darling::Error::custom(format_err!("{}: unexpected rules for uint64 field", name)));
+                    if self.validation.r#type.is_some()
+                        && !matches!(
+                            self.validation.r#type.as_ref().unwrap(),
+                            FieldRules::Uint64(_)
+                        )
+                    {
+                        return Err(darling::Error::custom(format_err!(
+                            "{}: unexpected rules for uint64 field",
+                            name
+                        )));
                     }
                 }
                 "::core::option::Option<u32>" => {
-                    if self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Uint32(_)) {
-                        return Err(darling::Error::custom(format_err!("{}: unexpected rules for uint32 field", name)));
+                    if self.validation.r#type.is_some()
+                        && !matches!(
+                            self.validation.r#type.as_ref().unwrap(),
+                            FieldRules::Uint32(_)
+                        )
+                    {
+                        return Err(darling::Error::custom(format_err!(
+                            "{}: unexpected rules for uint32 field",
+                            name
+                        )));
                     }
                 }
                 "::core::option::Option<i64>" => {
-                    if self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Int64(_)) {
-                        return Err(darling::Error::custom(format_err!("{}: unexpected rules for int64 field", name)));
+                    if self.validation.r#type.is_some()
+                        && !matches!(
+                            self.validation.r#type.as_ref().unwrap(),
+                            FieldRules::Int64(_)
+                        )
+                    {
+                        return Err(darling::Error::custom(format_err!(
+                            "{}: unexpected rules for int64 field",
+                            name
+                        )));
                     }
                 }
                 "::core::option::Option<i32>" => {
-                    if self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Int32(_)) {
-                        return Err(darling::Error::custom(format_err!("{}: unexpected rules for int32 field", name)));
+                    if self.validation.r#type.is_some()
+                        && !matches!(
+                            self.validation.r#type.as_ref().unwrap(),
+                            FieldRules::Int32(_)
+                        )
+                    {
+                        return Err(darling::Error::custom(format_err!(
+                            "{}: unexpected rules for int32 field",
+                            name
+                        )));
                     }
                 }
                 "::core::option::Option<f64>" => {
-                    if self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Double(_)) {
-                        return Err(darling::Error::custom(format_err!("{}: unexpected rules for double field", name)));
+                    if self.validation.r#type.is_some()
+                        && !matches!(
+                            self.validation.r#type.as_ref().unwrap(),
+                            FieldRules::Double(_)
+                        )
+                    {
+                        return Err(darling::Error::custom(format_err!(
+                            "{}: unexpected rules for double field",
+                            name
+                        )));
                     }
                 }
                 "::core::option::Option<f32>" => {
-                    if self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Float(_)) {
-                        return Err(darling::Error::custom(format_err!("{}: unexpected rules for float field", name)));
+                    if self.validation.r#type.is_some()
+                        && !matches!(
+                            self.validation.r#type.as_ref().unwrap(),
+                            FieldRules::Float(_)
+                        )
+                    {
+                        return Err(darling::Error::custom(format_err!(
+                            "{}: unexpected rules for float field",
+                            name
+                        )));
                     }
                 }
                 _ => {}
             }
         }
-        if self.prost.enumeration.is_some() && self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Enum(_)) {
-            return Err(darling::Error::custom(format_err!("{}: unexpected rules for enum field", name)));
+        if self.prost.enumeration.is_some()
+            && self.validation.r#type.is_some()
+            && !matches!(
+                self.validation.r#type.as_ref().unwrap(),
+                FieldRules::Enum(_)
+            )
+        {
+            return Err(darling::Error::custom(format_err!(
+                "{}: unexpected rules for enum field",
+                name
+            )));
         }
-        if self.prost.bool.is_some() && self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Bool(_)) {
-            return Err(darling::Error::custom(format_err!("{}: unexpected rules for bool field", name)));
+        if self.prost.bool.is_some()
+            && self.validation.r#type.is_some()
+            && !matches!(
+                self.validation.r#type.as_ref().unwrap(),
+                FieldRules::Bool(_)
+            )
+        {
+            return Err(darling::Error::custom(format_err!(
+                "{}: unexpected rules for bool field",
+                name
+            )));
         }
-        if self.prost.string.is_some() && self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::String(_)) {
-            return Err(darling::Error::custom(format_err!("{}: unexpected rules for string field", name)));
+        if self.prost.string.is_some()
+            && self.validation.r#type.is_some()
+            && !matches!(
+                self.validation.r#type.as_ref().unwrap(),
+                FieldRules::String(_)
+            )
+        {
+            return Err(darling::Error::custom(format_err!(
+                "{}: unexpected rules for string field",
+                name
+            )));
         }
-        if self.prost.bytes.is_some() && self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Bytes(_)) {
-            return Err(darling::Error::custom(format_err!("{}: unexpected rules for bytes field", name)));
+        if self.prost.bytes.is_some()
+            && self.validation.r#type.is_some()
+            && !matches!(
+                self.validation.r#type.as_ref().unwrap(),
+                FieldRules::Bytes(_)
+            )
+        {
+            return Err(darling::Error::custom(format_err!(
+                "{}: unexpected rules for bytes field",
+                name
+            )));
         }
-        if self.prost.int32.is_some() && self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Int32(_)) {
-            return Err(darling::Error::custom(format_err!("{}: unexpected rules for int32 field", name)));
+        if self.prost.int32.is_some()
+            && self.validation.r#type.is_some()
+            && !matches!(
+                self.validation.r#type.as_ref().unwrap(),
+                FieldRules::Int32(_)
+            )
+        {
+            return Err(darling::Error::custom(format_err!(
+                "{}: unexpected rules for int32 field",
+                name
+            )));
         }
-        if self.prost.int64.is_some() && self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Int64(_)) {
-            return Err(darling::Error::custom(format_err!("{}: unexpected rules for int64 field", name)));
+        if self.prost.int64.is_some()
+            && self.validation.r#type.is_some()
+            && !matches!(
+                self.validation.r#type.as_ref().unwrap(),
+                FieldRules::Int64(_)
+            )
+        {
+            return Err(darling::Error::custom(format_err!(
+                "{}: unexpected rules for int64 field",
+                name
+            )));
         }
-        if self.prost.uint32.is_some() && self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Uint32(_)) {
-            return Err(darling::Error::custom(format_err!("{}: unexpected rules for uint32 field", name)));
+        if self.prost.uint32.is_some()
+            && self.validation.r#type.is_some()
+            && !matches!(
+                self.validation.r#type.as_ref().unwrap(),
+                FieldRules::Uint32(_)
+            )
+        {
+            return Err(darling::Error::custom(format_err!(
+                "{}: unexpected rules for uint32 field",
+                name
+            )));
         }
-        if self.prost.uint64.is_some() && self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Uint64(_)) {
-            return Err(darling::Error::custom(format_err!("{}: unexpected rules for uint64 field", name)));
+        if self.prost.uint64.is_some()
+            && self.validation.r#type.is_some()
+            && !matches!(
+                self.validation.r#type.as_ref().unwrap(),
+                FieldRules::Uint64(_)
+            )
+        {
+            return Err(darling::Error::custom(format_err!(
+                "{}: unexpected rules for uint64 field",
+                name
+            )));
         }
-        if self.prost.sint32.is_some() && self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Sint32(_)) {
-            return Err(darling::Error::custom(format_err!("{}: unexpected rules for sint32 field", name)));
+        if self.prost.sint32.is_some()
+            && self.validation.r#type.is_some()
+            && !matches!(
+                self.validation.r#type.as_ref().unwrap(),
+                FieldRules::Sint32(_)
+            )
+        {
+            return Err(darling::Error::custom(format_err!(
+                "{}: unexpected rules for sint32 field",
+                name
+            )));
         }
-        if self.prost.sint64.is_some() && self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Sint64(_)) {
-            return Err(darling::Error::custom(format_err!("{}: unexpected rules for sint64 field", name)));
+        if self.prost.sint64.is_some()
+            && self.validation.r#type.is_some()
+            && !matches!(
+                self.validation.r#type.as_ref().unwrap(),
+                FieldRules::Sint64(_)
+            )
+        {
+            return Err(darling::Error::custom(format_err!(
+                "{}: unexpected rules for sint64 field",
+                name
+            )));
         }
-        if self.prost.fixed32.is_some() && self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Fixed32(_)) {
-            return Err(darling::Error::custom(format_err!("{}: unexpected rules for fixed32 field", name)));
+        if self.prost.fixed32.is_some()
+            && self.validation.r#type.is_some()
+            && !matches!(
+                self.validation.r#type.as_ref().unwrap(),
+                FieldRules::Fixed32(_)
+            )
+        {
+            return Err(darling::Error::custom(format_err!(
+                "{}: unexpected rules for fixed32 field",
+                name
+            )));
         }
-        if self.prost.fixed64.is_some() && self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Fixed64(_)) {
-            return Err(darling::Error::custom(format_err!("{}: unexpected rules for fixed64 field", name)));
+        if self.prost.fixed64.is_some()
+            && self.validation.r#type.is_some()
+            && !matches!(
+                self.validation.r#type.as_ref().unwrap(),
+                FieldRules::Fixed64(_)
+            )
+        {
+            return Err(darling::Error::custom(format_err!(
+                "{}: unexpected rules for fixed64 field",
+                name
+            )));
         }
-        if self.prost.sfixed32.is_some() && self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Sfixed32(_)) {
-            return Err(darling::Error::custom(format_err!("{}: unexpected rules for sfixed32 field", name)));
+        if self.prost.sfixed32.is_some()
+            && self.validation.r#type.is_some()
+            && !matches!(
+                self.validation.r#type.as_ref().unwrap(),
+                FieldRules::Sfixed32(_)
+            )
+        {
+            return Err(darling::Error::custom(format_err!(
+                "{}: unexpected rules for sfixed32 field",
+                name
+            )));
         }
-        if self.prost.sfixed64.is_some() && self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Sfixed64(_)) {
-            return Err(darling::Error::custom(format_err!("{}: unexpected rules for sfixed64 field", name)));
+        if self.prost.sfixed64.is_some()
+            && self.validation.r#type.is_some()
+            && !matches!(
+                self.validation.r#type.as_ref().unwrap(),
+                FieldRules::Sfixed64(_)
+            )
+        {
+            return Err(darling::Error::custom(format_err!(
+                "{}: unexpected rules for sfixed64 field",
+                name
+            )));
         }
-        if self.prost.float.is_some() && self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Float(_)) {
-            return Err(darling::Error::custom(format_err!("{}: unexpected rules for float field", name)));
+        if self.prost.float.is_some()
+            && self.validation.r#type.is_some()
+            && !matches!(
+                self.validation.r#type.as_ref().unwrap(),
+                FieldRules::Float(_)
+            )
+        {
+            return Err(darling::Error::custom(format_err!(
+                "{}: unexpected rules for float field",
+                name
+            )));
         }
-        if self.prost.double.is_some() && self.validation.r#type.is_some() && !matches!(self.validation.r#type.as_ref().unwrap(), FieldRules::Double(_)) {
-            return Err(darling::Error::custom(format_err!("{}: unexpected rules for double field", name)));
+        if self.prost.double.is_some()
+            && self.validation.r#type.is_some()
+            && !matches!(
+                self.validation.r#type.as_ref().unwrap(),
+                FieldRules::Double(_)
+            )
+        {
+            return Err(darling::Error::custom(format_err!(
+                "{}: unexpected rules for double field",
+                name
+            )));
         }
         Ok(())
     }
@@ -265,7 +522,7 @@ impl ToTokens for Field {
         }
         if let Some(ident) = &self.ident {
             let ctx = Context {
-                name: ident.to_string(),
+                name: &self.validation.name,
                 ty: &self.ty,
                 optional: self.prost.optional,
                 required: self.validation.required(),
@@ -287,10 +544,9 @@ impl ToTokens for Field {
             let body = self.validation.to_validation_tokens(&ctx, name);
             let required = ctx.required.then(|| {
                 let field = &ctx.name;
-                let err = "is required";
                 quote! {
                     if self.#name.is_none() {
-                        return Err(::prost_validate::Error::new(#field, #err));
+                        return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::message::Error::Required));
                     }
                 }
             });
@@ -335,6 +591,8 @@ impl ToTokens for Field {
 #[darling(attributes(validate))]
 pub struct FieldValidation {
     #[darling(default)]
+    pub name: String,
+    #[darling(default)]
     pub required: bool,
     pub optional: Option<bool>,
     pub repeated: Option<bool>,
@@ -345,8 +603,16 @@ pub struct FieldValidation {
 impl FieldValidation {
     pub fn required(&self) -> bool {
         self.required
-            || self.r#type.as_ref().map(|v| v.is_required()).unwrap_or_default()
-            || self.message.as_ref().map(|v| v.required).unwrap_or_default()
+            || self
+                .r#type
+                .as_ref()
+                .map(|v| v.is_required())
+                .unwrap_or_default()
+            || self
+                .message
+                .as_ref()
+                .map(|v| v.required)
+                .unwrap_or_default()
     }
 }
 
@@ -355,7 +621,8 @@ impl ToValidationTokens for FieldValidation {
         FieldValidationInner {
             message: self.message.to_owned(),
             r#type: self.r#type.to_owned(),
-        }.to_validation_tokens(ctx, name)
+        }
+        .to_validation_tokens(ctx, name)
     }
 }
 

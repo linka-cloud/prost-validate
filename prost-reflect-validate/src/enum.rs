@@ -1,6 +1,7 @@
 use crate::registry::FieldValidationFn;
-use prost_validate::{format_err, Result};
 use prost_reflect::{FieldDescriptor, Kind};
+use prost_validate::errors::r#enum;
+use prost_validate::{format_err, Error, Result};
 use prost_validate_types::field_rules::Type;
 use prost_validate_types::{EnumRules, FieldRules};
 use std::sync::Arc;
@@ -49,7 +50,7 @@ pub(crate) fn make_validate_enum(
             &name,
             Arc::new(move |val: i32, _: &EnumRules, name: &String| {
                 if val != v {
-                    return Err(format_err!(name, "must be {}", v));
+                    return Err(Error::new(name.to_string(), r#enum::Error::Const(v)));
                 }
                 Ok(true)
             }),
@@ -61,7 +62,10 @@ pub(crate) fn make_validate_enum(
             &name,
             Arc::new(move |val: i32, rules: &EnumRules, name: &String| {
                 if !rules.r#in.contains(&val) {
-                    return Err(format_err!(name, "must be in {:?}", rules.r#in));
+                    return Err(Error::new(
+                        name.to_string(),
+                        r#enum::Error::In(rules.r#in.clone()),
+                    ));
                 }
                 Ok(true)
             }),
@@ -73,7 +77,10 @@ pub(crate) fn make_validate_enum(
             &name,
             Arc::new(move |val: i32, rules: &EnumRules, name: &String| {
                 if rules.not_in.contains(&val) {
-                    return Err(format_err!(name, "must not be in {:?}", rules.not_in));
+                    return Err(Error::new(
+                        name.to_string(),
+                        r#enum::Error::NotIn(rules.not_in.clone()),
+                    ));
                 }
                 Ok(true)
             }),
@@ -85,7 +92,7 @@ pub(crate) fn make_validate_enum(
             &name,
             Arc::new(move |val: i32, _: &EnumRules, name: &String| {
                 if desc.get_value(val).is_none() {
-                    return Err(format_err!(name, "must be a defined enumeration value"));
+                    return Err(Error::new(name.to_string(), r#enum::Error::DefinedOnly));
                 }
                 Ok(true)
             }),
