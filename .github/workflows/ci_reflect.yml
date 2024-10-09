@@ -1,0 +1,53 @@
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
+
+name: prost-reflect-validate
+
+jobs:
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust: [beta, stable, 1.74]
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        toolchain: ${{ matrix.rust }}
+    - run: cargo update
+      if: ${{ matrix.rust == 'stable' || matrix.rust == 'beta' }}
+    - name: Install Protoc
+      uses: arduino/setup-protoc@v1
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+    - run: cargo test --features=reflect,tonic
+
+  lints:
+    name: Lints
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        toolchain: stable
+        components: clippy, rustfmt
+    - name: Install Protoc
+      uses: arduino/setup-protoc@v1
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+    - run: cargo fmt --all -- --check
+    - run: cargo clippy --all --all-features --workspace -- -D warnings
+    - run: cargo check
+    - name: Check Version is up-to-date
+      run: |
+        set -x
+        ./update-version.sh
+        git diff --exit-code >/dev/null || (echo "Version is out of date, run update-version.sh and commit the changes before tagging the new version." && exit 1)
