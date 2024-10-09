@@ -1,3 +1,10 @@
+[![crates.io](https://img.shields.io/crates/v/prost-reflect-validate.svg)](https://crates.io/crates/prost-reflect-validate/)
+[![docs.rs](https://docs.rs/prost-reflect-validate/badge.svg)](https://docs.rs/prost-reflect-validate/)
+[![deps.rs](https://deps.rs/crate/prost-reflect-validate/0.1.0/status.svg)](https://deps.rs/crate/prost-reflect-validate)
+![MSRV](https://img.shields.io/badge/rustc-1.74+-blue.svg)
+[![Continuous integration](https://github.com/linka-cloud/prost-validate/actions/workflows/ci_reflect.yml/badge.svg)](https://github.com/linka-cloud/prost-validate/actions/workflows/ci_reflect.yml)
+![Apache 2.0](https://img.shields.io/badge/license-Apache2.0-blue.svg)
+
 # `prost-reflect-validate`
 
 A protobuf library extending [prost](https://github.com/tokio-rs/prost)
@@ -37,11 +44,12 @@ message ExampleMessage {
 
 `build.rs`:
 
-```rust
+```rust no_run
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     prost_reflect_build::Builder::new()
         .descriptor_pool("DESCRIPTOR_POOL")
-        .compile_protos(&["message.proto"], &["proto", "../prost-validate-types/proto"])
+        .compile_protos(&["message.proto"], &["proto", "../prost-validate-types/proto"])?;
+    Ok(())
 }
 ```
 
@@ -52,21 +60,19 @@ It exposes a single extension trait `ValidatorExt` which can be used to validate
 `src/main.rs`:
 
 ```rust
-fn main() {
-    use example_proto::ExampleMessage;
-    use prost_reflect_validate::ValidatorExt;
+use example_proto::ExampleMessage;
+use prost_reflect_validate::ValidatorExt;
 
-    match ExampleMessage::default().validate() {
-        Ok(_) => println!("Validation passed"),
-        Err(e) => eprintln!("Validation failed: {}", e),
-    }
-    let msg = ExampleMessage {
-        content: "Hello, world!".to_string(),
-    };
-    match msg.validate() {
-        Ok(_) => println!("Validation passed"),
-        Err(e) => eprintln!("Validation failed: {}", e),
-    }
+match ExampleMessage::default().validate() {
+    Ok(_) => println!("Validation passed"),
+    Err(e) => eprintln!("Validation failed: {}", e),
+}
+let msg = ExampleMessage {
+    content: "Hello, world!".to_string(),
+};
+match msg.validate() {
+    Ok(_) => println!("Validation passed"),
+    Err(e) => eprintln!("Validation failed: {}", e),
 }
 ```
 
@@ -79,7 +85,7 @@ fn main() {
 
 ## Minimum Supported Rust Version
 
-Rust **1.64** or higher.
+Rust **1.74** or higher.
 
 The minimum supported Rust version may be changed in the future, but it will be
 done with a minor version bump.

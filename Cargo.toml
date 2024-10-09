@@ -1,6 +1,16 @@
 [workspace]
 resolver = "2"
-members = [ "example", "example-proto","prost-reflect-validate", "prost-validate", "prost-validate-build", "prost-validate-derive", "prost-validate-derive-core", "prost-validate-tests", "prost-validate-types"]
+members = [
+    "example",
+    "example-proto",
+    "prost-reflect-validate",
+    "prost-validate",
+    "prost-validate-build",
+    "prost-validate-derive",
+    "prost-validate-derive-core",
+    "prost-validate-tests",
+    "prost-validate-types",
+]
 
 [workspace.package]
 version = "0.1.0"

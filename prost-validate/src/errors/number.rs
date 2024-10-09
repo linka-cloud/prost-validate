@@ -54,7 +54,7 @@ macro_rules! make_error {
                     )
                 }
             }
-            impl From<Error> for crate::errors::Error {
+            impl From<Error> for $crate::errors::Error {
                 fn from(value: Error) -> Self {
                     Self::$enum_value(value)
                 }

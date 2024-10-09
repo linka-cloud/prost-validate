@@ -537,10 +537,11 @@ impl ToTokens for Field {
             };
             let name = if self.oneof {
                 let name = to_snake(ident.to_string());
-                &Ident::new(&name, ident.span())
+                Ident::new(&name, ident.span())
             } else {
-                ident
+                ident.to_owned()
             };
+            let name = &name;
             let body = self.validation.to_validation_tokens(&ctx, name);
             let required = ctx.required.then(|| {
                 let field = &ctx.name;

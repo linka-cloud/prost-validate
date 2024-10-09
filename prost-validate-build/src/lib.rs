@@ -1,3 +1,16 @@
+//! `prost-validate-build` contains [`Builder`] to configure [`prost_build::Config`]
+//! to derive [`prost_validate::Validator`] for all messages in protocol buffers.
+//!
+//! The simplest way to generate protocol buffer API:
+//!
+//! ```no_run
+//! // build.rs
+//! use prost_validate_build::Builder;
+//!
+//! Builder::new()
+//!     .compile_protos(&["path/to/protobuf.proto"], &["path/to/include"])
+//!     .expect("Failed to compile protos");
+//! ```
 mod rules;
 
 use crate::rules::IntoFieldAttribute;

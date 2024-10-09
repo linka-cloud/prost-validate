@@ -272,7 +272,7 @@ pub(crate) fn make_validate_string(
             if v {
                 fns.push(Arc::new(move |val, _| {
                     let val = val.unwrap_or("".to_string());
-                    if let Err(_) = val.validate_email() {
+                    if val.validate_email().is_err() {
                         return Err(Error::new(name.to_string(), string::Error::Email));
                     }
                     Ok(true)
@@ -283,7 +283,7 @@ pub(crate) fn make_validate_string(
             if v {
                 fns.push(Arc::new(move |val, _| {
                     let val = val.unwrap_or("".to_string());
-                    if let Err(_) = val.validate_hostname() {
+                    if val.validate_hostname().is_err() {
                         return Err(Error::new(name.to_string(), string::Error::Hostname));
                     }
                     Ok(true)

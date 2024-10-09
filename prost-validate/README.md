@@ -1,3 +1,10 @@
+[![crates.io](https://img.shields.io/crates/v/prost-validate.svg)](https://crates.io/crates/prost-validate/)
+[![docs.rs](https://docs.rs/prost-validate/badge.svg)](https://docs.rs/prost-validate/)
+[![deps.rs](https://deps.rs/crate/prost-validate/0.1.0/status.svg)](https://deps.rs/crate/prost-validate)
+![MSRV](https://img.shields.io/badge/rustc-1.74+-blue.svg)
+[![Continuous integration](https://github.com/linka-cloud/prost-validate/actions/workflows/ci_derive.yml/badge.svg)](https://github.com/linka-cloud/prost-validate/actions/workflows/ci_derive.yml)
+![Apache 2.0](https://img.shields.io/badge/license-Apache2.0-blue.svg)
+
 # `prost-validate`
 
 A protobuf library extending [prost](https://github.com/tokio-rs/prost) with validation support.
@@ -40,10 +47,11 @@ message ExampleMessage {
 
 `build.rs`:
 
-```rust
+```rust no_run
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     prost_validate_build::Builder::new()
-        .compile_protos(&["message.proto"], &["proto", "../prost-validate-types/proto"])
+        .compile_protos(&["message.proto"], &["proto", "../prost-validate-types/proto"])?:
+    Ok(())
 }
 ```
 
