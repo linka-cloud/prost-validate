@@ -1,6 +1,7 @@
 [package]
 name = "prost-reflect-validate"
 description = "protoc-gen-validate's validation using prost-reflect"
+documentation = "https://docs.rs/prost-reflect-validate"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true

@@ -1,13 +1,12 @@
 [package]
 name = "prost-validate-derive-core"
+description = "the prost-validate derive implementation"
+documentation = "https://docs.rs/prost-validate-derive-core"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
-description.workspace = true
-documentation.workspace = true
 license.workspace = true
 repository.workspace = true
-publish = false
 
 [dependencies]
 anyhow = { workspace = true }

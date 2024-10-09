@@ -13,7 +13,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Adphi"]
 edition = "2021"
 description = ""
@@ -44,12 +44,12 @@ proc-macro2 = "1"
 proc-macro-error = "1"
 darling = { version = "0.20", features = ["suggestions"] }
 
-prost-reflect-validate = { path = "prost-reflect-validate" }
-prost-validate = { path = "prost-validate" }
-prost-validate-build = { path = "prost-validate-build" }
-prost-validate-derive = { path = "prost-validate-derive" }
-prost-validate-types = { path = "prost-validate-types" }
-prost-validate-derive-core = { path = "prost-validate-derive-core" }
+prost-validate = { version = "0.2.0", path = "prost-validate" }
+prost-reflect-validate = { version = "0.2.0", path = "prost-reflect-validate" }
+prost-validate-build = { version = "0.2.0", path = "prost-validate-build" }
+prost-validate-derive = { version = "0.2.0", path = "prost-validate-derive" }
+prost-validate-types = { version = "0.2.0", path = "prost-validate-types" }
+prost-validate-derive-core = { version = "0.2.0", path = "prost-validate-derive-core" }
 
 [workspace.lints.clippy]
 todo = "deny"

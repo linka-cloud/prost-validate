@@ -28,6 +28,15 @@ echo "Updating version from $current to $last"
 echo "Updating Cargo.toml"
 sed -i "s|^version = \"$current\"|version = \"$last\"|g" Cargo.toml
 
+crates=(prost-validate prost-reflect-validate prost-validate-build prost-validate-derive prost-validate-types prost-validate-derive-core)
+
+
+for c in "${crates[@]}"; do
+  if grep -q "$c = { version = \"$current\"" Cargo.toml; then
+    echo "Updating $c in Cargo.toml"
+    sed -i "s|$c = { version = \"$current\"|$c = { version = \"$last\"|g" Cargo.toml
+  fi
+done
 
 # Update README.md files to reference the latest version
 for f in $(find . -name "README.md"); do

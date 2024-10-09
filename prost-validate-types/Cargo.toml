@@ -1,13 +1,12 @@
 [package]
 name = "prost-validate-types"
+description = "validation types with prost and prost-reflect support"
+documentation = "https://docs.rs/prost-validate-types"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
-description.workspace = true
-documentation.workspace = true
 license.workspace = true
 repository.workspace = true
-publish = false
 
 [dependencies]
 prost = { workspace = true }

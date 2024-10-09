@@ -1,10 +1,10 @@
 [package]
 name = "prost-validate-build"
 description = "protoc-gen-validate's validation generation using prost-build"
+documentation = "https://docs.rs/prost-validate-build"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
-documentation.workspace = true
 license.workspace = true
 repository.workspace = true
 
