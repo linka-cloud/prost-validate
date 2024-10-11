@@ -14,6 +14,7 @@
 mod rules;
 
 use crate::rules::IntoFieldAttribute;
+use prost_reflect::prost_types::FileDescriptorProto;
 use prost_reflect::{DescriptorPool, OneofDescriptor};
 use prost_validate_types::{FieldRulesExt, MessageRulesExt, OneofRulesExt};
 use std::collections::HashMap;
@@ -96,7 +97,47 @@ impl Builder {
 
         let buf = fs::read(&self.file_descriptor_set_path)?;
         let descriptor = DescriptorPool::decode(buf.as_ref()).expect("Invalid file descriptor");
+        self.annotate(config, &descriptor);
+        Ok(())
+    }
 
+    pub fn configure_with_file_descriptor_protos(
+        &mut self,
+        config: &mut prost_build::Config,
+        protos: &[FileDescriptorProto],
+    ) -> io::Result<()> {
+        let descriptor = {
+            let mut d = DescriptorPool::new();
+            d.add_file_descriptor_protos(protos.to_owned())
+                .expect("Invalid file descriptor protos");
+            d
+        };
+        self.annotate(config, &descriptor);
+        Ok(())
+    }
+
+    /// Compile protocol buffers into Rust with given [`prost_build::Config`].
+    pub fn compile_protos_with_config(
+        &mut self,
+        mut config: prost_build::Config,
+        protos: &[impl AsRef<Path>],
+        includes: &[impl AsRef<Path>],
+    ) -> io::Result<()> {
+        self.configure(&mut config, protos, includes)?;
+
+        config.skip_protoc_run().compile_protos(protos, includes)
+    }
+
+    /// Compile protocol buffers into Rust.
+    pub fn compile_protos(
+        &mut self,
+        protos: &[impl AsRef<Path>],
+        includes: &[impl AsRef<Path>],
+    ) -> io::Result<()> {
+        self.compile_protos_with_config(prost_build::Config::new(), protos, includes)
+    }
+
+    pub fn annotate(&self, config: &mut prost_build::Config, descriptor: &DescriptorPool) {
         for message in descriptor.all_messages() {
             let full_name = message.full_name();
             config.type_attribute(full_name, "#[derive(::prost_validate::Validator)]");
@@ -156,28 +197,5 @@ impl Builder {
                 }
             }
         }
-
-        Ok(())
-    }
-
-    /// Compile protocol buffers into Rust with given [`prost_build::Config`].
-    pub fn compile_protos_with_config(
-        &mut self,
-        mut config: prost_build::Config,
-        protos: &[impl AsRef<Path>],
-        includes: &[impl AsRef<Path>],
-    ) -> io::Result<()> {
-        self.configure(&mut config, protos, includes)?;
-
-        config.skip_protoc_run().compile_protos(protos, includes)
-    }
-
-    /// Compile protocol buffers into Rust.
-    pub fn compile_protos(
-        &mut self,
-        protos: &[impl AsRef<Path>],
-        includes: &[impl AsRef<Path>],
-    ) -> io::Result<()> {
-        self.compile_protos_with_config(prost_build::Config::new(), protos, includes)
     }
 }
