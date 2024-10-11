@@ -9,6 +9,10 @@ set -e;
 # Make the workspace version in Cargo.toml matches the last git tag
 last=$(git describe --tags --abbrev=0)
 last="${last:1}"
+if -n "$1"; then
+    last=$1
+fi
+
 if [ -z "$last" ]; then
     echo "No tags found"
     exit 1

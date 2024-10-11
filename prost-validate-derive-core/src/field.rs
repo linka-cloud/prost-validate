@@ -706,6 +706,8 @@ pub struct ProstField {
     #[allow(unused)]
     packed: Option<String>,
     boxed: Option<bool>,
+    #[allow(unused)]
+    default: Option<String>,
 }
 
 impl ProstField {
