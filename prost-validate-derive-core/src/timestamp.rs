@@ -22,12 +22,11 @@ pub struct TimestampRules {
 }
 
 pub fn datetime_to_tokens(name: &Ident, want: &OffsetDateTime) -> (TokenStream, TokenStream) {
-    let typ: syn::Path = syn::parse_str("prost_types::Timestamp").expect("Invalid path");
     let s = want.unix_timestamp();
     let n = want.nanosecond() as i32;
     (
-        quote!(::prost_validate::utils::AsDateTime::as_datetime(&#name)),
-        quote!(::prost_validate::utils::AsDateTime::as_datetime(&#typ{seconds: #s, nanos: #n})),
+        quote!(::prost_validate::utils::datetime(#name.seconds, #name.nanos)),
+        quote!(::prost_validate::utils::datetime(#s, #n)),
     )
 }
 

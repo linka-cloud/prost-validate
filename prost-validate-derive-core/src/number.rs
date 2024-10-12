@@ -1,5 +1,4 @@
 use crate::field::{Context, ToValidationTokens};
-use crate::utils::IsTrueAnd;
 use darling::FromMeta;
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
@@ -24,19 +23,6 @@ macro_rules! make_number_rules {
         impl ToValidationTokens for $name {
             fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
                 let rules = prost_validate_types::$name::from(self.to_owned());
-                let field = &ctx.name;
-                let required = ctx
-                    .rules
-                    .to_owned()
-                    .message
-                    .map(|v| v.required)
-                    .is_true_and(|| {
-                        quote! {
-                            if self.#name.is_none() {
-                                return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::message::Error::Required));
-                            }
-                        }
-                    });
                 let r#const = rules.r#const.map(|v| {
                     let field = &ctx.name;
                     quote! {
@@ -165,7 +151,7 @@ macro_rules! make_number_rules {
                         }
                     }
                 });
-                let validate = if self.ignore_empty {
+                if self.ignore_empty {
                     quote! {
                         if *#name != $typ::default() {
                             #r#const
@@ -181,11 +167,6 @@ macro_rules! make_number_rules {
                         #r#in
                         #not_in
                     }
-                };
-
-                quote! {
-                    #required
-                    #validate
                 }
             }
         }

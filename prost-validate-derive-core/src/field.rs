@@ -4,7 +4,7 @@ use crate::oneof::OneOfRules;
 use crate::rules::FieldRules;
 use crate::to_snake;
 use crate::utils::{IsTrueAnd, StringOrBool};
-use crate::wkt::WKT;
+use crate::wkt::{WKT, WKT_WRAPPERS};
 use anyhow::format_err;
 use darling::{FromField, FromMeta, FromVariant};
 use proc_macro2::{Ident, TokenStream};
@@ -21,11 +21,12 @@ pub struct Context<'a> {
     pub boxed: bool,
     pub repeated: bool,
     pub enumeration: Option<String>,
-    pub rules: &'a FieldValidation,
     pub wkt: bool,
     pub message: bool,
     pub map: bool,
     pub oneof: bool,
+    pub prost_types: bool,
+    pub wrapper: bool,
 }
 
 pub trait ToValidationTokens {
@@ -79,6 +80,25 @@ impl Field {
             .is_true_and(|| {
                 let typ = self.ty.to_token_stream().to_string().replace(" ", "");
                 WKT.contains(&typ.as_str())
+            })
+            .unwrap_or_default()
+    }
+
+    pub fn is_wrapper(&self) -> bool {
+        self.prost
+            .message
+            .is_true_and(|| {
+                let typ = self.ty.to_token_stream().to_string().replace(" ", "");
+                WKT_WRAPPERS.contains(&typ.as_str())
+            })
+            .unwrap_or_default()
+    }
+
+    pub fn is_prost_types(&self) -> bool {
+        self.is_wrapper()
+            .then(|| {
+                let typ = self.ty.to_token_stream().to_string().replace(" ", "");
+                !typ.contains("::pbjson_types::") && !typ.contains("::google::protobuf::")
             })
             .unwrap_or_default()
     }
@@ -529,11 +549,12 @@ impl ToTokens for Field {
                 boxed: self.prost.boxed.unwrap_or_default(),
                 repeated: self.prost.repeated,
                 enumeration: self.prost.enumeration.to_owned(),
-                rules: &self.validation,
                 wkt: self.is_wkt(),
+                wrapper: self.is_wrapper(),
                 message: self.prost.message.unwrap_or_default(),
                 map: self.map,
                 oneof: self.oneof,
+                prost_types: self.is_prost_types(),
             };
             let name = if self.oneof {
                 let name = to_snake(ident.to_string());
@@ -570,10 +591,20 @@ impl ToTokens for Field {
                     }
                 }
             } else if ctx.optional {
-                quote! {
-                    #required
-                    if let Some(ref #name) = self.#name {
-                        #body
+                if ctx.wrapper && !ctx.prost_types {
+                    quote! {
+                        #required
+                        if let Some(ref #name) = self.#name {
+                            let #name = &#name.value;
+                            #body
+                        }
+                    }
+                } else {
+                    quote! {
+                        #required
+                        if let Some(ref #name) = self.#name {
+                            #body
+                        }
                     }
                 }
             } else {
