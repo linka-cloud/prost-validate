@@ -25,8 +25,8 @@ pub fn duration_to_tokens(name: &Ident, want: &Duration) -> (TokenStream, TokenS
     let s = want.whole_seconds();
     let n = want.subsec_nanoseconds();
     (
-        quote!(::time::Duration::new(#name.seconds, #name.nanos)),
-        quote!(::time::Duration::new(#s, #n)),
+        quote!(::prost_validate::utils::duration(#name.seconds, #name.nanos)),
+        quote!(::prost_validate::utils::duration(#s, #n)),
     )
 }
 

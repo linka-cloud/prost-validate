@@ -14,7 +14,7 @@ name = "harness"
 harness = false
 
 [features]
-default = []
+default = ["derive", "reflect"]
 derive = []
 reflect = []
 
@@ -28,6 +28,7 @@ prost-reflect-validate = { workspace = true }
 prost-validate = { workspace = true, features = ["derive"] }
 time = { workspace = true }
 regex = { workspace = true }
+pbjson-types = { workspace = true }
 
 [dev-dependencies]
 criterion = { workspace = true }

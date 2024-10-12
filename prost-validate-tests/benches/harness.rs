@@ -1,5 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use prost_validate_tests::CASES;
+use prost_validate_tests::cases::CASES;
 
 #[cfg(feature = "reflect")]
 fn reflect_validate() {

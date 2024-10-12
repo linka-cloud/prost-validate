@@ -12,7 +12,7 @@ macro_rules! test_cases {
                 #[cfg(feature = "reflect")]
                 #[test]
                 fn reflect() {
-                    let (message, failures) = crate::cases::CASES.get(stringify!($name)).unwrap()();
+                    let (message, failures) = crate::cases_pbjson::CASES.get(stringify!($name)).unwrap()();
                     match ValidatorExt::validate(&*message) {
                         Err(err) => {
                             println!("{}", err);
@@ -25,7 +25,7 @@ macro_rules! test_cases {
                 #[cfg(feature = "derive")]
                 #[test]
                 fn derive() {
-                    let (message, failures) = crate::cases::CASES.get(stringify!($name)).unwrap()();
+                    let (message, failures) = crate::cases_pbjson::CASES.get(stringify!($name)).unwrap()();
                     match ValidatorDerive::validate(&*message) {
                         Err(err) => {
                             println!("{}", err);
@@ -1235,6 +1235,5 @@ mod kitchensink {
 }
 #[cfg(test)]
 mod nested {
-
     test_cases![nested_wkt_uuid_field_valid, nested_wkt_uuid_field_invalid,];
 }

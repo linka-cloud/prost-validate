@@ -1,6 +1,17 @@
 use prost_types::{Duration, Timestamp};
 use time::{Duration as TimeDelta, OffsetDateTime};
 
+#[allow(clippy::unwrap_used)]
+pub fn datetime(seconds: i64, nanos: i32) -> OffsetDateTime {
+    OffsetDateTime::from_unix_timestamp(seconds)
+        .unwrap_or(OffsetDateTime::from_unix_timestamp(0).unwrap())
+        + TimeDelta::nanoseconds(nanos as i64)
+}
+
+pub fn duration(seconds: i64, nanos: i32) -> TimeDelta {
+    TimeDelta::new(seconds, nanos)
+}
+
 pub trait AsDateTime {
     fn as_datetime(&self) -> OffsetDateTime;
 }
@@ -31,6 +42,7 @@ impl AsDuration for Duration {
 }
 
 impl AsDuration for Option<Duration> {
+    #[allow(clippy::unwrap_used)]
     fn as_duration(&self) -> TimeDelta {
         self.map(|d| d.as_duration()).unwrap_or_default()
     }

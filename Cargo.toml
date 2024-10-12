@@ -43,6 +43,10 @@ quote = "1"
 proc-macro2 = "1"
 proc-macro-error = "1"
 darling = { version = "0.20", features = ["suggestions"] }
+pbjson-build = "0.7.0"
+pbjson = { version = "0.7.0" }
+pbjson-types = "0.7.0"
+serde = { version = "1.0.210", features = ["derive"] }
 
 prost-validate = { version = "0.2.1", path = "prost-validate" }
 prost-reflect-validate = { version = "0.2.1", path = "prost-reflect-validate" }
