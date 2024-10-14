@@ -415,7 +415,7 @@ dependencies = [
 
 [[package]]
 name = "example"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "example-proto",
  "once_cell",
@@ -427,7 +427,7 @@ dependencies = [
 
 [[package]]
 name = "example-proto"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "anyhow",
  "once_cell",
@@ -1125,7 +1125,7 @@ dependencies = [
 
 [[package]]
 name = "prost-reflect-validate"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "anyhow",
  "email_address",
@@ -1155,7 +1155,7 @@ dependencies = [
 
 [[package]]
 name = "prost-validate"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "anyhow",
  "email_address",
@@ -1176,7 +1176,7 @@ dependencies = [
 
 [[package]]
 name = "prost-validate-build"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "heck",
  "prost-build",
@@ -1187,7 +1187,7 @@ dependencies = [
 
 [[package]]
 name = "prost-validate-derive"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "proc-macro2",
  "prost-validate-derive-core",
@@ -1195,7 +1195,7 @@ dependencies = [
 
 [[package]]
 name = "prost-validate-derive-core"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "anyhow",
  "darling",
@@ -1215,7 +1215,7 @@ dependencies = [
 
 [[package]]
 name = "prost-validate-tests"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "anyhow",
  "criterion",
@@ -1236,7 +1236,7 @@ dependencies = [
 
 [[package]]
 name = "prost-validate-types"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "anyhow",
  "once_cell",
@@ -1398,9 +1398,9 @@ dependencies = [
 
 [[package]]
 name = "rustversion"
-version = "1.0.17"
+version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "955d28af4278de8121b7ebeb796b6a45735dc01436d898801014aced2773a3d6"
+checksum = "0e819f2bc632f285be6d7cd36e25940d45b2391dd6d9b939e79de557f7014248"
 
 [[package]]
 name = "ryu"
@@ -1972,7 +1972,7 @@ checksum = "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec"
 
 [[package]]
 name = "xtask"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "anyhow",
 ]
