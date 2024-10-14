@@ -10,6 +10,7 @@ members = [
     "prost-validate-derive-core",
     "prost-validate-tests",
     "prost-validate-types",
+    ".xtask",
 ]
 
 [workspace.package]

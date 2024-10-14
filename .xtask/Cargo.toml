@@ -1,0 +1,16 @@
+[package]
+name = "xtask"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+description.workspace = true
+documentation.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+anyhow = { workspace = true }
+
+[lints]
+workspace = true
