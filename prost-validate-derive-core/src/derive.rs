@@ -12,6 +12,13 @@ struct Opts {
 }
 
 pub fn derive(input: TokenStream) -> proc_macro2::TokenStream {
+    derive_with_module(input, None)
+}
+
+pub fn derive_with_module(
+    input: TokenStream,
+    module: Option<TokenStream>,
+) -> proc_macro2::TokenStream {
     let input = syn::parse2(input).unwrap();
     let opts = Opts::from_derive_input(&input).expect("Wrong validate options");
     let DeriveInput { ident, .. } = input;
@@ -28,9 +35,14 @@ pub fn derive(input: TokenStream) -> proc_macro2::TokenStream {
             .collect::<proc_macro2::TokenStream>(),
     };
 
+    let path = if let Some(module) = module {
+        quote! { #module::#ident }
+    } else {
+        quote! { #ident }
+    };
     if !implementation.is_empty() {
         quote! {
-            impl ::prost_validate::Validator for #ident {
+            impl ::prost_validate::Validator for #path {
                 fn validate(&self) -> prost_validate::Result<()> {
                     #implementation
                     Ok(())
@@ -39,7 +51,7 @@ pub fn derive(input: TokenStream) -> proc_macro2::TokenStream {
         }
     } else {
         quote! {
-            impl ::prost_validate::Validator for #ident {}
+            impl ::prost_validate::Validator for #path {}
         }
     }
 }

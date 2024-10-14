@@ -18,5 +18,5 @@ mod timestamp;
 mod utils;
 mod wkt;
 
-pub use derive::derive;
+pub use derive::{derive, derive_with_module};
 pub use ident::*;

@@ -558,7 +558,11 @@ impl ToTokens for Field {
             };
             let name = if self.oneof {
                 let name = to_snake(ident.to_string());
-                Ident::new(&name, ident.span())
+                if let Some(name) = name.strip_prefix("r#") {
+                    Ident::new_raw(name, ident.span())
+                } else {
+                    Ident::new(&name, ident.span())
+                }
             } else {
                 ident.to_owned()
             };
