@@ -12,7 +12,7 @@ pub struct OneOfRules {
 impl ToValidationTokens for OneOfRules {
     fn to_validation_tokens(&self, _: &Context, name: &Ident) -> TokenStream {
         quote! {
-            ::prost_validate::Validator::validate(#name)?;
+            ::prost_validate::validate!(#name)?;
         }
     }
 }
