@@ -1,5 +1,5 @@
-use std::env;
 use anyhow::{Context, Result};
+use std::env;
 use std::process::Command;
 
 fn print_help() {

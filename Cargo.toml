@@ -14,7 +14,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.2.2"
+version = "0.2.3"
 authors = ["Adphi"]
 edition = "2021"
 description = ""
@@ -49,12 +49,12 @@ pbjson = { version = "0.7.0" }
 pbjson-types = "0.7.0"
 serde = { version = "1.0.210", features = ["derive"] }
 
-prost-validate = { version = "0.2.2", path = "prost-validate" }
-prost-reflect-validate = { version = "0.2.2", path = "prost-reflect-validate" }
-prost-validate-build = { version = "0.2.2", path = "prost-validate-build" }
-prost-validate-derive = { version = "0.2.2", path = "prost-validate-derive" }
-prost-validate-types = { version = "0.2.2", path = "prost-validate-types" }
-prost-validate-derive-core = { version = "0.2.2", path = "prost-validate-derive-core" }
+prost-validate = { version = "0.2.3", path = "prost-validate" }
+prost-reflect-validate = { version = "0.2.3", path = "prost-reflect-validate" }
+prost-validate-build = { version = "0.2.3", path = "prost-validate-build" }
+prost-validate-derive = { version = "0.2.3", path = "prost-validate-derive" }
+prost-validate-types = { version = "0.2.3", path = "prost-validate-types" }
+prost-validate-derive-core = { version = "0.2.3", path = "prost-validate-derive-core" }
 
 [workspace.lints.clippy]
 todo = "deny"
