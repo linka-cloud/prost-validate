@@ -70,13 +70,14 @@ impl ToValidationTokens for RepeatedRules {
                 if ctx.boxed {
                     quote! {
                         for (i, item) in #name.iter.enumerate() {
-                            ::prost_validate::Validator::validate(item.as_ref()).map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, i), ::prost_validate::errors::list::Error::Item(Box::new(e))))?;
+                            let item = item.as_ref();
+                            ::prost_validate::validate!(item).map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, i), ::prost_validate::errors::list::Error::Item(Box::new(e))))?;
                         }
                     }
                 } else {
                     quote! {
                         for (i, item) in #name.iter().enumerate() {
-                            ::prost_validate::Validator::validate(item).map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, i), ::prost_validate::errors::list::Error::Item(Box::new(e))))?;
+                            ::prost_validate::validate!(item).map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, i), ::prost_validate::errors::list::Error::Item(Box::new(e))))?;
                         }
                     }
                 }
