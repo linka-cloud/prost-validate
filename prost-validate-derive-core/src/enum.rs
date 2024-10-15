@@ -27,7 +27,12 @@ impl ToValidationTokens for EnumRules {
             }
         });
         let defined_only = rules.defined_only.is_true_and(|| {
-            let enum_type: syn::Path = syn::parse_str(ctx.to_owned().enumeration.expect("missing enum type").as_str())
+            let enumeration = if ctx.enum_strip_super {
+                ctx.enumeration.to_owned().expect("missing enum type").strip_prefix("super::").unwrap().to_string()
+            } else {
+                ctx.enumeration.to_owned().expect("missing enum type")
+            };
+            let enum_type: syn::Path = syn::parse_str(enumeration.as_str())
                 .expect("Invalid enum path");
             let field = &ctx.name;
             quote! {

@@ -26,13 +26,26 @@ pub fn derive_with_module(
     let implementation = match opts.data {
         Data::Enum(e) => e
             .iter()
+            .map(|v| Field {
+                enum_strip_super: module.is_some(),
+                ..v.clone()
+            })
             .map(|v| v.to_token_stream())
             .collect::<proc_macro2::TokenStream>(),
         Data::Struct(s) => s
             .fields
             .iter()
+            .map(|v| Field {
+                enum_strip_super: module.is_some(),
+                ..v.clone()
+            })
             .map(|field| field.into_token_stream())
             .collect::<proc_macro2::TokenStream>(),
+    };
+
+    let allow = quote! {
+        #[allow(irrefutable_let_patterns)]
+        #[allow(unused_variables)]
     };
 
     let path = if let Some(module) = module {
@@ -43,6 +56,7 @@ pub fn derive_with_module(
     if !implementation.is_empty() {
         quote! {
             impl ::prost_validate::Validator for #path {
+                #allow
                 fn validate(&self) -> prost_validate::Result<()> {
                     #implementation
                     Ok(())
