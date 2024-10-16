@@ -163,7 +163,7 @@ impl ToValidationTokens for StringRules {
                 string_rules::WellKnown::Email(true) => {
                     let field = &ctx.name;
                     quote! {
-                        if let Err(_) = ::prost_validate::ValidateStringExt::validate_email(&#name) {
+                        if ::prost_validate::ValidateStringExt::validate_email(&#name).is_err() {
                             return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Email));
                         }
                     }
@@ -171,7 +171,7 @@ impl ToValidationTokens for StringRules {
                 string_rules::WellKnown::Hostname(true) => {
                     let field = &ctx.name;
                     quote! {
-                        if let Err(_) = ::prost_validate::ValidateStringExt::validate_hostname(&#name) {
+                        if ::prost_validate::ValidateStringExt::validate_hostname(&#name).is_err() {
                             return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Hostname));
                         }
                     }
@@ -179,7 +179,7 @@ impl ToValidationTokens for StringRules {
                 string_rules::WellKnown::Ip(true) => {
                     let field = &ctx.name;
                     quote! {
-                        if let Err(_) = ::prost_validate::ValidateStringExt::validate_ip(&#name) {
+                        if ::prost_validate::ValidateStringExt::validate_ip(&#name).is_err() {
                             return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Ip));
                         }
                     }
@@ -187,7 +187,7 @@ impl ToValidationTokens for StringRules {
                 string_rules::WellKnown::Ipv4(true) => {
                     let field = &ctx.name;
                     quote! {
-                        if let Err(_) = ::prost_validate::ValidateStringExt::validate_ipv4(&#name) {
+                        if ::prost_validate::ValidateStringExt::validate_ipv4(&#name).is_err() {
                             return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Ipv4));
                         }
                     }
@@ -195,7 +195,7 @@ impl ToValidationTokens for StringRules {
                 string_rules::WellKnown::Ipv6(true) => {
                     let field = &ctx.name;
                     quote! {
-                        if let Err(_) = ::prost_validate::ValidateStringExt::validate_ipv6(&#name) {
+                        if ::prost_validate::ValidateStringExt::validate_ipv6(&#name).is_err() {
                             return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Ipv6));
                         }
                     }
@@ -203,7 +203,7 @@ impl ToValidationTokens for StringRules {
                 string_rules::WellKnown::Uri(true) => {
                     let field = &ctx.name;
                     quote! {
-                        if let Err(_) = ::prost_validate::ValidateStringExt::validate_uri(&#name) {
+                        if ::prost_validate::ValidateStringExt::validate_uri(&#name).is_err() {
                             return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Uri));
                         }
                     }
@@ -211,7 +211,7 @@ impl ToValidationTokens for StringRules {
                 string_rules::WellKnown::UriRef(true) => {
                     let field = &ctx.name;
                     quote! {
-                        if let Err(_) = ::prost_validate::ValidateStringExt::validate_uri_ref(&#name) {
+                        if ::prost_validate::ValidateStringExt::validate_uri_ref(&#name).is_err() {
                             return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::UriRef));
                         }
                     }
@@ -219,7 +219,7 @@ impl ToValidationTokens for StringRules {
                 string_rules::WellKnown::Address(true) => {
                     let field = &ctx.name;
                     quote! {
-                        if let Err(_) = ::prost_validate::ValidateStringExt::validate_address(&#name) {
+                        if ::prost_validate::ValidateStringExt::validate_address(&#name).is_err() {
                             return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Address));
                         }
                     }
@@ -227,7 +227,7 @@ impl ToValidationTokens for StringRules {
                 string_rules::WellKnown::Uuid(true) => {
                     let field = &ctx.name;
                     quote! {
-                        if let Err(_) = ::prost_validate::ValidateStringExt::validate_uuid(&#name) {
+                        if ::prost_validate::ValidateStringExt::validate_uuid(&#name).is_err() {
                             return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Uuid));
                         }
                     }
@@ -238,7 +238,7 @@ impl ToValidationTokens for StringRules {
                         Ok(prost_validate_types::KnownRegex::HttpHeaderName) => {
                             let field = &ctx.name;
                             quote! {
-                                if let Err(_) = ::prost_validate::ValidateStringExt::validate_header_name(&#name, #strict) {
+                                if ::prost_validate::ValidateStringExt::validate_header_name(&#name, #strict).is_err() {
                                     return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::HttpHeaderName));
                                 }
                             }
@@ -246,7 +246,7 @@ impl ToValidationTokens for StringRules {
                         Ok(prost_validate_types::KnownRegex::HttpHeaderValue) => {
                             let field = &ctx.name;
                             quote! {
-                                if let Err(_) = ::prost_validate::ValidateStringExt::validate_header_value(&#name, #strict) {
+                                if ::prost_validate::ValidateStringExt::validate_header_value(&#name, #strict).is_err() {
                                     return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::HttpHeaderValue));
                                 }
                             }
