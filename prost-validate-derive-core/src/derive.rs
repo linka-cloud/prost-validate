@@ -27,7 +27,7 @@ pub fn derive_with_module(
         Data::Enum(e) => e
             .iter()
             .map(|v| Field {
-                enum_strip_super: module.is_some(),
+                module: module.clone().map(|v| v.to_string()),
                 ..v.clone()
             })
             .map(|v| v.to_token_stream())
@@ -36,7 +36,7 @@ pub fn derive_with_module(
             .fields
             .iter()
             .map(|v| Field {
-                enum_strip_super: module.is_some(),
+                module: module.clone().map(|v| v.to_string()),
                 ..v.clone()
             })
             .map(|field| field.into_token_stream())

@@ -27,7 +27,7 @@ pub struct Context<'a> {
     pub oneof: bool,
     pub prost_types: bool,
     pub wrapper: bool,
-    pub enum_strip_super: bool,
+    pub module: Option<String>,
 }
 
 pub trait ToValidationTokens {
@@ -42,7 +42,7 @@ pub struct Field {
     pub prost: ProstField,
     pub oneof: bool,
     pub map: bool,
-    pub enum_strip_super: bool,
+    pub module: Option<String>,
 }
 
 impl Field {
@@ -74,7 +74,7 @@ impl Field {
             validation,
             oneof,
             map: map.is_some(),
-            enum_strip_super: false,
+            module: None,
         }
     }
     pub fn is_wkt(&self) -> bool {
@@ -558,7 +558,7 @@ impl ToTokens for Field {
                 map: self.map,
                 oneof: self.oneof,
                 prost_types: self.is_prost_types(),
-                enum_strip_super: self.enum_strip_super,
+                module: self.module.clone(),
             };
             let name = if self.oneof {
                 let name = to_snake(ident.to_string());

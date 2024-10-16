@@ -27,10 +27,21 @@ impl ToValidationTokens for EnumRules {
             }
         });
         let defined_only = rules.defined_only.is_true_and(|| {
-            let enumeration = if ctx.enum_strip_super {
-                ctx.enumeration.to_owned().expect("missing enum type").strip_prefix("super::").unwrap().to_string()
+            let enumeration = ctx.enumeration.to_owned().expect("missing enum type");
+            let enumeration = if let Some(ref m) = ctx.module {
+                if enumeration.starts_with("super::") {
+                    let enumeration = enumeration.strip_prefix("super::").unwrap();
+                    let parts: Vec<_> = m.split("::").collect();
+                    if parts.len() > 1 {
+                        format!("{}::{}", parts[..parts.len() - 1].join("::"), enumeration)
+                    } else {
+                        enumeration.to_string()
+                    }
+                } else {
+                    format!("{}::{}", m, enumeration)
+                }
             } else {
-                ctx.enumeration.to_owned().expect("missing enum type")
+                enumeration
             };
             let enum_type: syn::Path = syn::parse_str(enumeration.as_str())
                 .expect("Invalid enum path");
