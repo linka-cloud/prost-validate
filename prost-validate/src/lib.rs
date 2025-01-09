@@ -45,7 +45,7 @@ impl<T: ?Sized> NoopValidator for T {}
 pub struct SafeValidator<'a, T: ?Sized>(pub &'a T);
 
 // Implement the `validate` method only for types that implement the Validator trait.
-impl<'a, T: ?Sized + Validator> SafeValidator<'a, T> {
+impl<T: ?Sized + Validator> SafeValidator<'_, T> {
     pub fn validate(&self) -> Result {
         Validator::validate(self.0)
     }

@@ -86,7 +86,7 @@ trait IsTrueExt {
     fn is_true(&self) -> bool;
 }
 
-impl<'a> IsTrueExt for Cow<'a, Value> {
+impl IsTrueExt for Cow<'_, Value> {
     fn is_true(&self) -> bool {
         self.as_bool().unwrap_or(false)
     }
