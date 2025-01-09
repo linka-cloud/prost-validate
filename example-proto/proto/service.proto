@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package validate.example;
+
+import "validate/validate.proto";
+
+import "message.proto";
+
+service ExampleService {
+  rpc ExampleMethod (ExampleMessage) returns (ExampleMessage);
+}

@@ -429,16 +429,15 @@ dependencies = [
 name = "example-proto"
 version = "0.2.6"
 dependencies = [
- "anyhow",
  "once_cell",
  "prost",
  "prost-build",
  "prost-reflect",
  "prost-reflect-build",
- "prost-reflect-validate",
- "prost-types",
  "prost-validate",
  "prost-validate-build",
+ "tonic",
+ "tonic-build",
 ]
 
 [[package]]
@@ -1665,6 +1664,20 @@ dependencies = [
  "tower-layer",
  "tower-service",
  "tracing",
+]
+
+[[package]]
+name = "tonic-build"
+version = "0.12.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9557ce109ea773b399c9b9e5dca39294110b74f1f342cb347a80d1fce8c26a11"
+dependencies = [
+ "prettyplease",
+ "proc-macro2",
+ "prost-build",
+ "prost-types",
+ "quote",
+ "syn 2.0.79",
 ]
 
 [[package]]

@@ -11,14 +11,13 @@ publish = false
 
 [dependencies]
 prost = { workspace = true }
-prost-types = { workspace = true }
 prost-reflect = { workspace = true }
 prost-validate = { workspace = true, features = ["derive"] }
-prost-reflect-validate = { workspace = true }
+tonic = { workspace = true }
 once_cell = { workspace = true }
-anyhow = { workspace = true }
 
 [build-dependencies]
 prost-build = { workspace = true }
 prost-reflect-build = { workspace = true }
 prost-validate-build = { workspace = true }
+tonic-build = { workspace = true }
