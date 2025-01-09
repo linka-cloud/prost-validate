@@ -60,16 +60,36 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ### Generating `prost-build` configuration for usage with other generators
 
-#### Example for `prost-reflect-build`
+#### Example for `prost-reflect-build` and `tonic-build`
+
+`service.proto`:
+
+```proto
+syntax = "proto3";
+
+package validate.example;
+
+import "validate/validate.proto";
+
+import "message.proto";
+
+service ExampleService {
+  rpc ExampleMethod (ExampleMessage) returns (ExampleMessage);
+}
+```
 
 `build.rs`:
 
 ```rust
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let files = &["message.proto"];
+    let files = &["message.proto", "service.proto"];
     let includes = &["proto", "../prost-validate-types/proto"];
 
-    let mut config = prost_build::Config::new();
+    let mut config = {
+        let mut c = prost_build::Config::new();
+        c.service_generator(tonic_build::configure().service_generator());
+        c
+    };
 
     prost_validate_build::Builder::new().configure(&mut config, files, includes)?;
 
