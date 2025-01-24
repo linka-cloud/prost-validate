@@ -7,7 +7,7 @@
 This is a Rust implementation of [protoc-gen-validate](https://github.com/bufbuild/protoc-gen-validate).
 
 It must be used with [prost](https://github.com/tokio-rs/prost) generated code.
-All validation rules are documented in the [proto file](../main/prost-validate-types/proto/validate/validate.proto)
+All validation rules are documented in the [proto file](https://github.com/linka-cloud/prost-validate/blob/main/prost-validate-types/proto/validate/validate.proto)
 or in the [protoc-gen-validate](https://github.com/bufbuild/protoc-gen-validate/blob/v1.1.0/README.md#constraint-rules)
 documentation.
 
