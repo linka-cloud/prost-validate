@@ -58,7 +58,7 @@ pub fn derive_with_module(
         quote! {
             impl ::prost_validate::Validator for #path {
                 #allow
-                fn validate(&self) -> prost_validate::Result<()> {
+                fn validate(&self) -> ::prost_validate::Result<()> {
                     #implementation
                     Ok(())
                 }
