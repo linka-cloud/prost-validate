@@ -20,9 +20,20 @@ impl ToValidationTokens for MessageRules {
         let validate = self.skip.not().then(|| {
             let field = &ctx.name;
             if ctx.boxed {
+                if ctx.multierrs {
+                    quote! {
+                        let #name = #name.as_ref();
+                        errs.extend(::prost_validate::validate_all!(#name).into_iter().map(|e| ::prost_validate::Error::new(#field, ::prost_validate::errors::message::Error::Message(Box::new(e)))));
+                    }
+                } else {
+                    quote! {
+                        let #name = #name.as_ref();
+                        ::prost_validate::validate!(#name).map_err(|e| ::prost_validate::Error::new(#field, ::prost_validate::errors::message::Error::Message(Box::new(e))))?;
+                    }
+                }
+            } else if ctx.multierrs {
                 quote! {
-                    let #name = #name.as_ref();
-                    ::prost_validate::validate!(#name).map_err(|e| ::prost_validate::Error::new(#field, ::prost_validate::errors::message::Error::Message(Box::new(e))))?;
+                    errs.extend(::prost_validate::validate_all!(#name).into_iter().map(|e| ::prost_validate::Error::new(#field, ::prost_validate::errors::message::Error::Message(Box::new(e)))));
                 }
             } else {
                 quote! {

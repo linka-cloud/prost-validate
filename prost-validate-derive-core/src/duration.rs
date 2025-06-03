@@ -33,12 +33,17 @@ pub fn duration_to_tokens(name: &Ident, want: &Duration) -> (TokenStream, TokenS
 impl ToValidationTokens for DurationRules {
     fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
         let rules = prost_validate_types::DurationRules::from(self.clone());
+        let maybe_return = if ctx.multierrs {
+            quote! { errs.push }
+        } else {
+            quote! { return Err }
+        };
         let r#const = rules.r#const.map(|v| v.as_duration()).map(|v| {
             let (got, want) = duration_to_tokens(name, &v);
             let field = &ctx.name;
             quote! {
                 if #got != #want {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::Const(#want)));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::Const(#want)));
                 }
             }
         });
@@ -51,7 +56,7 @@ impl ToValidationTokens for DurationRules {
                     let (_, gt) = duration_to_tokens(name, &gt);
                     quote! {
                         if #val <= #gt || #val >= #lt {
-                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::in_range(false, #gt, #lt, false)));
+                            #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::in_range(false, #gt, #lt, false)));
                         }
                     }
                 } else {
@@ -60,7 +65,7 @@ impl ToValidationTokens for DurationRules {
                     let (_, gt) = duration_to_tokens(name, &gt);
                     quote! {
                         if #val >= #lt && #val <= #gt {
-                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::not_in_range(true, #lt, #gt, true)));
+                            #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::not_in_range(true, #lt, #gt, true)));
                         }
                     }
                 }
@@ -71,7 +76,7 @@ impl ToValidationTokens for DurationRules {
                     let (_, gte) = duration_to_tokens(name, &gte);
                     quote! {
                         if #val < #gte || #val >= #lt {
-                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::in_range(true, #gte, #lt, false)));
+                            #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::in_range(true, #gte, #lt, false)));
                         }
                     }
                 } else {
@@ -80,7 +85,7 @@ impl ToValidationTokens for DurationRules {
                     let (_, gte) = duration_to_tokens(name, &gte);
                     quote! {
                         if #val >= #lt && #val < #gte {
-                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::not_in_range(true, #lt, #gte, false)));
+                            #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::not_in_range(true, #lt, #gte, false)));
                         }
                     }
                 }
@@ -89,7 +94,7 @@ impl ToValidationTokens for DurationRules {
                 let (val, lt) = duration_to_tokens(name, &lt);
                 quote! {
                     if #val >= #lt {
-                        return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::Lt(#lt)));
+                        #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::Lt(#lt)));
                     }
                 }
             }
@@ -101,7 +106,7 @@ impl ToValidationTokens for DurationRules {
                     let (_, gt) = duration_to_tokens(name, &gt);
                     quote! {
                         if #val <= #gt || #val > #lte {
-                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::in_range(false, #gt, #lte, true)));
+                            #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::in_range(false, #gt, #lte, true)));
                         }
                     }
                 } else {
@@ -110,7 +115,7 @@ impl ToValidationTokens for DurationRules {
                     let (_, gt) = duration_to_tokens(name, &gt);
                     quote! {
                         if #val >= #lte && #val < #gt {
-                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::not_in_range(false, #lte, #gt, true)));
+                            #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::not_in_range(false, #lte, #gt, true)));
                         }
                     }
                 }
@@ -121,7 +126,7 @@ impl ToValidationTokens for DurationRules {
                     let (_, gte) = duration_to_tokens(name, &gte);
                     quote! {
                         if #val < #gte || #val > #lte {
-                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::in_range(true, #gte, #lte, true)));
+                            #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::in_range(true, #gte, #lte, true)));
                         }
                     }
                 } else {
@@ -130,7 +135,7 @@ impl ToValidationTokens for DurationRules {
                     let (_, gte) = duration_to_tokens(name, &gte);
                     quote! {
                         if #val > #lte && #val < #gte {
-                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::not_in_range(false, #lte, #gte, false)));
+                            #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::not_in_range(false, #lte, #gte, false)));
                         }
                     }
                 }
@@ -139,7 +144,7 @@ impl ToValidationTokens for DurationRules {
                 let (val, lte) = duration_to_tokens(name, &lte);
                 quote! {
                     if #val > #lte {
-                        return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::Lte(#lte)));
+                        #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::Lte(#lte)));
                     }
                 }
             }
@@ -148,7 +153,7 @@ impl ToValidationTokens for DurationRules {
             let (val, gt) = duration_to_tokens(name, &gt);
             quote! {
                 if #val <= #gt {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::Gt(#gt)));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::Gt(#gt)));
                 }
             }
         } else if let Some(gte) = rules.gte.map(|v| v.as_duration()) {
@@ -156,7 +161,7 @@ impl ToValidationTokens for DurationRules {
             let (val, gte) = duration_to_tokens(name, &gte);
             quote! {
                 if #val < #gte {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::Gte(#gte)));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::Gte(#gte)));
                 }
             }
         } else {
@@ -178,7 +183,7 @@ impl ToValidationTokens for DurationRules {
             quote! {
                 let values = [#(#vals),*];
                 if !values.contains(&#val) {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::In(values.to_vec())));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::In(values.to_vec())));
                 }
             }
         });
@@ -198,7 +203,7 @@ impl ToValidationTokens for DurationRules {
             quote! {
                 let values = [#(#vals),*];
                 if values.contains(&#val) {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::NotIn(values.to_vec())));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::NotIn(values.to_vec())));
                 }
             }
         });

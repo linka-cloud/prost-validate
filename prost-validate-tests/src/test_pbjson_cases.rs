@@ -34,6 +34,20 @@ macro_rules! test_cases {
                         Ok(_) => assert_eq!(failures, 0, "unexpected validation success"),
                     }
                 }
+
+                #[cfg(feature = "derive")]
+                #[test]
+                fn derive_all() {
+                    let (message, failures) = crate::cases_pbjson::CASES.get(stringify!($name)).unwrap()();
+                    let errs = ValidatorDerive::validate_all(message.as_ref());
+                    let res = errs.is_empty().then(|| "success").unwrap_or("failure");
+                    assert_eq!(
+                        failures as usize,
+                        errs.len(),
+                        "{}: unexpected validation {res}: {errs:?}",
+                        stringify!($name),
+                    );
+                }
             }
         )*
     }
