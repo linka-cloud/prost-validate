@@ -20,11 +20,12 @@ impl ToValidationTokens for MapRules {
     fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
         let field = &ctx.name;
         let rules = prost_validate_types::MapRules::from(self.to_owned());
+        let maybe_return = ctx.maybe_return();
         let min_pairs = rules.min_pairs.map(|v| {
             let v = v as usize;
             quote! {
                 if #name.len() < #v {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::map::Error::MinPairs(#v)));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::map::Error::MinPairs(#v)));
                 }
             }
         });
@@ -32,27 +33,54 @@ impl ToValidationTokens for MapRules {
             let v = v as usize;
             quote! {
                 if #name.len() > #v {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::map::Error::MaxPairs(#v)));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::map::Error::MaxPairs(#v)));
                 }
             }
         });
-        let key = format_ident!("key");
         let keys = self.keys.as_ref().map(|rules| {
+            let key = format_ident!("key");
             let validate = rules.to_validation_tokens(ctx, &key);
+            let map = quote! { |e| ::prost_validate::Error::new(format!("{}[{}]", #field, #key), ::prost_validate::errors::map::Error::Keys(Box::new(e))) };
             validate.is_empty().not().then(|| {
+                if ctx.multierrs {
+                    return quote! {
+                        for #key in #name.keys() {
+                            if let Err(es) = || -> ::core::result::Result<(), Vec<::prost_validate::Error>> {
+                                let mut errs = vec![];
+                                #validate
+                                if errs.is_empty() { Ok(()) } else { Err(errs) }
+                            }() {
+                                errs.extend(es.into_iter().map(#map));
+                            }
+                        }
+                    };
+                }
                 quote! {
                     for #key in #name.keys() {
                         || -> ::prost_validate::Result<_> {
                             #validate
                             Ok(())
-                        }().map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, #key), ::prost_validate::errors::map::Error::Keys(Box::new(e))))?;
+                        }().map_err(#map)?;
                     }
                 }
             })
         });
         let value = format_ident!("value");
-        let map = quote! { |e| ::prost_validate::Error::new(format!("{}[{k}]", #field), ::prost_validate::errors::map::Error::Values(Box::new(e))) };
         let quote_values = |validation: TokenStream| {
+            let map = quote! { |e| ::prost_validate::Error::new(format!("{}[{k}]", #field), ::prost_validate::errors::map::Error::Values(Box::new(e))) };
+            if ctx.multierrs {
+                return quote! {
+                    for (k, #value) in #name.iter() {
+                        if let Err(es) = || -> ::core::result::Result<(), Vec<::prost_validate::Error>> {
+                            let mut errs = vec![];
+                            #validation
+                            if errs.is_empty() { Ok(()) } else { Err(errs) }
+                        }() {
+                            errs.extend(es.into_iter().map(#map));
+                        }
+                    }
+                };
+            }
             quote! {
                 for (k, #value) in #name.iter() {
                     || -> ::prost_validate::Result<_> {

@@ -23,27 +23,11 @@ pub fn derive_with_module(
     let opts = Opts::from_derive_input(&input).expect("Wrong validate options");
     let DeriveInput { ident, .. } = input;
 
-    let implementation = match opts.data {
-        Data::Enum(e) => e
-            .iter()
-            .map(|v| Field {
-                module: module.clone().map(|v| v.to_string()),
-                ..v.clone()
-            })
-            .map(|v| v.to_token_stream())
-            .collect::<proc_macro2::TokenStream>(),
-        Data::Struct(s) => s
-            .fields
-            .iter()
-            .map(|v| Field {
-                module: module.clone().map(|v| v.to_string()),
-                ..v.clone()
-            })
-            .map(|field| field.into_token_stream())
-            .collect::<proc_macro2::TokenStream>(),
-    };
+    let implementation = body_tokens(&opts, module.clone(), false);
+    let impl_multierrs = body_tokens(&opts, module.clone(), true);
 
     let allow = quote! {
+        #[allow(clippy::collapsible_if)]
         #[allow(clippy::regex_creation_in_loops)]
         #[allow(irrefutable_let_patterns)]
         #[allow(unused_variables)]
@@ -62,12 +46,43 @@ pub fn derive_with_module(
                     #implementation
                     Ok(())
                 }
+
+                #allow
+                fn validate_all(&self) -> ::core::result::Result<(), Vec<::prost_validate::Error>> {
+                    let mut errs = vec![];
+                    #impl_multierrs
+                    if errs.is_empty() { Ok(()) } else { Err(errs) }
+                }
             }
         }
     } else {
         quote! {
             impl ::prost_validate::Validator for #path {}
         }
+    }
+}
+
+fn body_tokens(opts: &Opts, module: Option<TokenStream>, multierrs: bool) -> TokenStream {
+    match &opts.data {
+        Data::Enum(e) => e
+            .iter()
+            .map(|v| Field {
+                module: module.clone().map(|v| v.to_string()),
+                multierrs,
+                ..v.clone()
+            })
+            .map(|v| v.to_token_stream())
+            .collect(),
+        Data::Struct(s) => s
+            .fields
+            .iter()
+            .map(|v| Field {
+                module: module.clone().map(|v| v.to_string()),
+                multierrs,
+                ..v.clone()
+            })
+            .map(|field| field.into_token_stream())
+            .collect(),
     }
 }
 
@@ -107,6 +122,7 @@ mod tests {
     use super::*;
 
     #[test]
+    // cargo test --all-targets --all-features --locked --frozen --offline --no-fail-fast --manifest-path prost-validate-derive-core/Cargo.toml derive::tests -- --nocapture
     fn tests() {
         let input = quote! {
             pub struct WrapperRequiredFloat {
