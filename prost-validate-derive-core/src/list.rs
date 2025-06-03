@@ -51,10 +51,10 @@ impl ToValidationTokens for RepeatedRules {
                 let validation = v.to_validation_tokens(ctx, &item);
                 quote! {
                     for (i, item) in #name.iter().enumerate() {
-                        {
+                        || -> ::prost_validate::Result<_> {
                             #validation
                             Ok(())
-                        }.map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, i), ::prost_validate::errors::list::Error::Item(Box::new(e))))?;
+                        }().map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, i), ::prost_validate::errors::list::Error::Item(Box::new(e))))?;
                     }
                 }
             });

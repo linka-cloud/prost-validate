@@ -5,7 +5,7 @@ use prost_validate_tests::cases::CASES;
 fn reflect_validate() {
     for (name, f) in CASES.iter() {
         let (message, failures) = f();
-        match prost_reflect_validate::ValidatorExt::validate(&*message) {
+        match prost_reflect_validate::ValidatorExt::validate(message.as_ref()) {
             Ok(_) => assert_eq!(failures, 0, "{name}: unexpected validation success"),
             Err(err) => assert!(failures > 0, "{name}: unexpected validation failure: {err}"),
         }
@@ -16,7 +16,7 @@ fn reflect_validate() {
 fn derive_validate() {
     for (name, f) in CASES.iter() {
         let (message, failures) = f();
-        match ::prost_validate::Validator::validate(&*message) {
+        match ::prost_validate::Validator::validate(message.as_ref()) {
             Ok(_) => assert_eq!(failures, 0, "{name}: unexpected validation success"),
             Err(err) => assert!(failures > 0, "{name}: unexpected validation failure: {err}"),
         }

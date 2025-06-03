@@ -6,6 +6,21 @@ use once_cell::sync::Lazy;
 use prost_types::{Any, Duration, Timestamp};
 use std::collections::HashMap;
 
+#[test]
+fn regress_detail_contains_array_index() {
+    let message = RepeatedItemMaxLen {
+        val: vec!["one".to_owned(), "Two".to_owned(), "THREE".to_owned()],
+    };
+    #[expect(clippy::unwrap_used)]
+    let err = ::prost_validate::Validator::validate(&message)
+        .err()
+        .unwrap();
+    assert!(
+        err.to_string().contains("RepeatedItemMaxLen.val[2]"),
+        "Error should contain index information: {err}"
+    );
+}
+
 pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
     HashMap::from([
         (
@@ -5703,6 +5718,17 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
             }) as Factory,
         ),
         (
+            "repeated_items_valid_max_len",
+            Box::new(|| {
+                (
+                    Box::new(RepeatedItemMaxLen {
+                        val: vec!["one".to_owned(), "Two".to_owned()],
+                    }) as Box<dyn Validator>,
+                    0,
+                )
+            }) as Factory,
+        ),
+        (
             "repeated_items_valid_pattern",
             Box::new(|| {
                 (
@@ -5719,6 +5745,17 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
                 (
                     Box::new(RepeatedItemRule {
                         val: vec![1., -2., 3.],
+                    }) as Box<dyn Validator>,
+                    1,
+                )
+            }) as Factory,
+        ),
+        (
+            "repeated_items_invalid_max_len",
+            Box::new(|| {
+                (
+                    Box::new(RepeatedItemMaxLen {
+                        val: vec!["one".to_owned(), "Two".to_owned(), "THREE".to_owned()],
                     }) as Box<dyn Validator>,
                     1,
                 )
