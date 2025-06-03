@@ -11,7 +11,7 @@ fn regress_detail_contains_array_index() {
     let message = RepeatedItemMaxLen {
         val: vec!["one".to_owned(), "Two".to_owned(), "THREE".to_owned()],
     };
-    #[expect(clippy::unwrap_used)]
+    #[allow(clippy::unwrap_used)]
     let err = ::prost_validate::Validator::validate(&message)
         .err()
         .unwrap();
