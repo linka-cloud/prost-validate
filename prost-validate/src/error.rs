@@ -97,9 +97,6 @@ macro_rules! format_err {
 
 #[cfg(test)]
 mod tests {
-    use crate::errors::message;
-    use crate::Error;
-
     #[test]
     fn test_format_err() {
         let err = format_err!("field", "something wrong");
@@ -125,7 +122,10 @@ mod tests {
 
     #[cfg(feature = "tonic")]
     #[test]
+    #[allow(clippy::unwrap_used)]
     fn test_status() {
+        use crate::errors::message;
+        use crate::Error;
         use tonic_types::StatusExt;
 
         let status: tonic::Status = Error::new("field", message::Error::Required).into();

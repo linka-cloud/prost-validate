@@ -95,7 +95,7 @@ where
     }
 
     fn validate_ipv4(&self) -> anyhow::Result<()> {
-        if IpAddr::from_str(&self.to_string()).map_or(false, |i| i.is_ipv4()) {
+        if IpAddr::from_str(&self.to_string()).is_ok_and(|i| i.is_ipv4()) {
             Ok(())
         } else {
             Err(format_err!("invalid ipv4 format"))
@@ -103,7 +103,7 @@ where
     }
 
     fn validate_ipv6(&self) -> anyhow::Result<()> {
-        if IpAddr::from_str(&self.to_string()).map_or(false, |i| i.is_ipv6()) {
+        if IpAddr::from_str(&self.to_string()).is_ok_and(|i| i.is_ipv6()) {
             Ok(())
         } else {
             Err(format_err!("invalid ipv6 format"))

@@ -25,9 +25,9 @@ fn derive_validate() {
 
 fn criterion_benchmark(c: &mut Criterion) {
     #[cfg(feature = "reflect")]
-    c.bench_function("harness reflect", |b| b.iter(|| reflect_validate()));
+    c.bench_function("harness reflect", |b| b.iter(reflect_validate));
     #[cfg(feature = "derive")]
-    c.bench_function("harness derive", |b| b.iter(|| derive_validate()));
+    c.bench_function("harness derive", |b| b.iter(derive_validate));
 }
 
 criterion_group!(benches, criterion_benchmark);

@@ -44,6 +44,7 @@ pub fn derive_with_module(
     };
 
     let allow = quote! {
+        #[allow(clippy::regex_creation_in_loops)]
         #[allow(irrefutable_let_patterns)]
         #[allow(unused_variables)]
     };
@@ -87,7 +88,7 @@ pub mod test_utils {
 
     pub fn _format(tk: &TokenStream) -> anyhow::Result<String> {
         let mut rustfmt = Command::new("rustfmt")
-            .args(&["--edition", "2018"])
+            .args(["--edition", "2018"])
             .stdin(std::process::Stdio::piped())
             .stdout(std::process::Stdio::piped())
             .spawn()?;
