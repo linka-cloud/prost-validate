@@ -44,10 +44,10 @@ impl ToValidationTokens for MapRules {
                 let field = &ctx.name;
                 quote! {
                     for #key in #name.keys() {
-                        {
+                        || -> ::prost_validate::Result<_> {
                             #validate
                             Ok(())
-                        }.map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, #key), ::prost_validate::errors::map::Error::Keys(Box::new(e))))?;
+                        }().map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, #key), ::prost_validate::errors::map::Error::Keys(Box::new(e))))?;
                     }
                 }
             })
@@ -64,10 +64,10 @@ impl ToValidationTokens for MapRules {
             let field = &ctx.name;
             quote! {
                 for (k, #value) in #name.iter() {
-                    {
+                    || -> ::prost_validate::Result<_> {
                         #validation
                         Ok(())
-                    }.map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, k), ::prost_validate::errors::map::Error::Values(Box::new(e))))?;
+                    }().map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, k), ::prost_validate::errors::map::Error::Values(Box::new(e))))?;
                 }
             }
         });
@@ -77,10 +77,10 @@ impl ToValidationTokens for MapRules {
                 let field = &ctx.name;
                 quote! {
                     for (k, #value) in #name.iter() {
-                        {
+                        || -> ::prost_validate::Result<_> {
                             #validate
                             Ok(())
-                        }.map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, k), ::prost_validate::errors::map::Error::Values(Box::new(e))))?;
+                        }().map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, k), ::prost_validate::errors::map::Error::Values(Box::new(e))))?;
                     }
                 }
             })
