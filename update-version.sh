@@ -41,7 +41,7 @@ for c in "${crates[@]}"; do
   fi
 done
 
-cargo update
+# cargo update
 
 # Update README.md files to reference the latest version
 for f in $(find . -name "README.md"); do
