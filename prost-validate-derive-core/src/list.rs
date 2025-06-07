@@ -16,12 +16,17 @@ pub struct RepeatedRules {
 
 impl ToValidationTokens for RepeatedRules {
     fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
+        let maybe_return = if ctx.multierrs {
+            quote! { errs.push }
+        } else {
+            quote! { return Err }
+        };
         let min_items = self.min_items.map(|v| {
             let v = v as usize;
             let field = &ctx.name;
             quote! {
                 if #name.len() < #v {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::list::Error::MinItems(#v)));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::list::Error::MinItems(#v)));
                 }
             }
         });
@@ -30,7 +35,7 @@ impl ToValidationTokens for RepeatedRules {
             let field = &ctx.name;
             quote! {
                 if #name.len() > #v {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::list::Error::MaxItems(#v)));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::list::Error::MaxItems(#v)));
                 }
             }
         });
@@ -38,7 +43,7 @@ impl ToValidationTokens for RepeatedRules {
             let field = &ctx.name;
             quote! {
                 if ::prost_validate::VecExt::unique(#name).len() != #name.len() {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::list::Error::Unique));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::list::Error::Unique));
                 }
             }
         });
@@ -49,12 +54,24 @@ impl ToValidationTokens for RepeatedRules {
                 let field = &ctx.name;
                 let item = format_ident!("item");
                 let validation = v.to_validation_tokens(ctx, &item);
-                quote! {
-                    for (i, item) in #name.iter().enumerate() {
-                        || -> ::prost_validate::Result<_> {
-                            #validation
-                            Ok(())
-                        }().map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, i), ::prost_validate::errors::list::Error::Item(Box::new(e))))?;
+                if ctx.multierrs {
+                    quote! {
+                        for (i, item) in #name.iter().enumerate() {
+                            errs.extend({
+                                let mut errs = vec![];
+                                #validation
+                                errs
+                            }.into_iter().map(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, i), ::prost_validate::errors::list::Error::Item(Box::new(e)))));
+                        }
+                    }
+                } else {
+                    quote! {
+                        for (i, item) in #name.iter().enumerate() {
+                            || -> ::prost_validate::Result<_> {
+                                #validation
+                                Ok(())
+                            }().map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, i), ::prost_validate::errors::list::Error::Item(Box::new(e))))?;
+                        }
                     }
                 }
             });
@@ -68,10 +85,25 @@ impl ToValidationTokens for RepeatedRules {
             .then(|| {
                 let field = &ctx.name;
                 if ctx.boxed {
+                    if ctx.multierrs {
+                        quote! {
+                            for (i, item) in #name.iter.enumerate() {
+                                let item = item.as_ref();
+                                errs.extend(::prost_validate::validate_all!(item).into_iter().map(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, i), ::prost_validate::errors::list::Error::Item(Box::new(e)))));
+                            }
+                        }
+                    } else {
+                        quote! {
+                            for (i, item) in #name.iter.enumerate() {
+                                let item = item.as_ref();
+                                ::prost_validate::validate!(item).map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, i), ::prost_validate::errors::list::Error::Item(Box::new(e))))?;
+                            }
+                        }
+                    }
+                } else if ctx.multierrs {
                     quote! {
-                        for (i, item) in #name.iter.enumerate() {
-                            let item = item.as_ref();
-                            ::prost_validate::validate!(item).map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, i), ::prost_validate::errors::list::Error::Item(Box::new(e))))?;
+                        for (i, item) in #name.iter().enumerate() {
+                            errs.extend(::prost_validate::validate_all!(item).into_iter().map(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, i), ::prost_validate::errors::list::Error::Item(Box::new(e)))));
                         }
                     }
                 } else {

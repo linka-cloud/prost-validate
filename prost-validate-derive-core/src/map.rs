@@ -19,12 +19,17 @@ pub struct MapRules {
 impl ToValidationTokens for MapRules {
     fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
         let rules = prost_validate_types::MapRules::from(self.to_owned());
+        let maybe_return = if ctx.multierrs {
+            quote! { errs.push }
+        } else {
+            quote! { return Err }
+        };
         let min_pairs = rules.min_pairs.map(|v| {
             let v = v as usize;
             let field = &ctx.name;
             quote! {
                 if #name.len() < #v {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::map::Error::MinPairs(#v)));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::map::Error::MinPairs(#v)));
                 }
             }
         });
@@ -33,7 +38,7 @@ impl ToValidationTokens for MapRules {
             let field = &ctx.name;
             quote! {
                 if #name.len() > #v {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::map::Error::MaxPairs(#v)));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::map::Error::MaxPairs(#v)));
                 }
             }
         });
@@ -42,12 +47,24 @@ impl ToValidationTokens for MapRules {
             let validate = rules.to_validation_tokens(ctx, &key);
             validate.is_empty().not().then(|| {
                 let field = &ctx.name;
-                quote! {
-                    for #key in #name.keys() {
-                        || -> ::prost_validate::Result<_> {
-                            #validate
-                            Ok(())
-                        }().map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, #key), ::prost_validate::errors::map::Error::Keys(Box::new(e))))?;
+                if ctx.multierrs {
+                    quote! {
+                        for #key in #name.keys() {
+                            errs.extend({
+                                let mut errs = vec![];
+                                #validate
+                                errs
+                            }.into_iter().map(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, #key), ::prost_validate::errors::map::Error::Keys(Box::new(e)))));
+                        }
+                    }
+                } else {
+                    quote! {
+                        for #key in #name.keys() {
+                            || -> ::prost_validate::Result<_> {
+                                #validate
+                                Ok(())
+                            }().map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, #key), ::prost_validate::errors::map::Error::Keys(Box::new(e))))?;
+                        }
                     }
                 }
             })
@@ -62,12 +79,24 @@ impl ToValidationTokens for MapRules {
             .unwrap_or_default()).then(|| {
             let validation = MessageRules::default().to_validation_tokens(ctx, &value);
             let field = &ctx.name;
-            quote! {
-                for (k, #value) in #name.iter() {
-                    || -> ::prost_validate::Result<_> {
-                        #validation
-                        Ok(())
-                    }().map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, k), ::prost_validate::errors::map::Error::Values(Box::new(e))))?;
+            if ctx.multierrs {
+                quote! {
+                    for (k, #value) in #name.iter() {
+                        errs.extend({
+                            let mut errs = vec![];
+                            #validation
+                            errs
+                        }.into_iter().map(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, k), ::prost_validate::errors::map::Error::Values(Box::new(e)))));
+                    }
+                }
+            } else {
+                quote! {
+                    for (k, #value) in #name.iter() {
+                        || -> ::prost_validate::Result<_> {
+                            #validation
+                            Ok(())
+                        }().map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, k), ::prost_validate::errors::map::Error::Values(Box::new(e))))?;
+                    }
                 }
             }
         });
@@ -75,12 +104,24 @@ impl ToValidationTokens for MapRules {
             let validate = rules.to_validation_tokens(ctx, &value);
             validate.is_empty().not().then(|| {
                 let field = &ctx.name;
-                quote! {
-                    for (k, #value) in #name.iter() {
-                        || -> ::prost_validate::Result<_> {
-                            #validate
-                            Ok(())
-                        }().map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, k), ::prost_validate::errors::map::Error::Values(Box::new(e))))?;
+                if ctx.multierrs {
+                    quote! {
+                        for (k, #value) in #name.iter() {
+                            errs.extend({
+                                let mut errs = vec![];
+                                #validate
+                                errs
+                            }.into_iter().map(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, k), ::prost_validate::errors::map::Error::Values(Box::new(e)))));
+                        }
+                    }
+                } else {
+                    quote! {
+                        for (k, #value) in #name.iter() {
+                            || -> ::prost_validate::Result<_> {
+                                #validate
+                                Ok(())
+                            }().map_err(|e| ::prost_validate::Error::new(format!("{}[{}]", #field, k), ::prost_validate::errors::map::Error::Values(Box::new(e))))?;
+                        }
                     }
                 }
             })
@@ -108,8 +149,6 @@ impl From<MapRules> for prost_validate_types::MapRules {
             keys: value.keys.map(|v| (*v).into()).map(Box::new),
             values: value.values.map(|v| (*v).into()).map(Box::new),
             ignore_empty: Some(value.ignore_empty),
-            // keys: None,
-            // values: None,
         }
     }
 }

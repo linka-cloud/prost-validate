@@ -23,11 +23,16 @@ macro_rules! make_number_rules {
         impl ToValidationTokens for $name {
             fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
                 let rules = prost_validate_types::$name::from(self.to_owned());
+                let maybe_return = if ctx.multierrs {
+                    quote! { errs.push }
+                } else {
+                    quote! { return Err }
+                };
                 let r#const = rules.r#const.map(|v| {
                     let field = &ctx.name;
                     quote! {
                         if *#name != #v {
-                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::Const(#v)));
+                            #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::Const(#v)));
                         }
                     }
                 });
@@ -38,14 +43,14 @@ macro_rules! make_number_rules {
                             let field = &ctx.name;
                             quote! {
                                 if *#name <= #gt || *#name >= #lt {
-                                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::in_range(false, #gt, #lt, false)));
+                                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::in_range(false, #gt, #lt, false)));
                                 }
                             }
                         } else {
                             let field = &ctx.name;
                             quote! {
                                 if *#name >= #lt && *#name <= #gt {
-                                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::not_in_range(true, #lt, #gt, true)));
+                                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::not_in_range(true, #lt, #gt, true)));
                                 }
                             }
                         }
@@ -54,14 +59,14 @@ macro_rules! make_number_rules {
                             let field = &ctx.name;
                             quote! {
                                 if *#name < #gte || *#name >= #lt {
-                                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::in_range(true, #gte, #lt, false)));
+                                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::in_range(true, #gte, #lt, false)));
                                 }
                             }
                         } else {
                             let field = &ctx.name;
                             quote! {
                                 if *#name >= #lt && *#name < #gte {
-                                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::not_in_range(true, #lt, #gte, false)));
+                                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::not_in_range(true, #lt, #gte, false)));
                                 }
                             }
                         }
@@ -69,7 +74,7 @@ macro_rules! make_number_rules {
                         let field = &ctx.name;
                         quote! {
                             if *#name >= #lt {
-                                return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::Lt(#lt)));
+                                #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::Lt(#lt)));
                             }
                         }
                     }
@@ -79,14 +84,14 @@ macro_rules! make_number_rules {
                             let field = &ctx.name;
                             quote! {
                                 if *#name <= #gt || *#name > #lte {
-                                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::in_range(false, #gt, #lte, true)));
+                                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::in_range(false, #gt, #lte, true)));
                                 }
                             }
                         } else {
                             let field = &ctx.name;
                             quote! {
                                 if *#name > #lte && *#name <= #gt {
-                                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::not_in_range(false, #lte, #gt, true)));
+                                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::not_in_range(false, #lte, #gt, true)));
                                 }
                             }
                         }
@@ -95,14 +100,14 @@ macro_rules! make_number_rules {
                             let field = &ctx.name;
                             quote! {
                                 if *#name < #gte || *#name > #lte {
-                                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::in_range(true, #gte, #lte, true)));
+                                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::in_range(true, #gte, #lte, true)));
                                 }
                             }
                         } else {
                             let field = &ctx.name;
                             quote! {
                                 if *#name > #lte && *#name < #gte {
-                                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::not_in_range(false, #lte, #gte, false)));
+                                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::not_in_range(false, #lte, #gte, false)));
                                 }
                             }
                         }
@@ -110,7 +115,7 @@ macro_rules! make_number_rules {
                         let field = &ctx.name;
                         quote! {
                             if *#name > #lte {
-                                return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::Lte(#lte)));
+                                #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::Lte(#lte)));
                             }
                         }
                     }
@@ -118,14 +123,14 @@ macro_rules! make_number_rules {
                     let field = &ctx.name;
                     quote! {
                         if *#name <= #gt {
-                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::Gt(#gt)));
+                            #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::Gt(#gt)));
                         }
                     }
                 } else if let Some(gte) = rules.gte {
                     let field = &ctx.name;
                     quote! {
                         if *#name < #gte {
-                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::Gte(#gte)));
+                            #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::Gte(#gte)));
                         }
                     }
                 } else {
@@ -137,7 +142,7 @@ macro_rules! make_number_rules {
                     quote! {
                         let values = vec![#(#v),*];
                         if !values.contains(#name) {
-                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::In(values.to_vec())));
+                            #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::In(values.to_vec())));
                         }
                     }
                 });
@@ -147,7 +152,7 @@ macro_rules! make_number_rules {
                     quote! {
                         let values = vec![#(#v),*];
                         if values.contains(#name) {
-                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::NotIn(values.to_vec())));
+                            #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::NotIn(values.to_vec())));
                         }
                     }
                 });

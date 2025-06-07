@@ -18,11 +18,16 @@ pub struct EnumRules {
 impl ToValidationTokens for EnumRules {
     fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
         let rules = prost_validate_types::EnumRules::from(self.to_owned());
+        let maybe_return = if ctx.multierrs {
+            quote! { errs.push }
+        } else {
+            quote! { return Err }
+        };
         let r#const = rules.r#const.map(|v| {
             let field = &ctx.name;
             quote! {
                 if (*#name as i32) != #v {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::r#enum::Error::Const(#v)));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::r#enum::Error::Const(#v)));
                 }
             }
         });
@@ -48,7 +53,7 @@ impl ToValidationTokens for EnumRules {
             let field = &ctx.name;
             quote! {
                 if !#enum_type::is_valid(*#name) {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::r#enum::Error::DefinedOnly));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::r#enum::Error::DefinedOnly));
                 }
             }
         });
@@ -58,7 +63,7 @@ impl ToValidationTokens for EnumRules {
             quote! {
                 let values = [#(#v),*];
                 if !values.contains(&#name) {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::r#enum::Error::In(values.to_vec())));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::r#enum::Error::In(values.to_vec())));
                 }
             }
         });
@@ -68,7 +73,7 @@ impl ToValidationTokens for EnumRules {
             quote! {
                 let values = [#(#v),*];
                 if values.contains(#name) {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::r#enum::Error::NotIn(values.to_vec())));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::r#enum::Error::NotIn(values.to_vec())));
                 }
             }
         });
