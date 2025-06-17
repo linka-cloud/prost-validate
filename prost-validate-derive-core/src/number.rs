@@ -22,9 +22,9 @@ macro_rules! make_number_rules {
 
         impl ToValidationTokens for $name {
             fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
+                let field = &ctx.name;
                 let rules = prost_validate_types::$name::from(self.to_owned());
                 let r#const = rules.r#const.map(|v| {
-                    let field = &ctx.name;
                     quote! {
                         if *#name != #v {
                             return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::Const(#v)));
@@ -35,14 +35,12 @@ macro_rules! make_number_rules {
                 let lte_gte = if let Some(lt) = rules.lt {
                     if let Some(gt) = rules.gt {
                         if lt > gt {
-                            let field = &ctx.name;
                             quote! {
                                 if *#name <= #gt || *#name >= #lt {
                                     return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::in_range(false, #gt, #lt, false)));
                                 }
                             }
                         } else {
-                            let field = &ctx.name;
                             quote! {
                                 if *#name >= #lt && *#name <= #gt {
                                     return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::not_in_range(true, #lt, #gt, true)));
@@ -51,14 +49,12 @@ macro_rules! make_number_rules {
                         }
                     } else if let Some(gte) = rules.gte {
                         if lt > gte {
-                            let field = &ctx.name;
                             quote! {
                                 if *#name < #gte || *#name >= #lt {
                                     return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::in_range(true, #gte, #lt, false)));
                                 }
                             }
                         } else {
-                            let field = &ctx.name;
                             quote! {
                                 if *#name >= #lt && *#name < #gte {
                                     return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::not_in_range(true, #lt, #gte, false)));
@@ -66,7 +62,6 @@ macro_rules! make_number_rules {
                             }
                         }
                     } else {
-                        let field = &ctx.name;
                         quote! {
                             if *#name >= #lt {
                                 return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::Lt(#lt)));
@@ -76,14 +71,12 @@ macro_rules! make_number_rules {
                 } else if let Some(lte) = rules.lte {
                     if let Some(gt) = rules.gt {
                         if lte > gt {
-                            let field = &ctx.name;
                             quote! {
                                 if *#name <= #gt || *#name > #lte {
                                     return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::in_range(false, #gt, #lte, true)));
                                 }
                             }
                         } else {
-                            let field = &ctx.name;
                             quote! {
                                 if *#name > #lte && *#name <= #gt {
                                     return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::not_in_range(false, #lte, #gt, true)));
@@ -92,14 +85,12 @@ macro_rules! make_number_rules {
                         }
                     } else if let Some(gte) = rules.gte {
                         if lte > gte {
-                            let field = &ctx.name;
                             quote! {
                                 if *#name < #gte || *#name > #lte {
                                     return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::in_range(true, #gte, #lte, true)));
                                 }
                             }
                         } else {
-                            let field = &ctx.name;
                             quote! {
                                 if *#name > #lte && *#name < #gte {
                                     return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::not_in_range(false, #lte, #gte, false)));
@@ -107,7 +98,6 @@ macro_rules! make_number_rules {
                             }
                         }
                     } else {
-                        let field = &ctx.name;
                         quote! {
                             if *#name > #lte {
                                 return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::Lte(#lte)));
@@ -115,14 +105,12 @@ macro_rules! make_number_rules {
                         }
                     }
                 } else if let Some(gt) = rules.gt {
-                    let field = &ctx.name;
                     quote! {
                         if *#name <= #gt {
                             return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::Gt(#gt)));
                         }
                     }
                 } else if let Some(gte) = rules.gte {
-                    let field = &ctx.name;
                     quote! {
                         if *#name < #gte {
                             return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::$module::Error::Gte(#gte)));
@@ -133,7 +121,6 @@ macro_rules! make_number_rules {
                 };
                 let r#in = rules.r#in.is_empty().not().then(|| {
                     let v = rules.r#in.to_owned();
-                    let field = &ctx.name;
                     quote! {
                         let values = vec![#(#v),*];
                         if !values.contains(#name) {
@@ -143,7 +130,6 @@ macro_rules! make_number_rules {
                 });
                 let not_in = rules.not_in.is_empty().not().then(|| {
                     let v = rules.not_in.to_owned();
-                    let field = &ctx.name;
                     quote! {
                         let values = vec![#(#v),*];
                         if values.contains(#name) {

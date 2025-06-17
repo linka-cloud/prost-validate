@@ -14,20 +14,16 @@ pub struct MessageRules {
 
 impl ToValidationTokens for MessageRules {
     fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
+        let field = &ctx.name;
         if self.skip {
             return quote! {};
         }
         let validate = self.skip.not().then(|| {
-            let field = &ctx.name;
-            if ctx.boxed {
-                quote! {
-                    let #name = #name.as_ref();
-                    ::prost_validate::validate!(#name).map_err(|e| ::prost_validate::Error::new(#field, ::prost_validate::errors::message::Error::Message(Box::new(e))))?;
-                }
-            } else {
-                quote! {
-                    ::prost_validate::validate!(#name).map_err(|e| ::prost_validate::Error::new(#field, ::prost_validate::errors::message::Error::Message(Box::new(e))))?;
-                }
+            let map = quote! { |e| ::prost_validate::Error::new(#field, ::prost_validate::errors::message::Error::Message(Box::new(e))) };
+            let name_ref = ctx.boxed.then(|| quote! { let #name = #name.as_ref(); });
+            quote! {
+                #name_ref
+                ::prost_validate::validate!(#name).map_err(#map)?;
             }
         });
         validate.unwrap_or_default()

@@ -25,10 +25,10 @@ pub struct BytesRules {
 
 impl ToValidationTokens for BytesRules {
     fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
+        let field = &ctx.name;
         let rules = prost_validate_types::BytesRules::from(self.to_owned());
         let r#const = rules.r#const.map(|v| {
             let v = LitByteStr::new(v.as_slice(), Span::call_site());
-            let field = &ctx.name;
             quote! {
                 if !#name.iter().eq(#v.iter()) {
                     return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::Const(#v.to_vec())));
@@ -37,7 +37,6 @@ impl ToValidationTokens for BytesRules {
         });
         let len = rules.len.map(|v| {
             let v = v as usize;
-            let field = &ctx.name;
             quote! {
                 if #name.len() != #v {
                     return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::Len(#v)));
@@ -46,7 +45,6 @@ impl ToValidationTokens for BytesRules {
         });
         let min_len = rules.min_len.map(|v| {
             let v = v as usize;
-            let field = &ctx.name;
             quote! {
                 if #name.len() < #v {
                     return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::MinLen(#v)));
@@ -55,7 +53,6 @@ impl ToValidationTokens for BytesRules {
         });
         let max_len = rules.max_len.map(|v| {
             let v = v as usize;
-            let field = &ctx.name;
             quote! {
                 if #name.len() > #v {
                     return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::MaxLen(#v)));
@@ -63,22 +60,22 @@ impl ToValidationTokens for BytesRules {
             }
         });
         let pattern = rules.pattern.map(|v| {
-            let field = &ctx.name;
-            if let Err(err ) = regex::bytes::Regex::new(&v) {
-                panic!("{field}: Invalid regex pattern: {}", err);
+            if let Err(err) = regex::bytes::Regex::new(&v) {
+                panic!("{field}: Invalid regex pattern: {err}");
             }
             quote! {
-                let regex = ::regex::bytes::Regex::new(#v).map_err(|err| {
-                    ::prost_validate::Error::new(#field, format!("Invalid regex pattern: {}", err))
-                })?;
-                if !regex.is_match(#name.iter().as_slice()) {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::Pattern(#v.to_string())));
+                match ::regex::bytes::Regex::new(#v) {
+                    Err(e) => return Err(::prost_validate::Error::new(#field, format!("Invalid regex pattern: {e}"))),
+                    Ok(regex) => {
+                        if !regex.is_match(#name.iter().as_slice()) {
+                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::Pattern(#v.to_string())));
+                        }
+                    }
                 }
             }
         });
         let prefix = rules.prefix.map(|v| {
             let v = LitByteStr::new(v.as_slice(), Span::call_site());
-            let field = &ctx.name;
             quote! {
                 if !#name.starts_with(#v) {
                     return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::Prefix(#v.to_vec())));
@@ -87,7 +84,6 @@ impl ToValidationTokens for BytesRules {
         });
         let suffix = rules.suffix.map(|v| {
             let v = LitByteStr::new(v.as_slice(), Span::call_site());
-            let field = &ctx.name;
             quote! {
                 if !#name.ends_with(#v) {
                     return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::Suffix(#v.to_vec())));
@@ -96,7 +92,6 @@ impl ToValidationTokens for BytesRules {
         });
         let contains = rules.contains.map(|v| {
             let v = LitByteStr::new(v.as_slice(), Span::call_site());
-            let field = &ctx.name;
             quote! {
                 if !::prost_validate::ValidateBytesExt::contains(&#name, #v.as_slice()) {
                     return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::Contains(#v.to_vec())));
@@ -109,7 +104,6 @@ impl ToValidationTokens for BytesRules {
                 .iter()
                 .map(|v| LitByteStr::new(v.as_slice(), Span::call_site()))
                 .collect::<Vec<_>>();
-            let field = &ctx.name;
             quote! {
                 let values = [#(#v.to_vec()),*];
                 if !values.contains(&#name) {
@@ -123,7 +117,6 @@ impl ToValidationTokens for BytesRules {
                 .iter()
                 .map(|v| LitByteStr::new(v.as_slice(), Span::call_site()))
                 .collect::<Vec<_>>();
-            let field = &ctx.name;
             quote! {
                 let values = [#(#v.to_vec()),*];
                 if values.contains(&#name) {
@@ -133,7 +126,6 @@ impl ToValidationTokens for BytesRules {
         });
         let well_known = rules.well_known.map(|v| match v {
             bytes_rules::WellKnown::Ip(true) => {
-                let field = &ctx.name;
                 quote! {
                     if #name.len() != 4 && #name.len() != 16 {
                         return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::Ip));
@@ -141,7 +133,6 @@ impl ToValidationTokens for BytesRules {
                 }
             }
             bytes_rules::WellKnown::Ipv4(true) => {
-                let field = &ctx.name;
                 quote! {
                     if #name.len() != 4 {
                         return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::Ipv4));
@@ -149,7 +140,6 @@ impl ToValidationTokens for BytesRules {
                 }
             }
             bytes_rules::WellKnown::Ipv6(true) => {
-                let field = &ctx.name;
                 quote! {
                     if #name.len() != 16 {
                         return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::Ipv6));

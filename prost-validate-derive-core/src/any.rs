@@ -15,10 +15,10 @@ pub struct AnyRules {
 
 impl ToValidationTokens for AnyRules {
     fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
+        let field = &ctx.name;
         let rules = prost_validate_types::AnyRules::from(self.to_owned());
         let r#in = rules.r#in.is_empty().not().then(|| {
             let v = rules.r#in;
-            let field = &ctx.name;
             quote! {
                 let values = vec![#(#v),*];
                 if !values.contains(&#name.type_url.as_str()) {
@@ -28,7 +28,6 @@ impl ToValidationTokens for AnyRules {
         });
         let not_in = rules.not_in.is_empty().not().then(|| {
             let v = rules.not_in;
-            let field = &ctx.name;
             quote! {
                 let values = vec![#(#v),*];
                 if values.contains(&#name.type_url.as_str()) {
