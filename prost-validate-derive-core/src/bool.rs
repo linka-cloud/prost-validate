@@ -10,8 +10,8 @@ pub struct BoolRules {
 
 impl ToValidationTokens for BoolRules {
     fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
+        let field = &ctx.name;
         let r#const = self.r#const.map(|v| {
-            let field = &ctx.name;
             quote! {
                 if *#name != #v {
                     return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::r#bool::Error::Const(#v)));

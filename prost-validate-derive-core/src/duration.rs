@@ -32,10 +32,10 @@ pub fn duration_to_tokens(name: &Ident, want: &Duration) -> (TokenStream, TokenS
 
 impl ToValidationTokens for DurationRules {
     fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
+        let field = &ctx.name;
         let rules = prost_validate_types::DurationRules::from(self.clone());
         let r#const = rules.r#const.map(|v| v.as_duration()).map(|v| {
             let (got, want) = duration_to_tokens(name, &v);
-            let field = &ctx.name;
             quote! {
                 if #got != #want {
                     return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::duration::Error::Const(#want)));
@@ -46,7 +46,6 @@ impl ToValidationTokens for DurationRules {
         let gte_lte = if let Some(lt) = rules.lt.map(|v| v.as_duration()) {
             if let Some(gt) = rules.gt.map(|v| v.as_duration()) {
                 if lt > gt {
-                    let field = &ctx.name;
                     let (val, lt) = duration_to_tokens(name, &lt);
                     let (_, gt) = duration_to_tokens(name, &gt);
                     quote! {
@@ -55,7 +54,6 @@ impl ToValidationTokens for DurationRules {
                         }
                     }
                 } else {
-                    let field = &ctx.name;
                     let (val, lt) = duration_to_tokens(name, &lt);
                     let (_, gt) = duration_to_tokens(name, &gt);
                     quote! {
@@ -66,7 +64,6 @@ impl ToValidationTokens for DurationRules {
                 }
             } else if let Some(gte) = rules.gte.map(|v| v.as_duration()) {
                 if lt > gte {
-                    let field = &ctx.name;
                     let (val, lt) = duration_to_tokens(name, &lt);
                     let (_, gte) = duration_to_tokens(name, &gte);
                     quote! {
@@ -75,7 +72,6 @@ impl ToValidationTokens for DurationRules {
                         }
                     }
                 } else {
-                    let field = &ctx.name;
                     let (val, lt) = duration_to_tokens(name, &lt);
                     let (_, gte) = duration_to_tokens(name, &gte);
                     quote! {
@@ -85,7 +81,6 @@ impl ToValidationTokens for DurationRules {
                     }
                 }
             } else {
-                let field = &ctx.name;
                 let (val, lt) = duration_to_tokens(name, &lt);
                 quote! {
                     if #val >= #lt {
@@ -96,7 +91,6 @@ impl ToValidationTokens for DurationRules {
         } else if let Some(lte) = rules.lte.map(|v| v.as_duration()) {
             if let Some(gt) = rules.gt.map(|v| v.as_duration()) {
                 if lte > gt {
-                    let field = &ctx.name;
                     let (val, lte) = duration_to_tokens(name, &lte);
                     let (_, gt) = duration_to_tokens(name, &gt);
                     quote! {
@@ -105,7 +99,6 @@ impl ToValidationTokens for DurationRules {
                         }
                     }
                 } else {
-                    let field = &ctx.name;
                     let (val, lte) = duration_to_tokens(name, &lte);
                     let (_, gt) = duration_to_tokens(name, &gt);
                     quote! {
@@ -116,7 +109,6 @@ impl ToValidationTokens for DurationRules {
                 }
             } else if let Some(gte) = rules.gte.map(|v| v.as_duration()) {
                 if lte > gte {
-                    let field = &ctx.name;
                     let (val, lte) = duration_to_tokens(name, &lte);
                     let (_, gte) = duration_to_tokens(name, &gte);
                     quote! {
@@ -125,7 +117,6 @@ impl ToValidationTokens for DurationRules {
                         }
                     }
                 } else {
-                    let field = &ctx.name;
                     let (val, lte) = duration_to_tokens(name, &lte);
                     let (_, gte) = duration_to_tokens(name, &gte);
                     quote! {
@@ -135,7 +126,6 @@ impl ToValidationTokens for DurationRules {
                     }
                 }
             } else {
-                let field = &ctx.name;
                 let (val, lte) = duration_to_tokens(name, &lte);
                 quote! {
                     if #val > #lte {
@@ -144,7 +134,6 @@ impl ToValidationTokens for DurationRules {
                 }
             }
         } else if let Some(gt) = rules.gt.map(|v| v.as_duration()) {
-            let field = &ctx.name;
             let (val, gt) = duration_to_tokens(name, &gt);
             quote! {
                 if #val <= #gt {
@@ -152,7 +141,6 @@ impl ToValidationTokens for DurationRules {
                 }
             }
         } else if let Some(gte) = rules.gte.map(|v| v.as_duration()) {
-            let field = &ctx.name;
             let (val, gte) = duration_to_tokens(name, &gte);
             quote! {
                 if #val < #gte {
@@ -168,7 +156,6 @@ impl ToValidationTokens for DurationRules {
                 .iter()
                 .map(|v| v.as_duration())
                 .collect::<Vec<Duration>>();
-            let field = &ctx.name;
             let (val, _) = duration_to_tokens(name, &vals[0]);
             let vals = rules
                 .r#in
@@ -188,7 +175,6 @@ impl ToValidationTokens for DurationRules {
                 .iter()
                 .map(|v| v.as_duration())
                 .collect::<Vec<Duration>>();
-            let field = &ctx.name;
             let (val, _) = duration_to_tokens(name, &vals[0]);
             let vals = rules
                 .not_in

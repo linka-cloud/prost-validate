@@ -48,10 +48,10 @@ impl From<TimestampRules> for prost_validate_types::TimestampRules {
 
 impl ToValidationTokens for TimestampRules {
     fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
+        let field = &ctx.name;
         let rules = prost_validate_types::TimestampRules::from(self.clone());
         let r#const = rules.r#const.map(|v| v.as_datetime()).map(|v| {
             let (got, want) = datetime_to_tokens(name, &v);
-            let field = &ctx.name;
             quote! {
                 if #got != #want {
                     return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::timestamp::Error::Const(#want)));
@@ -62,7 +62,6 @@ impl ToValidationTokens for TimestampRules {
         let gte_lte = if let Some(lt) = rules.lt.map(|v| v.as_datetime()) {
             if let Some(gt) = rules.gt.map(|v| v.as_datetime()) {
                 if lt > gt {
-                    let field = &ctx.name;
                     let (val, lt) = datetime_to_tokens(name, &lt);
                     let (_, gt) = datetime_to_tokens(name, &gt);
                     quote! {
@@ -71,7 +70,6 @@ impl ToValidationTokens for TimestampRules {
                         }
                     }
                 } else {
-                    let field = &ctx.name;
                     let (val, lt) = datetime_to_tokens(name, &lt);
                     let (_, gt) = datetime_to_tokens(name, &gt);
                     quote! {
@@ -82,7 +80,6 @@ impl ToValidationTokens for TimestampRules {
                 }
             } else if let Some(gte) = rules.gte.map(|v| v.as_datetime()) {
                 if lt > gte {
-                    let field = &ctx.name;
                     let (val, lt) = datetime_to_tokens(name, &lt);
                     let (_, gte) = datetime_to_tokens(name, &gte);
                     quote! {
@@ -91,7 +88,6 @@ impl ToValidationTokens for TimestampRules {
                         }
                     }
                 } else {
-                    let field = &ctx.name;
                     let (val, lt) = datetime_to_tokens(name, &lt);
                     let (_, gte) = datetime_to_tokens(name, &gte);
                     quote! {
@@ -101,7 +97,6 @@ impl ToValidationTokens for TimestampRules {
                     }
                 }
             } else {
-                let field = &ctx.name;
                 let (val, lt) = datetime_to_tokens(name, &lt);
                 quote! {
                     if #val >= #lt {
@@ -112,7 +107,6 @@ impl ToValidationTokens for TimestampRules {
         } else if let Some(lte) = rules.lte.map(|v| v.as_datetime()) {
             if let Some(gt) = rules.gt.map(|v| v.as_datetime()) {
                 if lte > gt {
-                    let field = &ctx.name;
                     let (val, lte) = datetime_to_tokens(name, &lte);
                     let (_, gt) = datetime_to_tokens(name, &gt);
                     quote! {
@@ -121,7 +115,6 @@ impl ToValidationTokens for TimestampRules {
                         }
                     }
                 } else {
-                    let field = &ctx.name;
                     let (val, lte) = datetime_to_tokens(name, &lte);
                     let (_, gt) = datetime_to_tokens(name, &gt);
                     quote! {
@@ -132,7 +125,6 @@ impl ToValidationTokens for TimestampRules {
                 }
             } else if let Some(gte) = rules.gte.map(|v| v.as_datetime()) {
                 if lte > gte {
-                    let field = &ctx.name;
                     let (val, lte) = datetime_to_tokens(name, &lte);
                     let (_, gte) = datetime_to_tokens(name, &gte);
                     quote! {
@@ -141,7 +133,6 @@ impl ToValidationTokens for TimestampRules {
                         }
                     }
                 } else {
-                    let field = &ctx.name;
                     let (val, lte) = datetime_to_tokens(name, &lte);
                     let (_, gte) = datetime_to_tokens(name, &gte);
                     quote! {
@@ -151,7 +142,6 @@ impl ToValidationTokens for TimestampRules {
                     }
                 }
             } else {
-                let field = &ctx.name;
                 let (val, lte) = datetime_to_tokens(name, &lte);
                 quote! {
                     if #val > #lte {
@@ -160,7 +150,6 @@ impl ToValidationTokens for TimestampRules {
                 }
             }
         } else if let Some(gt) = rules.gt.map(|v| v.as_datetime()) {
-            let field = &ctx.name;
             let (val, gt) = datetime_to_tokens(name, &gt);
             quote! {
                 if #val <= #gt {
@@ -168,7 +157,6 @@ impl ToValidationTokens for TimestampRules {
                 }
             }
         } else if let Some(gte) = rules.gte.map(|v| v.as_datetime()) {
-            let field = &ctx.name;
             let (val, gte) = datetime_to_tokens(name, &gte);
             quote! {
                 if #val < #gte {
@@ -179,7 +167,6 @@ impl ToValidationTokens for TimestampRules {
             if let Some(ref within) = rules.within.map(|v| v.as_duration()) {
                 let (val, _) = datetime_to_tokens(name, &OffsetDateTime::now_utc());
                 let (_, d) = duration_to_tokens(name, within);
-                let field = &ctx.name;
                 quote! {
                     let now = ::time::OffsetDateTime::now_utc();
                     let d = #d;
@@ -189,7 +176,6 @@ impl ToValidationTokens for TimestampRules {
                 }
             } else {
                 let (val, _) = datetime_to_tokens(name, &OffsetDateTime::now_utc());
-                let field = &ctx.name;
                 quote! {
                     let now = ::time::OffsetDateTime::now_utc();
                     if #val >= now {
@@ -201,7 +187,6 @@ impl ToValidationTokens for TimestampRules {
             if let Some(ref within) = rules.within.map(|v| v.as_duration()) {
                 let (val, _) = datetime_to_tokens(name, &OffsetDateTime::now_utc());
                 let (_, d) = duration_to_tokens(name, within);
-                let field = &ctx.name;
                 quote! {
                      let now = ::time::OffsetDateTime::now_utc();
                      let d = #d;
@@ -211,7 +196,6 @@ impl ToValidationTokens for TimestampRules {
                 }
             } else {
                 let (val, _) = datetime_to_tokens(name, &OffsetDateTime::now_utc());
-                let field = &ctx.name;
                 quote! {
                     let now = ::time::OffsetDateTime::now_utc();
                     if #val <= now {
@@ -222,7 +206,6 @@ impl ToValidationTokens for TimestampRules {
         } else if let Some(ref within) = rules.within.map(|v| v.as_duration()) {
             let (val, _) = datetime_to_tokens(name, &OffsetDateTime::now_utc());
             let (_, d) = duration_to_tokens(name, within);
-            let field = &ctx.name;
             quote! {
                 let now = ::time::OffsetDateTime::now_utc();
                 let d = #d;
