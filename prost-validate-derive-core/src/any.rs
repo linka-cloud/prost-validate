@@ -17,12 +17,13 @@ impl ToValidationTokens for AnyRules {
     fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
         let field = &ctx.name;
         let rules = prost_validate_types::AnyRules::from(self.to_owned());
+        let maybe_return = ctx.maybe_return();
         let r#in = rules.r#in.is_empty().not().then(|| {
             let v = rules.r#in;
             quote! {
                 let values = vec![#(#v),*];
                 if !values.contains(&#name.type_url.as_str()) {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::any::Error::In(values.iter().map(|v|v.to_string()).collect())));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::any::Error::In(values.iter().map(|v|v.to_string()).collect())));
                 }
             }
         });
@@ -31,7 +32,7 @@ impl ToValidationTokens for AnyRules {
             quote! {
                 let values = vec![#(#v),*];
                 if values.contains(&#name.type_url.as_str()) {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::any::Error::NotIn(values.iter().map(|v|v.to_string()).collect())));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::any::Error::NotIn(values.iter().map(|v|v.to_string()).collect())));
                 }
             }
         });

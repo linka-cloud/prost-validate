@@ -31,10 +31,11 @@ impl ToValidationTokens for StringRules {
     fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
         let field = &ctx.name;
         let rules = prost_validate_types::StringRules::from(self.to_owned());
+        let maybe_return = ctx.maybe_return();
         let r#const = rules.r#const.map(|v| {
             quote! {
                 if #name != #v {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Const(#v.to_string())));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Const(#v.to_string())));
                 }
             }
         });
@@ -42,7 +43,7 @@ impl ToValidationTokens for StringRules {
             let v = v as usize;
             quote! {
                 if #name.chars().count() != #v {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Len(#v)));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Len(#v)));
                 }
             }
         });
@@ -50,7 +51,7 @@ impl ToValidationTokens for StringRules {
             let v = v as usize;
             quote! {
                 if #name.chars().count() < #v {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::MinLen(#v)));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::MinLen(#v)));
                 }
             }
         });
@@ -58,7 +59,7 @@ impl ToValidationTokens for StringRules {
             let v = v as usize;
             quote! {
                 if #name.chars().count() > #v {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::MaxLen(#v)));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::MaxLen(#v)));
                 }
             }
         });
@@ -66,7 +67,7 @@ impl ToValidationTokens for StringRules {
             let v = v as usize;
             quote! {
                 if #name.len() != #v {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::LenBytes(#v)));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::LenBytes(#v)));
                 }
             }
         });
@@ -74,7 +75,7 @@ impl ToValidationTokens for StringRules {
             let v = v as usize;
             quote! {
                 if #name.len() < #v {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::MinLenBytes(#v)));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::MinLenBytes(#v)));
                 }
             }
         });
@@ -82,7 +83,7 @@ impl ToValidationTokens for StringRules {
             let v = v as usize;
             quote! {
                 if #name.len() > #v {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::MaxLenBytes(#v)));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::MaxLenBytes(#v)));
                 }
             }
         });
@@ -92,10 +93,10 @@ impl ToValidationTokens for StringRules {
             }
             quote! {
                 match ::regex::Regex::new(#v) {
-                    Err(e) => return Err(::prost_validate::Error::new(#field, format!("Invalid regex pattern: {e}"))),
+                    Err(e) => #maybe_return(::prost_validate::Error::new(#field, format!("Invalid regex pattern: {e}"))),
                     Ok(regex) => {
                         if !regex.is_match(#name.as_str()) {
-                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Pattern(#v.to_string())));
+                            #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Pattern(#v.to_string())));
                         }
                     }
                 }
@@ -104,28 +105,28 @@ impl ToValidationTokens for StringRules {
         let prefix = rules.prefix.map(|v| {
             quote! {
                 if !#name.starts_with(#v) {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Prefix(#v.to_string())));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Prefix(#v.to_string())));
                 }
             }
         });
         let suffix = rules.suffix.map(|v| {
             quote! {
                 if !#name.ends_with(#v) {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Suffix(#v.to_string())));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Suffix(#v.to_string())));
                 }
             }
         });
         let contains = rules.contains.map(|v| {
             quote! {
                 if !#name.contains(#v) {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Contains(#v.to_string())));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Contains(#v.to_string())));
                 }
             }
         });
         let not_contains = rules.not_contains.map(|v| {
             quote! {
                 if #name.contains(#v) {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::NotContains(#v.to_string())));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::NotContains(#v.to_string())));
                 }
             }
         });
@@ -134,7 +135,7 @@ impl ToValidationTokens for StringRules {
             quote! {
                 let values = [#(#v),*];
                 if !values.contains(&#name.as_str()) {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::In(values.iter().map(|v| v.to_string()).collect())));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::In(values.iter().map(|v| v.to_string()).collect())));
                 }
             }
         });
@@ -143,7 +144,7 @@ impl ToValidationTokens for StringRules {
             quote! {
                 let values = [#(#v),*];
                 if values.contains(&#name.as_str()) {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::NotIn(values.iter().map(|v| v.to_string()).collect())));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::NotIn(values.iter().map(|v| v.to_string()).collect())));
                 }
             }
         });
@@ -152,63 +153,63 @@ impl ToValidationTokens for StringRules {
                 string_rules::WellKnown::Email(true) => {
                     quote! {
                         if ::prost_validate::ValidateStringExt::validate_email(&#name).is_err() {
-                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Email));
+                            #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Email));
                         }
                     }
                 }
                 string_rules::WellKnown::Hostname(true) => {
                     quote! {
                         if ::prost_validate::ValidateStringExt::validate_hostname(&#name).is_err() {
-                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Hostname));
+                            #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Hostname));
                         }
                     }
                 }
                 string_rules::WellKnown::Ip(true) => {
                     quote! {
                         if ::prost_validate::ValidateStringExt::validate_ip(&#name).is_err() {
-                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Ip));
+                            #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Ip));
                         }
                     }
                 }
                 string_rules::WellKnown::Ipv4(true) => {
                     quote! {
                         if ::prost_validate::ValidateStringExt::validate_ipv4(&#name).is_err() {
-                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Ipv4));
+                            #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Ipv4));
                         }
                     }
                 }
                 string_rules::WellKnown::Ipv6(true) => {
                     quote! {
                         if ::prost_validate::ValidateStringExt::validate_ipv6(&#name).is_err() {
-                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Ipv6));
+                            #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Ipv6));
                         }
                     }
                 }
                 string_rules::WellKnown::Uri(true) => {
                     quote! {
                         if ::prost_validate::ValidateStringExt::validate_uri(&#name).is_err() {
-                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Uri));
+                            #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Uri));
                         }
                     }
                 }
                 string_rules::WellKnown::UriRef(true) => {
                     quote! {
                         if ::prost_validate::ValidateStringExt::validate_uri_ref(&#name).is_err() {
-                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::UriRef));
+                            #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::UriRef));
                         }
                     }
                 }
                 string_rules::WellKnown::Address(true) => {
                     quote! {
                         if ::prost_validate::ValidateStringExt::validate_address(&#name).is_err() {
-                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Address));
+                            #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Address));
                         }
                     }
                 }
                 string_rules::WellKnown::Uuid(true) => {
                     quote! {
                         if ::prost_validate::ValidateStringExt::validate_uuid(&#name).is_err() {
-                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Uuid));
+                            #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::Uuid));
                         }
                     }
                 }
@@ -218,14 +219,14 @@ impl ToValidationTokens for StringRules {
                         Ok(prost_validate_types::KnownRegex::HttpHeaderName) => {
                             quote! {
                                 if ::prost_validate::ValidateStringExt::validate_header_name(&#name, #strict).is_err() {
-                                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::HttpHeaderName));
+                                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::HttpHeaderName));
                                 }
                             }
                         }
                         Ok(prost_validate_types::KnownRegex::HttpHeaderValue) => {
                             quote! {
                                 if ::prost_validate::ValidateStringExt::validate_header_value(&#name, #strict).is_err() {
-                                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::HttpHeaderValue));
+                                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::string::Error::HttpHeaderValue));
                                 }
                             }
                         }

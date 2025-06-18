@@ -27,11 +27,12 @@ impl ToValidationTokens for BytesRules {
     fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
         let field = &ctx.name;
         let rules = prost_validate_types::BytesRules::from(self.to_owned());
+        let maybe_return = ctx.maybe_return();
         let r#const = rules.r#const.map(|v| {
             let v = LitByteStr::new(v.as_slice(), Span::call_site());
             quote! {
                 if !#name.iter().eq(#v.iter()) {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::Const(#v.to_vec())));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::Const(#v.to_vec())));
                 }
             }
         });
@@ -39,7 +40,7 @@ impl ToValidationTokens for BytesRules {
             let v = v as usize;
             quote! {
                 if #name.len() != #v {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::Len(#v)));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::Len(#v)));
                 }
             }
         });
@@ -47,7 +48,7 @@ impl ToValidationTokens for BytesRules {
             let v = v as usize;
             quote! {
                 if #name.len() < #v {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::MinLen(#v)));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::MinLen(#v)));
                 }
             }
         });
@@ -55,7 +56,7 @@ impl ToValidationTokens for BytesRules {
             let v = v as usize;
             quote! {
                 if #name.len() > #v {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::MaxLen(#v)));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::MaxLen(#v)));
                 }
             }
         });
@@ -65,10 +66,10 @@ impl ToValidationTokens for BytesRules {
             }
             quote! {
                 match ::regex::bytes::Regex::new(#v) {
-                    Err(e) => return Err(::prost_validate::Error::new(#field, format!("Invalid regex pattern: {e}"))),
+                    Err(e) => #maybe_return(::prost_validate::Error::new(#field, format!("Invalid regex pattern: {e}"))),
                     Ok(regex) => {
                         if !regex.is_match(#name.iter().as_slice()) {
-                            return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::Pattern(#v.to_string())));
+                            #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::Pattern(#v.to_string())));
                         }
                     }
                 }
@@ -78,7 +79,7 @@ impl ToValidationTokens for BytesRules {
             let v = LitByteStr::new(v.as_slice(), Span::call_site());
             quote! {
                 if !#name.starts_with(#v) {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::Prefix(#v.to_vec())));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::Prefix(#v.to_vec())));
                 }
             }
         });
@@ -86,7 +87,7 @@ impl ToValidationTokens for BytesRules {
             let v = LitByteStr::new(v.as_slice(), Span::call_site());
             quote! {
                 if !#name.ends_with(#v) {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::Suffix(#v.to_vec())));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::Suffix(#v.to_vec())));
                 }
             }
         });
@@ -94,7 +95,7 @@ impl ToValidationTokens for BytesRules {
             let v = LitByteStr::new(v.as_slice(), Span::call_site());
             quote! {
                 if !::prost_validate::ValidateBytesExt::contains(&#name, #v.as_slice()) {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::Contains(#v.to_vec())));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::Contains(#v.to_vec())));
                 }
             }
         });
@@ -107,7 +108,7 @@ impl ToValidationTokens for BytesRules {
             quote! {
                 let values = [#(#v.to_vec()),*];
                 if !values.contains(&#name) {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::In(values.iter().map(|v| v.to_vec()).collect())));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::In(values.iter().map(|v| v.to_vec()).collect())));
                 }
             }
         });
@@ -120,7 +121,7 @@ impl ToValidationTokens for BytesRules {
             quote! {
                 let values = [#(#v.to_vec()),*];
                 if values.contains(&#name) {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::NotIn(values.iter().map(|v| v.to_vec()).collect())));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::NotIn(values.iter().map(|v| v.to_vec()).collect())));
                 }
             }
         });
@@ -128,21 +129,21 @@ impl ToValidationTokens for BytesRules {
             bytes_rules::WellKnown::Ip(true) => {
                 quote! {
                     if #name.len() != 4 && #name.len() != 16 {
-                        return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::Ip));
+                        #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::Ip));
                     }
                 }
             }
             bytes_rules::WellKnown::Ipv4(true) => {
                 quote! {
                     if #name.len() != 4 {
-                        return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::Ipv4));
+                        #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::Ipv4));
                     }
                 }
             }
             bytes_rules::WellKnown::Ipv6(true) => {
                 quote! {
                     if #name.len() != 16 {
-                        return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::Ipv6));
+                        #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::bytes::Error::Ipv6));
                     }
                 }
             }

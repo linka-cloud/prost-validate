@@ -21,6 +21,14 @@ impl ToValidationTokens for MessageRules {
         let validate = self.skip.not().then(|| {
             let map = quote! { |e| ::prost_validate::Error::new(#field, ::prost_validate::errors::message::Error::Message(Box::new(e))) };
             let name_ref = ctx.boxed.then(|| quote! { let #name = #name.as_ref(); });
+            if ctx.multierrs {
+                return quote! {
+                    #name_ref
+                    if let Err(es) = ::prost_validate::validate_all!(#name) {
+                        errs.extend(es.into_iter().map(#map));
+                    }
+                };
+            }
             quote! {
                 #name_ref
                 ::prost_validate::validate!(#name).map_err(#map)?;

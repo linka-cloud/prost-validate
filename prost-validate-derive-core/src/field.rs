@@ -27,7 +27,18 @@ pub struct Context<'a> {
     pub oneof: bool,
     pub prost_types: bool,
     pub wrapper: bool,
+    pub multierrs: bool,
     pub module: Option<String>,
+}
+
+impl<'a> Context<'a> {
+    pub(crate) fn maybe_return(&self) -> TokenStream {
+        if self.multierrs {
+            quote! { errs.push }
+        } else {
+            quote! { return Err }
+        }
+    }
 }
 
 pub trait ToValidationTokens {
@@ -42,6 +53,7 @@ pub struct Field {
     pub prost: ProstField,
     pub oneof: bool,
     pub map: bool,
+    pub multierrs: bool,
     pub module: Option<String>,
 }
 
@@ -74,6 +86,7 @@ impl Field {
             validation,
             oneof,
             map: map.is_some(),
+            multierrs: false,
             module: None,
         }
     }
@@ -558,6 +571,7 @@ impl ToTokens for Field {
                 map: self.map,
                 oneof: self.oneof,
                 prost_types: self.is_prost_types(),
+                multierrs: self.multierrs,
                 module: self.module.clone(),
             };
             let name = if self.oneof {
@@ -574,9 +588,10 @@ impl ToTokens for Field {
             let body = self.validation.to_validation_tokens(&ctx, name);
             let required = ctx.required.then(|| {
                 let field = &ctx.name;
+                let maybe_return = ctx.maybe_return();
                 quote! {
                     if self.#name.is_none() {
-                        return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::message::Error::Required));
+                        #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::message::Error::Required));
                     }
                 }
             });
@@ -775,10 +790,9 @@ pub fn with_ignore_empty(name: &syn::Ident, ignore_empty: bool, body: TokenStrea
     }
     if ignore_empty {
         quote! {
-            if #name.is_empty() {
-                return Ok(());
+            if !#name.is_empty() {
+                #body
             }
-            #body
         }
     } else {
         quote! {

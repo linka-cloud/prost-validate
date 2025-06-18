@@ -10,7 +10,14 @@ pub struct OneOfRules {
 }
 
 impl ToValidationTokens for OneOfRules {
-    fn to_validation_tokens(&self, _: &Context, name: &Ident) -> TokenStream {
+    fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
+        if ctx.multierrs {
+            return quote! {
+                if let Err(es) = ::prost_validate::validate_all!(#name) {
+                    errs.extend(es.into_iter());
+                }
+            };
+        }
         quote! {
             ::prost_validate::validate!(#name)?;
         }
