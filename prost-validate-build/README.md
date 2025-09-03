@@ -60,7 +60,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ### Generating `prost-build` configuration for usage with other generators
 
-#### Example for `prost-reflect-build` and `tonic-build`
+#### Example for `prost-reflect-build` and `tonic-prost-build`
 
 `service.proto`:
 

@@ -14,10 +14,11 @@ prost = { workspace = true }
 prost-reflect = { workspace = true }
 prost-validate = { workspace = true, features = ["derive"] }
 tonic = { workspace = true }
+tonic-prost = { workspace = true }
 once_cell = { workspace = true }
 
 [build-dependencies]
 prost-build = { workspace = true }
 prost-reflect-build = { workspace = true }
 prost-validate-build = { workspace = true }
-tonic-build = { workspace = true }
+tonic-prost-build = { workspace = true }
