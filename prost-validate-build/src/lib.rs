@@ -15,7 +15,7 @@ mod rules;
 
 use crate::rules::IntoFieldAttribute;
 use prost_reflect::prost_types::FileDescriptorProto;
-use prost_reflect::{DescriptorPool, OneofDescriptor};
+use prost_reflect::{DescriptorPool, FieldDescriptor, OneofDescriptor};
 use prost_validate_types::{FieldRulesExt, MessageRulesExt, OneofRulesExt};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -157,7 +157,7 @@ impl Builder {
                 if oneofs.contains_key(field.full_name()) {
                     continue;
                 }
-                if let Some(ref desc) = field.containing_oneof() {
+                if let Some(ref desc) = containing_non_synthetic_oneof(&field) {
                     config.field_attribute(
                         desc.full_name(),
                         format!("#[validate(name = \"{}\")]", desc.full_name()),
@@ -198,4 +198,13 @@ impl Builder {
             }
         }
     }
+}
+
+fn containing_non_synthetic_oneof(field: &FieldDescriptor) -> Option<OneofDescriptor> {
+    if let Some(desc) = field.containing_oneof() {
+        if !desc.is_synthetic() {
+            return Some(desc);
+        }
+    };
+    None
 }
