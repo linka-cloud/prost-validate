@@ -23,14 +23,16 @@ license = "Apache-2.0"
 repository = "https://github.com/linka-cloud/prost-validate"
 
 [workspace.dependencies]
-prost = "0.13.2"
-prost-build = "0.13.2"
-prost-types = "0.13.2"
-prost-reflect = { version = "0.14.1", features = ["derive", "serde"] }
-prost-reflect-build = "0.14.0"
-tonic = "0.12.3"
-tonic-types = "0.12.3"
-tonic-build = "0.12.3"
+prost = "0.14"
+prost-build = "0.14"
+prost-types = "0.14"
+prost-reflect = { version = "0.16", features = ["derive", "serde"] }
+prost-reflect-build = "0.16"
+tonic = "0.14"
+tonic-types = "0.14"
+tonic-build = "0.14"
+tonic-prost = "0.14"
+tonic-prost-build = "0.14"
 anyhow = "1.0.86"
 thiserror = "1.0.63"
 http = "1.1.0"
@@ -45,9 +47,9 @@ quote = "1"
 proc-macro2 = "1"
 proc-macro-error = "1"
 darling = { version = "0.20", features = ["suggestions"] }
-pbjson-build = "0.7.0"
-pbjson = { version = "0.7.0" }
-pbjson-types = "0.7.0"
+pbjson-build = "0.8.0"
+pbjson = { version = "0.8.0" }
+pbjson-types = "0.8.0"
 serde = { version = "1.0.210", features = ["derive"] }
 
 prost-validate = { version = "0.2.7", path = "prost-validate" }
