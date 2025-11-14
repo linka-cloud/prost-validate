@@ -34,6 +34,7 @@ impl From<Error> for tonic_types::FieldViolation {
         Self {
             field: value.field,
             description: value.details.to_string(),
+            ..tonic_types::FieldViolation::default()
         }
     }
 }
