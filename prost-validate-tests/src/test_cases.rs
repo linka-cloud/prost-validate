@@ -608,6 +608,8 @@ mod bool {
 mod string {
 
     test_cases![
+        string_optional_len_valid,
+        string_optional_len_invalid,
         string_none_valid,
         string_const_valid,
         string_const_invalid,
@@ -1014,6 +1016,8 @@ mod map {
 mod oneof {
 
     test_cases![
+        oneof_single_invalid,
+        oneof_single_valid,
         oneof_none_valid,
         oneof_none_valid_empty,
         oneof_field_valid_x,
