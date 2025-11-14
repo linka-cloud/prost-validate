@@ -54,7 +54,7 @@ impl Field {
         map: Option<(String, String)>,
         oneof: bool,
     ) -> Self {
-        let typ = ty.to_token_stream().to_string().replace(" ", "");
+        let typ = ty.to_token_stream().to_string().replace(' ', "");
         let mut validation = validation;
         if validation.r#type.is_none() && validation.message.is_none() {
             if map.is_some() {
@@ -81,7 +81,7 @@ impl Field {
         self.prost
             .message
             .is_true_and(|| {
-                let typ = self.ty.to_token_stream().to_string().replace(" ", "");
+                let typ = self.ty.to_token_stream().to_string().replace(' ', "");
                 WKT.contains(&typ.as_str())
             })
             .unwrap_or_default()
@@ -91,19 +91,21 @@ impl Field {
         self.prost
             .message
             .is_true_and(|| {
-                let typ = self.ty.to_token_stream().to_string().replace(" ", "");
+                let typ = self.ty.to_token_stream().to_string().replace(' ', "");
                 WKT_WRAPPERS.contains(&typ.as_str())
             })
             .unwrap_or_default()
     }
 
     pub fn is_prost_types(&self) -> bool {
-        self.is_wrapper()
-            .then(|| {
-                let typ = self.ty.to_token_stream().to_string().replace(" ", "");
+        if self.is_wrapper() {
+            {
+                let typ = self.ty.to_token_stream().to_string().replace(' ', "");
                 !typ.contains("::pbjson_types::") && !typ.contains("::google::protobuf::")
-            })
-            .unwrap_or_default()
+            }
+        } else {
+            Default::default()
+        }
     }
 
     pub fn validate(&self) -> darling::Result<()> {
@@ -151,7 +153,7 @@ impl Field {
             )));
         }
         if self.prost.message.is_some() {
-            let typ = self.ty.to_token_stream().to_string().replace(" ", "");
+            let typ = self.ty.to_token_stream().to_string().replace(' ', "");
             match typ.as_str() {
                 "::core::option::Option<::prost_types::Timestamp>" => {
                     if self.validation.r#type.is_some()
