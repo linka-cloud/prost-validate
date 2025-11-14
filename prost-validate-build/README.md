@@ -59,7 +59,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ### Generating `prost-build` configuration for usage with other generators
 
-#### Example for `prost-reflect-build` and `tonic-build`
+#### Example for `prost-reflect-build` and `tonic-prost-build`
 
 `service.proto`:
 
@@ -86,7 +86,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut config = {
         let mut c = prost_build::Config::new();
-        c.service_generator(tonic_build::configure().service_generator());
+        c.service_generator(tonic_prost_build::configure().service_generator());
         c
     };
 
