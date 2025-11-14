@@ -1,6 +1,9 @@
 #[allow(clippy::trivially_copy_pass_by_ref)]
 #[allow(clippy::enum_variant_names)]
 #[allow(clippy::disallowed_names)]
+#[allow(dead_code)]
+#[allow(unknown_lints)]
+#[allow(clippy::regex_creation_in_loops)]
 pub(crate) mod cases {
     include!(concat!(env!("OUT_DIR"), "/pbjson/tests.harness.cases.rs"));
 
@@ -26,6 +29,7 @@ pub(crate) mod cases {
 
 #[allow(clippy::trivially_copy_pass_by_ref)]
 #[allow(clippy::enum_variant_names)]
+#[allow(dead_code)]
 pub(crate) mod harness {
     include!(concat!(env!("OUT_DIR"), "/pbjson/tests.harness.rs"));
 }

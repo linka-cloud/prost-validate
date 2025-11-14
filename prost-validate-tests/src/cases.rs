@@ -4756,12 +4756,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "bytes_ipv6_valid_ignore_empty",
-            Box::new(|| {
-                (
-                    Box::new(BytesIPv6Ignore::default()) as Box<dyn Validator>,
-                    0,
-                )
-            }) as Factory,
+            Box::new(|| (Box::<BytesIPv6Ignore>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "enum_none_valid",
@@ -5238,7 +5233,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "message_none_valid_unset",
-            Box::new(|| (Box::new(MessageNone::default()) as Box<dyn Validator>, 0)) as Factory,
+            Box::new(|| (Box::<MessageNone>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "message_disabled_valid",
@@ -5287,7 +5282,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "message_field_valid_unset",
-            Box::new(|| (Box::new(cases::Message::default()) as Box<dyn Validator>, 0)) as Factory,
+            Box::new(|| (Box::<Message>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "message_field_invalid",
@@ -5307,7 +5302,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
                     Box::new(cases::Message {
                         val: Some(TestMsg {
                             r#const: "foo".to_string(),
-                            nested: Some(Box::new(TestMsg::default())),
+                            nested: Some(Box::default()),
                         }),
                     }) as Box<dyn Validator>,
                     1,
@@ -5355,18 +5350,13 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "message_required_invalid",
-            Box::new(|| {
-                (
-                    Box::new(MessageRequired::default()) as Box<dyn Validator>,
-                    1,
-                )
-            }) as Factory,
+            Box::new(|| (Box::<MessageRequired>::default() as Box<dyn Validator>, 1)) as Factory,
         ),
         (
             "message_required_invalid_oneof",
             Box::new(|| {
                 (
-                    Box::new(MessageRequiredOneof::default()) as Box<dyn Validator>,
+                    Box::<MessageRequiredOneof>::default() as Box<dyn Validator>,
                     1,
                 )
             }) as Factory,
@@ -5386,7 +5376,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
             "message_cross_package_embed_none_valid_nil",
             Box::new(|| {
                 (
-                    Box::new(MessageCrossPackage::default()) as Box<dyn Validator>,
+                    Box::<MessageCrossPackage>::default() as Box<dyn Validator>,
                     0,
                 )
             }) as Factory,
@@ -5431,7 +5421,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
             "message_required_valid_unset",
             Box::new(|| {
                 (
-                    Box::new(MessageRequiredButOptional::default()) as Box<dyn Validator>,
+                    Box::<MessageRequiredButOptional>::default() as Box<dyn Validator>,
                     0,
                 )
             }) as Factory,
@@ -5458,21 +5448,11 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "repeated_embed_none_valid_nil",
-            Box::new(|| {
-                (
-                    Box::new(RepeatedEmbedNone::default()) as Box<dyn Validator>,
-                    0,
-                )
-            }) as Factory,
+            Box::new(|| (Box::<RepeatedEmbedNone>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "repeated_embed_none_valid_empty",
-            Box::new(|| {
-                (
-                    Box::new(RepeatedEmbedNone::default()) as Box<dyn Validator>,
-                    0,
-                )
-            }) as Factory,
+            Box::new(|| (Box::<RepeatedEmbedNone>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "repeated_embed_none_invalid",
@@ -5500,7 +5480,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
             "repeated_cross_package_embed_none_valid_nil",
             Box::new(|| {
                 (
-                    Box::new(RepeatedEmbedCrossPackageNone::default()) as Box<dyn Validator>,
+                    Box::<RepeatedEmbedCrossPackageNone>::default() as Box<dyn Validator>,
                     0,
                 )
             }) as Factory,
@@ -5509,7 +5489,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
             "repeated_cross_package_embed_none_valid_empty",
             Box::new(|| {
                 (
-                    Box::new(RepeatedEmbedCrossPackageNone::default()) as Box<dyn Validator>,
+                    Box::<RepeatedEmbedCrossPackageNone>::default() as Box<dyn Validator>,
                     0,
                 )
             }) as Factory,
@@ -5635,7 +5615,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "repeated_min_max_invalid_below",
-            Box::new(|| (Box::new(RepeatedMinMax::default()) as Box<dyn Validator>, 1)) as Factory,
+            Box::new(|| (Box::<RepeatedMinMax>::default() as Box<dyn Validator>, 1)) as Factory,
         ),
         (
             "repeated_min_max_invalid_above",
@@ -5690,7 +5670,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "repeated_unique_valid_empty",
-            Box::new(|| (Box::new(RepeatedUnique::default()) as Box<dyn Validator>, 0)) as Factory,
+            Box::new(|| (Box::<RepeatedUnique>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "repeated_unique_valid_case_sensitivity",
@@ -5732,12 +5712,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "repeated_items_valid_empty",
-            Box::new(|| {
-                (
-                    Box::new(RepeatedItemRule::default()) as Box<dyn Validator>,
-                    0,
-                )
-            }) as Factory,
+            Box::new(|| (Box::<RepeatedItemRule>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "repeated_items_valid_max_len",
@@ -6036,7 +6011,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
             "repeated_min_and_max_items_len_invalid_min_len",
             Box::new(|| {
                 (
-                    Box::new(RepeatedMinAndMaxItemLen::default()) as Box<dyn Validator>,
+                    Box::<RepeatedMinAndMaxItemLen>::default() as Box<dyn Validator>,
                     1,
                 )
             }) as Factory,
@@ -6073,12 +6048,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "repeated_duration_gte_valid_empty",
-            Box::new(|| {
-                (
-                    Box::new(RepeatedDuration::default()) as Box<dyn Validator>,
-                    0,
-                )
-            }) as Factory,
+            Box::new(|| (Box::<RepeatedDuration>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "repeated_duration_gte_valid_equal",
@@ -6112,7 +6082,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
             "repeated_exact_valid_ignore_empty",
             Box::new(|| {
                 (
-                    Box::new(RepeatedExactIgnore::default()) as Box<dyn Validator>,
+                    Box::<RepeatedExactIgnore>::default() as Box<dyn Validator>,
                     0,
                 )
             }) as Factory,
@@ -6528,7 +6498,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "map_exact_valid_ignore_empty",
-            Box::new(|| (Box::new(MapExactIgnore::default()) as Box<dyn Validator>, 0)) as Factory,
+            Box::new(|| (Box::<MapExactIgnore>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "map_multiple_valid",
@@ -6578,7 +6548,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "oneof_none_valid_empty",
-            Box::new(|| (Box::new(OneOfNone::default()) as Box<dyn Validator>, 0)) as Factory,
+            Box::new(|| (Box::<OneOfNone>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "oneof_field_valid_x",
@@ -6615,7 +6585,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "oneof_field_valid_empty",
-            Box::new(|| (Box::new(OneOf::default()) as Box<dyn Validator>, 0)) as Factory,
+            Box::new(|| (Box::<OneOf>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "oneof_field_invalid_x",
@@ -6663,7 +6633,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "oneof_require_invalid",
-            Box::new(|| (Box::new(OneOfRequired::default()) as Box<dyn Validator>, 1)) as Factory,
+            Box::new(|| (Box::<OneOfRequired>::default() as Box<dyn Validator>, 1)) as Factory,
         ),
         (
             "oneof_ignore_empty_valid_x",
@@ -6983,7 +6953,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
             "wrapper_required_string_invalid_empty",
             Box::new(|| {
                 (
-                    Box::new(WrapperRequiredString::default()) as Box<dyn Validator>,
+                    Box::<WrapperRequiredString>::default() as Box<dyn Validator>,
                     1,
                 )
             }) as Factory,
@@ -7014,7 +6984,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
             "wrapper_required_string_empty_invalid_empty",
             Box::new(|| {
                 (
-                    Box::new(WrapperRequiredEmptyString::default()) as Box<dyn Validator>,
+                    Box::<WrapperRequiredEmptyString>::default() as Box<dyn Validator>,
                     1,
                 )
             }) as Factory,
@@ -7034,7 +7004,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
             "wrapper_optional_string_uuid_valid_empty",
             Box::new(|| {
                 (
-                    Box::new(WrapperOptionalUuidString::default()) as Box<dyn Validator>,
+                    Box::<WrapperOptionalUuidString>::default() as Box<dyn Validator>,
                     0,
                 )
             }) as Factory,
@@ -7072,7 +7042,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
             "wrapper_required_float_invalid_empty",
             Box::new(|| {
                 (
-                    Box::new(WrapperRequiredFloat::default()) as Box<dyn Validator>,
+                    Box::<WrapperRequiredFloat>::default() as Box<dyn Validator>,
                     1,
                 )
             }) as Factory,
@@ -7104,12 +7074,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "duration_required_invalid",
-            Box::new(|| {
-                (
-                    Box::new(DurationRequired::default()) as Box<dyn Validator>,
-                    1,
-                )
-            }) as Factory,
+            Box::new(|| (Box::<DurationRequired>::default() as Box<dyn Validator>, 1)) as Factory,
         ),
         (
             "duration_const_valid",
@@ -7127,7 +7092,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "duration_const_valid_empty",
-            Box::new(|| (Box::new(DurationConst::default()) as Box<dyn Validator>, 0)) as Factory,
+            Box::new(|| (Box::<DurationConst>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "duration_const_invalid",
@@ -7159,7 +7124,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "duration_in_valid_empty",
-            Box::new(|| (Box::new(DurationIn::default()) as Box<dyn Validator>, 0)) as Factory,
+            Box::new(|| (Box::<DurationIn>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "duration_in_invalid",
@@ -7188,7 +7153,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "duration_not_in_valid_empty",
-            Box::new(|| (Box::new(DurationNotIn::default()) as Box<dyn Validator>, 0)) as Factory,
+            Box::new(|| (Box::<DurationNotIn>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "duration_not_in_invalid",
@@ -7217,7 +7182,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "duration_lt_valid_empty",
-            Box::new(|| (Box::new(DurationLt::default()) as Box<dyn Validator>, 0)) as Factory,
+            Box::new(|| (Box::<DurationLt>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "duration_lt_invalid_equal",
@@ -7257,7 +7222,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "duration_lte_valid_empty",
-            Box::new(|| (Box::new(DurationLte::default()) as Box<dyn Validator>, 0)) as Factory,
+            Box::new(|| (Box::<DurationLte>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "duration_lte_valid_equal",
@@ -7303,7 +7268,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "duration_gt_valid_empty",
-            Box::new(|| (Box::new(DurationGt::default()) as Box<dyn Validator>, 0)) as Factory,
+            Box::new(|| (Box::<DurationGt>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "duration_gt_invalid_equal",
@@ -7346,7 +7311,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "duration_gte_valid_empty",
-            Box::new(|| (Box::new(DurationGte::default()) as Box<dyn Validator>, 0)) as Factory,
+            Box::new(|| (Box::<DurationGte>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "duration_gte_valid_equal",
@@ -7392,7 +7357,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "duration_gt_lt_valid_empty",
-            Box::new(|| (Box::new(DurationGtlt::default()) as Box<dyn Validator>, 0)) as Factory,
+            Box::new(|| (Box::<DurationGtlt>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "duration_gt_lt_invalid_above",
@@ -7449,7 +7414,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "duration_exclusive_gt_lt_valid_empty",
-            Box::new(|| (Box::new(DurationExLtgt::default()) as Box<dyn Validator>, 0)) as Factory,
+            Box::new(|| (Box::<DurationExLtgt>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "duration_exclusive_gt_lt_valid_above",
@@ -7534,7 +7499,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "duration_gte_lte_valid_empty",
-            Box::new(|| (Box::new(DurationGtelte::default()) as Box<dyn Validator>, 0)) as Factory,
+            Box::new(|| (Box::<DurationGtelte>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "duration_gte_lte_valid_max",
@@ -7594,12 +7559,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "duration_gte_lte_valid_empty_2",
-            Box::new(|| {
-                (
-                    Box::new(DurationExGtelte::default()) as Box<dyn Validator>,
-                    0,
-                )
-            }) as Factory,
+            Box::new(|| (Box::<DurationExGtelte>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "duration_exclusive_gte_lte_valid_above",
@@ -7730,7 +7690,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "timestamp_const_valid_empty",
-            Box::new(|| (Box::new(TimestampConst::default()) as Box<dyn Validator>, 0)) as Factory,
+            Box::new(|| (Box::<TimestampConst>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "timestamp_const_invalid",
@@ -7762,7 +7722,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "timestamp_lt_valid_empty",
-            Box::new(|| (Box::new(TimestampLt::default()) as Box<dyn Validator>, 0)) as Factory,
+            Box::new(|| (Box::<TimestampLt>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "timestamp_lt_invalid_equal",
@@ -7802,7 +7762,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "timestamp_lte_valid_empty",
-            Box::new(|| (Box::new(TimestampLte::default()) as Box<dyn Validator>, 0)) as Factory,
+            Box::new(|| (Box::<TimestampLte>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "timestamp_lte_valid_equal",
@@ -7848,7 +7808,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "timestamp_gt_valid_empty",
-            Box::new(|| (Box::new(TimestampGt::default()) as Box<dyn Validator>, 0)) as Factory,
+            Box::new(|| (Box::<TimestampGt>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "timestamp_gt_invalid_equal",
@@ -7891,7 +7851,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "timestamp_gte_valid_empty",
-            Box::new(|| (Box::new(TimestampGte::default()) as Box<dyn Validator>, 0)) as Factory,
+            Box::new(|| (Box::<TimestampGte>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "timestamp_gte_valid_equal",
@@ -7937,7 +7897,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "timestamp_gt_lt_valid_empty",
-            Box::new(|| (Box::new(TimestampGtlt::default()) as Box<dyn Validator>, 0)) as Factory,
+            Box::new(|| (Box::<TimestampGtlt>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "timestamp_gt_lt_invalid_above",
@@ -7994,12 +7954,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "timestamp_exclusive_gt_lt_valid_empty",
-            Box::new(|| {
-                (
-                    Box::new(TimestampExLtgt::default()) as Box<dyn Validator>,
-                    0,
-                )
-            }) as Factory,
+            Box::new(|| (Box::<TimestampExLtgt>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "timestamp_exclusive_gt_lt_valid_above",
@@ -8084,12 +8039,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "timestamp_gte_lte_valid_empty",
-            Box::new(|| {
-                (
-                    Box::new(TimestampGtelte::default()) as Box<dyn Validator>,
-                    0,
-                )
-            }) as Factory,
+            Box::new(|| (Box::<TimestampGtelte>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "timestamp_gte_lte_valid_max",
@@ -8149,12 +8099,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "timestamp_gte_lte_valid_empty_2",
-            Box::new(|| {
-                (
-                    Box::new(TimestampExGtelte::default()) as Box<dyn Validator>,
-                    0,
-                )
-            }) as Factory,
+            Box::new(|| (Box::<TimestampExGtelte>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "timestamp_exclusive_gte_lte_valid_above",
@@ -8236,7 +8181,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "timestamp_lt_now_valid_empty",
-            Box::new(|| (Box::new(TimestampLtNow::default()) as Box<dyn Validator>, 0)) as Factory,
+            Box::new(|| (Box::<TimestampLtNow>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "timestamp_lt_now_invalid",
@@ -8268,7 +8213,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "timestamp_gt_now_valid_empty",
-            Box::new(|| (Box::new(TimestampGtNow::default()) as Box<dyn Validator>, 0)) as Factory,
+            Box::new(|| (Box::<TimestampGtNow>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "timestamp_gt_now_invalid",
@@ -8297,12 +8242,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "timestamp_within_valid_empty",
-            Box::new(|| {
-                (
-                    Box::new(TimestampWithin::default()) as Box<dyn Validator>,
-                    0,
-                )
-            }) as Factory,
+            Box::new(|| (Box::<TimestampWithin>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "timestamp_within_invalid_below",
@@ -8347,7 +8287,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
             "timestamp_lt_now_within_valid_empty",
             Box::new(|| {
                 (
-                    Box::new(TimestampLtNowWithin::default()) as Box<dyn Validator>,
+                    Box::<TimestampLtNowWithin>::default() as Box<dyn Validator>,
                     0,
                 )
             }) as Factory,
@@ -8398,7 +8338,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
             "timestamp_gt_now_within_valid_empty",
             Box::new(|| {
                 (
-                    Box::new(TimestampGtNowWithin::default()) as Box<dyn Validator>,
+                    Box::<TimestampGtNowWithin>::default() as Box<dyn Validator>,
                     0,
                 )
             }) as Factory,
@@ -8473,7 +8413,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "any_in_valid_empty",
-            Box::new(|| (Box::new(AnyIn::default()) as Box<dyn Validator>, 0)) as Factory,
+            Box::new(|| (Box::<AnyIn>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "any_in_invalid",
@@ -8505,7 +8445,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
         ),
         (
             "any_not_in_valid_empty",
-            Box::new(|| (Box::new(AnyNotIn::default()) as Box<dyn Validator>, 0)) as Factory,
+            Box::new(|| (Box::<AnyNotIn>::default() as Box<dyn Validator>, 0)) as Factory,
         ),
         (
             "any_not_in_invalid",
@@ -8565,7 +8505,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
             "kitchensink_valid_unset",
             Box::new(|| {
                 (
-                    Box::new(KitchenSinkMessage::default()) as Box<dyn Validator>,
+                    Box::<KitchenSinkMessage>::default() as Box<dyn Validator>,
                     0,
                 )
             }) as Factory,
@@ -8587,7 +8527,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
                 (
                     Box::new(KitchenSinkMessage {
                         val: Some(ComplexTestMsg {
-                            another: Some(Box::new(ComplexTestMsg::default())),
+                            another: Some(Box::default()),
                             ..ComplexTestMsg::default()
                         }),
                     }) as Box<dyn Validator>,
@@ -8603,7 +8543,7 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
                         val: Some(ComplexTestMsg {
                             r#const: "abcd".to_string(),
                             bool_const: true,
-                            nested: Some(Box::new(ComplexTestMsg::default())),
+                            nested: Some(Box::default()),
                             ..ComplexTestMsg::default()
                         }),
                     }) as Box<dyn Validator>,

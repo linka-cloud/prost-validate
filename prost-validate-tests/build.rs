@@ -34,7 +34,7 @@ fn main() -> Result<()> {
         gen(
             dir.strip_prefix("proto/")
                 .unwrap()
-                .replace("/", "_")
+                .replace('/', "_")
                 .as_str(),
             &files,
             &includes,
