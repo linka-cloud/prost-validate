@@ -50,3 +50,5 @@ for f in $(find . -name "README.md"); do
     sed -i "s|$current|$last|g" $f
   fi
 done
+
+cargo publish -n --workspace --allow-dirty

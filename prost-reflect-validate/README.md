@@ -1,6 +1,6 @@
 [![crates.io](https://img.shields.io/crates/v/prost-reflect-validate.svg)](https://crates.io/crates/prost-reflect-validate/)
 [![docs.rs](https://docs.rs/prost-reflect-validate/badge.svg)](https://docs.rs/prost-reflect-validate/)
-[![deps.rs](https://deps.rs/crate/prost-reflect-validate/0.2.7/status.svg)](https://deps.rs/crate/prost-reflect-validate)
+[![deps.rs](https://deps.rs/crate/prost-reflect-validate/0.2.8/status.svg)](https://deps.rs/crate/prost-reflect-validate)
 [![Continuous integration](https://github.com/linka-cloud/prost-validate/actions/workflows/ci_reflect.yml/badge.svg)](https://github.com/linka-cloud/prost-validate/actions/workflows/ci_reflect.yml)
 ![Apache 2.0](https://img.shields.io/badge/license-Apache2.0-blue.svg)
 

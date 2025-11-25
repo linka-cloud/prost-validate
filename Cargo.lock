@@ -383,7 +383,7 @@ dependencies = [
 
 [[package]]
 name = "example"
-version = "0.2.7"
+version = "0.2.8"
 dependencies = [
  "example-proto",
  "once_cell",
@@ -395,7 +395,7 @@ dependencies = [
 
 [[package]]
 name = "example-proto"
-version = "0.2.7"
+version = "0.2.8"
 dependencies = [
  "once_cell",
  "prost",
@@ -1076,7 +1076,7 @@ dependencies = [
 
 [[package]]
 name = "prost-reflect-validate"
-version = "0.2.7"
+version = "0.2.8"
 dependencies = [
  "anyhow",
  "email_address",
@@ -1106,7 +1106,7 @@ dependencies = [
 
 [[package]]
 name = "prost-validate"
-version = "0.2.7"
+version = "0.2.8"
 dependencies = [
  "anyhow",
  "email_address",
@@ -1127,7 +1127,7 @@ dependencies = [
 
 [[package]]
 name = "prost-validate-build"
-version = "0.2.7"
+version = "0.2.8"
 dependencies = [
  "heck",
  "prost-build",
@@ -1138,7 +1138,7 @@ dependencies = [
 
 [[package]]
 name = "prost-validate-derive"
-version = "0.2.7"
+version = "0.2.8"
 dependencies = [
  "proc-macro2",
  "prost-validate-derive-core",
@@ -1146,7 +1146,7 @@ dependencies = [
 
 [[package]]
 name = "prost-validate-derive-core"
-version = "0.2.7"
+version = "0.2.8"
 dependencies = [
  "anyhow",
  "darling",
@@ -1166,7 +1166,7 @@ dependencies = [
 
 [[package]]
 name = "prost-validate-tests"
-version = "0.2.7"
+version = "0.2.8"
 dependencies = [
  "anyhow",
  "criterion",
@@ -1187,7 +1187,7 @@ dependencies = [
 
 [[package]]
 name = "prost-validate-types"
-version = "0.2.7"
+version = "0.2.8"
 dependencies = [
  "anyhow",
  "once_cell",
@@ -2030,7 +2030,7 @@ checksum = "d6bbff5f0aada427a1e5a6da5f1f98158182f26556f345ac9e04d36d0ebed650"
 
 [[package]]
 name = "xtask"
-version = "0.2.7"
+version = "0.2.8"
 dependencies = [
  "anyhow",
 ]
