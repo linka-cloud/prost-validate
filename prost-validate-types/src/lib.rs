@@ -40,6 +40,8 @@ static VALIDATION_ONE_OF_RULES: Lazy<ExtensionDescriptor> = Lazy::new(|| {
 
 pub trait FieldRulesExt {
     fn validation_rules(&self) -> anyhow::Result<Option<FieldRules>>;
+    fn real_oneof(&self) -> Option<OneofDescriptor>;
+    fn optional(&self) -> bool;
 }
 
 impl FieldRulesExt for FieldDescriptor {
@@ -52,6 +54,19 @@ impl FieldRulesExt for FieldDescriptor {
             Some(r) => Ok(Some(r.transcode_to::<FieldRules>()?)),
             None => Ok(None),
         }
+    }
+    fn real_oneof(&self) -> Option<OneofDescriptor> {
+        if let Some(oneof) = self.containing_oneof() {
+            if oneof.is_synthetic() {
+                return None;
+            }
+            return Some(oneof);
+        }
+        None
+    }
+
+    fn optional(&self) -> bool {
+        self.containing_oneof().is_some_and(|d| d.is_synthetic())
     }
 }
 

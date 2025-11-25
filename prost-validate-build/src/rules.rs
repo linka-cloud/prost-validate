@@ -1,6 +1,6 @@
 use prost_reflect::{DynamicMessage, FieldDescriptor, Kind, ReflectMessage, Value};
 use prost_validate_derive_core::sanitize_identifier;
-use prost_validate_types::FieldRules;
+use prost_validate_types::{FieldRules, FieldRulesExt};
 use std::collections::HashMap;
 
 pub(crate) trait IntoFieldAttribute {
@@ -42,7 +42,7 @@ fn message_to_annotation(msg: DynamicMessage) -> String {
         if !val.is_valid(&kind) && !val.is_default(&kind) {
             continue;
         }
-        if let Some(oneof) = desc.containing_oneof() {
+        if let Some(oneof) = desc.real_oneof() {
             for field in oneof.fields() {
                 oneofs.insert(field.full_name().to_string(), oneof.name().to_string());
             }

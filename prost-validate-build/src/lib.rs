@@ -157,7 +157,7 @@ impl Builder {
                 if oneofs.contains_key(field.full_name()) {
                     continue;
                 }
-                if let Some(ref desc) = field.containing_oneof() {
+                if let Some(ref desc) = field.real_oneof() {
                     config.field_attribute(
                         desc.full_name(),
                         format!("#[validate(name = \"{}\")]", desc.full_name()),
@@ -191,6 +191,9 @@ impl Builder {
                     continue;
                 }
                 let field_attribute = field_rules.into_field_attribute();
+                if field.optional() {
+                    config.field_attribute(field.full_name(), "#[validate(optional)]");
+                }
                 if let Some(attribute) = field_attribute {
                     config
                         .field_attribute(field.full_name(), format!("#[validate({})]", attribute));
