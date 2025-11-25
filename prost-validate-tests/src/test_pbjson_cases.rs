@@ -608,7 +608,11 @@ mod bool {
 mod string {
 
     test_cases![
+        oneof_single_invalid,
+        oneof_single_valid,
         string_none_valid,
+        string_optional_len_valid,
+        string_optional_len_invalid,
         string_const_valid,
         string_const_invalid,
         string_in_valid,

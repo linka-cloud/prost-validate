@@ -8,6 +8,12 @@ message TestOneOfMsg {
     bool val = 1 [(validate.rules).bool.const = true];
 }
 
+message OneOfSingle {
+  oneof o {
+    string       x = 1 [(validate.rules).string = {min_len: 3, max_len: 5}];
+  }
+}
+
 message OneOfNone {
     oneof o {
         string       x = 1;

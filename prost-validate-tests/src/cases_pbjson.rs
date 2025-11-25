@@ -2472,6 +2472,28 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
             }) as Factory,
         ),
         (
+            "string_optional_len_valid",
+            Box::new(|| {
+                (
+                    Box::new(StringOptional {
+                        val: Some("123".to_string()),
+                    }) as Box<dyn Validator>,
+                    0,
+                )
+            }) as Factory,
+        ),
+        (
+            "string_optional_len_invalid",
+            Box::new(|| {
+                (
+                    Box::new(StringOptional {
+                        val: Some("".to_string()),
+                    }) as Box<dyn Validator>,
+                    1,
+                )
+            }) as Factory,
+        ),
+        (
             "string_const_valid",
             Box::new(|| {
                 (
@@ -6451,6 +6473,28 @@ pub static CASES: Lazy<HashMap<&'static str, Factory>> = Lazy::new(|| {
                         third: HashMap::default(),
                     }) as Box<dyn Validator>,
                     0,
+                )
+            }) as Factory,
+        ),
+        (
+            "oneof_single_valid",
+            Box::new(|| {
+                (
+                    Box::new(OneOfSingle {
+                        o: Some(one_of_single::O::X("foo".to_string())),
+                    }) as Box<dyn Validator>,
+                    0,
+                )
+            }) as Factory,
+        ),
+        (
+            "oneof_single_invalid",
+            Box::new(|| {
+                (
+                    Box::new(OneOfSingle {
+                        o: Some(one_of_single::O::X("".to_string())),
+                    }) as Box<dyn Validator>,
+                    1,
                 )
             }) as Factory,
         ),

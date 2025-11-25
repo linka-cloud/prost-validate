@@ -17,6 +17,7 @@ pub struct Context<'a> {
     #[allow(unused)]
     pub ty: &'a Option<syn::Type>,
     pub optional: bool,
+    pub optional_keyword: bool,
     pub required: bool,
     pub boxed: bool,
     pub repeated: bool,
@@ -550,6 +551,7 @@ impl ToTokens for Field {
                 name: &self.validation.name,
                 ty: &self.ty,
                 optional: self.prost.optional,
+                optional_keyword: self.validation.optional.unwrap_or_default(),
                 required: self.validation.required(),
                 boxed: self.prost.boxed.unwrap_or_default(),
                 repeated: self.prost.repeated,
@@ -574,7 +576,7 @@ impl ToTokens for Field {
             };
             let name = &name;
             let body = self.validation.to_validation_tokens(&ctx, name);
-            let required = ctx.required.then(|| {
+            let required = (ctx.required && !ctx.optional_keyword).then(|| {
                 let field = &ctx.name;
                 quote! {
                     if self.#name.is_none() {
