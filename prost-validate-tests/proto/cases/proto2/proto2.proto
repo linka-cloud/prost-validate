@@ -1,0 +1,11 @@
+syntax = "proto2";
+
+package tests.harness.cases.proto2;
+option go_package = "tests/proto/cases/proto2;proto2";
+
+import "validate/validate.proto";
+
+message  Proto2Msg {
+  required string  const  = 1 [(validate.rules).string.const = "foo"];
+  optional string opt    = 2 [(validate.rules).string.len = 3];
+}

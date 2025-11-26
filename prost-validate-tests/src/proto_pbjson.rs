@@ -25,6 +25,12 @@ pub(crate) mod cases {
             "/pbjson/tests.harness.cases.other_package.rs"
         ));
     }
+    pub(crate) mod proto2 {
+        include!(concat!(
+            env!("OUT_DIR"),
+            "/pbjson/tests.harness.cases.proto2.rs"
+        ));
+    }
 }
 
 #[allow(clippy::trivially_copy_pass_by_ref)]

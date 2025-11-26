@@ -719,6 +719,8 @@ pub struct ProstField {
     tag: Option<u32>,
     #[darling(default)]
     pub optional: bool,
+    #[allow(unused)]
+    required: Option<bool>,
     #[darling(default)]
     pub repeated: bool,
     map: Option<String>,
