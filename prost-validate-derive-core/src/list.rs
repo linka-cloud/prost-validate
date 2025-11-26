@@ -17,11 +17,12 @@ pub struct RepeatedRules {
 impl ToValidationTokens for RepeatedRules {
     fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
         let field = &ctx.name;
+        let maybe_return = ctx.maybe_return();
         let min_items = self.min_items.map(|v| {
             let v = v as usize;
             quote! {
                 if #name.len() < #v {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::list::Error::MinItems(#v)));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::list::Error::MinItems(#v)));
                 }
             }
         });
@@ -29,20 +30,33 @@ impl ToValidationTokens for RepeatedRules {
             let v = v as usize;
             quote! {
                 if #name.len() > #v {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::list::Error::MaxItems(#v)));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::list::Error::MaxItems(#v)));
                 }
             }
         });
         let unique = self.unique.is_true_and(|| {
             quote! {
                 if ::prost_validate::VecExt::unique(#name).len() != #name.len() {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::list::Error::Unique));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::list::Error::Unique));
                 }
             }
         });
         let map = quote! { |e| ::prost_validate::Error::new(format!("{}[{i}]", #field), ::prost_validate::errors::list::Error::Item(Box::new(e))) };
         let items = self.items.as_ref().map(|v| {
             let validation = v.to_validation_tokens(ctx, &format_ident!("item"));
+            if ctx.multierrs {
+                return quote! {
+                    for (i, item) in #name.iter().enumerate() {
+                        if let Err(es) = || -> ::core::result::Result<(), Vec<::prost_validate::Error>> {
+                            let mut errs = vec![];
+                            #validation
+                            if errs.is_empty() { Ok(()) } else { Err(errs) }
+                        }() {
+                            errs.extend(es.into_iter().map(#map));
+                        }
+                    }
+                };
+            }
             quote! {
                 for (i, item) in #name.iter().enumerate() {
                     || -> ::prost_validate::Result<_> {
@@ -65,6 +79,16 @@ impl ToValidationTokens for RepeatedRules {
             } else {
                 (quote! { #name.iter() }, quote! {})
             };
+            if ctx.multierrs {
+                return quote! {
+                    for (i, item) in #name_iter.enumerate() {
+                        #item_ref
+                        if let Err(es) = ::prost_validate::validate_all!(item) {
+                            errs.extend(es.into_iter().map(#map));
+                        }
+                    }
+                };
+            }
             quote! {
                 for (i, item) in #name_iter.enumerate() {
                     #item_ref

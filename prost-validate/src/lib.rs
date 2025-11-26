@@ -25,6 +25,10 @@ pub trait Validator: Send + Sync {
     fn validate(&self) -> Result {
         Ok(())
     }
+
+    fn validate_all(&self) -> Result<(), Vec<Error>> {
+        Ok(())
+    }
 }
 
 // NoopValidator is the same trait as `Validator`.
@@ -32,6 +36,10 @@ pub trait Validator: Send + Sync {
 #[doc(hidden)]
 pub trait NoopValidator {
     fn validate(&self) -> Result {
+        Ok(())
+    }
+
+    fn validate_all(&self) -> Result<(), Vec<Error>> {
         Ok(())
     }
 }
@@ -49,6 +57,10 @@ impl<T: ?Sized + Validator> SafeValidator<'_, T> {
     pub fn validate(&self) -> Result {
         Validator::validate(self.0)
     }
+
+    pub fn validate_all(&self) -> Result<(), Vec<Error>> {
+        Validator::validate_all(self.0)
+    }
 }
 
 /// Validate any value if it implements the Validator trait.
@@ -59,6 +71,17 @@ macro_rules! validate {
         use ::prost_validate::NoopValidator;
         use std::ops::Deref;
         ::prost_validate::SafeValidator($value.deref()).validate()
+    }};
+}
+
+/// Validate any value if it implements the Validator trait, returning all errors.
+/// If the value does not implement the Validator trait, it will return vec![].
+#[macro_export]
+macro_rules! validate_all {
+    ($value:tt) => {{
+        use ::prost_validate::NoopValidator;
+        use std::ops::Deref;
+        ::prost_validate::SafeValidator($value.deref()).validate_all()
     }};
 }
 
@@ -73,6 +96,13 @@ mod tests {
                 prost_validate::errors::Error::InvalidRules("failed".to_string()),
             ))
         }
+
+        fn validate_all(&self) -> Result<(), Vec<prost_validate::Error>> {
+            Err(vec![prost_validate::Error::new(
+                "",
+                prost_validate::errors::Error::InvalidRules("failed".to_string()),
+            )])
+        }
     }
 
     pub struct B {}
@@ -81,20 +111,24 @@ mod tests {
     fn test_validator() {
         let a = &A {};
         assert!(prost_validate::validate!(a).is_err());
+        assert!(prost_validate::validate_all!(a).is_err());
     }
     #[test]
     fn test_validator_double_ref() {
         let a = &&A {};
         assert!(prost_validate::validate!(a).is_err());
+        assert!(prost_validate::validate_all!(a).is_err());
     }
     #[test]
     fn test_non_validator() {
         let b = &B {};
         assert!(prost_validate::validate!(b).is_ok());
+        assert!(prost_validate::validate_all!(b).is_ok());
     }
     #[test]
     fn test_scalar() {
         let c = &42;
         assert!(prost_validate::validate!(c).is_ok());
+        assert!(prost_validate::validate_all!(c).is_ok());
     }
 }

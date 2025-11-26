@@ -11,10 +11,11 @@ pub struct BoolRules {
 impl ToValidationTokens for BoolRules {
     fn to_validation_tokens(&self, ctx: &Context, name: &Ident) -> TokenStream {
         let field = &ctx.name;
+        let maybe_return = ctx.maybe_return();
         let r#const = self.r#const.map(|v| {
             quote! {
                 if *#name != #v {
-                    return Err(::prost_validate::Error::new(#field, ::prost_validate::errors::r#bool::Error::Const(#v)));
+                    #maybe_return(::prost_validate::Error::new(#field, ::prost_validate::errors::r#bool::Error::Const(#v)));
                 }
             }
         });
